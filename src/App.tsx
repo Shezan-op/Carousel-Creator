@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import LeftPane from './components/LeftPane';
 import CarouselPreview from './components/CarouselPreview';
 import type { CarouselData } from './types';
-import { Instagram, Twitter, Linkedin, Github } from 'lucide-react';
 
 function App() {
   const [carouselData, setCarouselData] = useState<CarouselData | null>(null);
@@ -74,11 +73,16 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-zinc-950 text-zinc-50 font-sans">
+    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen w-full bg-zinc-950 text-zinc-50 font-sans">
 
       {/* LEFT PANE — CONTROLS */}
-      <div className="w-full md:w-[450px] lg:w-[500px] h-full overflow-y-auto border-r border-white/10 bg-zinc-950 p-6 flex flex-col gap-6 shrink-0 z-10">
-        <h1 className="text-2xl font-bold tracking-tight mb-4">Carousel Creator</h1>
+      <div className="w-full lg:w-[450px] xl:w-[500px] h-auto lg:h-full lg:overflow-y-auto border-b lg:border-b-0 lg:border-r border-white/10 bg-zinc-950 p-6 flex flex-col gap-6 shrink-0 z-10 relative">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 border border-white/10 flex-shrink-0">
+            <img src="/Logo.png" alt="Carousel Creator Logo" className="w-full h-full object-cover" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Carousel Creator</h1>
+        </div>
 
         {/* Tab Controls, Inputs, and Settings */}
         <LeftPane
@@ -102,54 +106,39 @@ function App() {
         />
 
         {/* THE PRODUCTION FOOTER */}
-        <div className="mt-auto pt-6 border-t border-white/10 flex flex-col gap-4 text-xs text-zinc-500">
-          <p>
-            Built by <span className="text-zinc-300 font-medium">Shezan</span> — Founder @{' '}
-            <a
-              href="https://www.linkedin.com/company/lead-linked/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
-            >
-              LeadLinked
-            </a>
-          </p>
-
-          <div className="flex items-center gap-6">
-            <a href="#" className="hover:text-zinc-300 transition-colors">FAQ</a>
-            <a href="#" className="hover:text-zinc-300 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-zinc-300 transition-colors">Terms</a>
+        <div className="mt-auto pt-6 border-t border-white/10 flex flex-col gap-6 text-xs text-zinc-500">
+          {/* Documentation Links */}
+          <div className="flex flex-col gap-2">
+            <span className="font-semibold text-zinc-400 uppercase tracking-wider text-[10px]">Core Documentation</span>
+            <div className="flex flex-wrap gap-3">
+              <a href="https://github.com/Shezan-op/Carousel-Creator/blob/main/HOW_TO_USE.md" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">📖 How To Use Guide</a>
+              <a href="https://github.com/Shezan-op/Carousel-Creator/blob/main/README.md" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">💻 GitHub Repo</a>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {[
-              { Icon: Instagram, href: 'https://www.instagram.com/shortclipz.shezan/' },
-              { Icon: Twitter, href: 'https://x.com/UShezan4' },
-              { Icon: Linkedin, href: 'https://www.linkedin.com/in/shezanahmed29/' },
-              { Icon: Github, href: 'https://github.com/Shezan-op' },
-            ].map(({ Icon, href }, i) => (
-              <a
-                key={i}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-zinc-500 hover:text-white transition-all transform hover:scale-110"
-              >
-                <Icon size={16} />
-              </a>
-            ))}
+          {/* Example Results */}
+          <div className="flex flex-col gap-2">
+            <span className="font-semibold text-zinc-400 uppercase tracking-wider text-[10px]">Example Outputs</span>
+            <div className="flex flex-wrap gap-3">
+              <a href="/Minimal%20Carousel.pdf" target="_blank" className="hover:text-blue-400 transition-colors flex items-center gap-1">📄 Minimal</a>
+              <a href="/Tweet%20Carousel.pdf" target="_blank" className="hover:text-blue-400 transition-colors flex items-center gap-1">📄 Tweet</a>
+              <a href="/Brutalist%20Carousel.pdf" target="_blank" className="hover:text-blue-400 transition-colors flex items-center gap-1">📄 Brutalist</a>
+            </div>
+          </div>
+
+          {/* Credits */}
+          <div className="pt-4 border-t border-white/5 flex justify-between items-center">
+            <p>Built by <a href="https://www.linkedin.com/company/lead-linked/" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline font-medium">Shezan @LeadLinked</a></p>
+            <div className="flex gap-3">
+              <a href="https://x.com/UShezan4" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">X</a>
+              <a href="https://www.linkedin.com/in/shezanahmed29/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">IN</a>
+            </div>
           </div>
         </div>
       </div>
 
       {/* RIGHT PANE — PREVIEW CANVAS */}
-      <div
-        className="flex-1 h-full bg-zinc-900/50 relative overflow-hidden flex flex-col items-center justify-center p-8"
-        style={{
-          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
-          backgroundSize: '24px 24px'
-        }}
-      >
+      <div className="flex-1 h-[80vh] lg:h-full bg-zinc-900/50 relative overflow-hidden flex flex-col">
         <CarouselPreview
           data={carouselData}
           authorName={authorName}
@@ -158,6 +147,7 @@ function App() {
           backgroundImage={backgroundImage}
           fontFamily={fontFamily}
           activeTemplate={activeTemplate}
+          setActiveTemplate={setActiveTemplate}
           onDeleteSlide={deleteSlide}
           onMoveSlide={moveSlide}
           previewScale={previewScale}

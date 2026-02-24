@@ -11,6 +11,7 @@ interface Props {
     fontFamily: string;
     backgroundImage: string | null;
     activeTemplate: string;
+    setActiveTemplate: (template: string) => void;
     previewScale: number;
     onDeleteSlide?: (index: number) => void;
     onMoveSlide?: (index: number, direction: 'up' | 'down') => void;
@@ -39,25 +40,18 @@ const renderHighlightedText = (text: string, templateType: string, accentColor: 
 
 const CarouselPreview: React.FC<Props> = ({
     data, authorName, authorHandle, authorAvatar, fontFamily, backgroundImage,
-    activeTemplate, onDeleteSlide, onMoveSlide, previewScale
+    activeTemplate, setActiveTemplate, onDeleteSlide, onMoveSlide, previewScale
 }) => {
-    const [scale, setScale] = React.useState(0.35);
+    const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
 
     React.useEffect(() => {
-        const updateScale = () => {
-            const screenWidth = window.innerWidth;
-            if (screenWidth < 768) {
-                // Mobile: Scale to fit screen width minus padding
-                setScale((screenWidth - 40) / 1080);
-            } else {
-                // Desktop: Use the user-defined previewScale
-                setScale(previewScale);
-            }
-        };
-        updateScale();
-        window.addEventListener('resize', updateScale);
-        return () => window.removeEventListener('resize', updateScale);
-    }, [previewScale]);
+        const handleResize = () => setIsMobile(window.innerWidth < 1024);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Mobile forces scale to fit screen width (minus padding). Desktop uses the zoom slider.
+    const effectiveScale = isMobile ? (window.innerWidth - 64) / 1080 : previewScale;
 
     useEffect(() => {
         if (!fontFamily) return;
@@ -89,7 +83,15 @@ const CarouselPreview: React.FC<Props> = ({
             const comments = 50 + (index * 3) % 100;
 
             return (
-                <div key={index} className="flex justify-center w-full shrink-0 group relative">
+                /* THE SCALER WRAPPER: Matches the visual scaled size so scrollbars work perfectly */
+                <div
+                    key={index}
+                    style={{
+                        width: 1080 * effectiveScale,
+                        height: 1350 * effectiveScale
+                    }}
+                    className="relative shrink-0 shadow-2xl shadow-black/50 group"
+                >
                     {/* SLIDE CONTROLS (Hover only) */}
                     <div className="absolute -left-12 top-0 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30">
                         <button
@@ -115,212 +117,128 @@ const CarouselPreview: React.FC<Props> = ({
                         </button>
                     </div>
 
-                    {/* THE SCALE WRAPPER: Visual-only. Handles scaling + decorative rounding/shadow. NEVER captured by export. */}
+                    {/* THE RIGID CANVAS: Always 1080x1350, sharp corners, flat rectangle. This is the ONLY node captured by html-to-image. */}
                     <div
-                        className="slide-wrapper rounded-[40px] shadow-[0_64px_128px_-24px_rgba(0,0,0,0.8)] overflow-hidden"
+                        className="slide-export-node absolute top-0 left-0"
                         style={{
-                            transform: `scale(${scale})`,
-                            transformOrigin: 'top center',
-                            height: `${1350 * scale}px`
+                            width: '1080px',
+                            height: '1350px',
+                            transform: `scale(${effectiveScale})`,
+                            transformOrigin: 'top left',
+                            backgroundColor: data.theme.background,
+                            color: data.theme.text,
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            padding: '120px',
+                            boxSizing: 'border-box',
+                            overflow: 'hidden',
+                            fontFamily: fontFamily || 'Inter',
+                            backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
                         }}
                     >
-                        {/* THE RIGID CANVAS: Always 1080x1350, sharp corners, flat rectangle. This is the ONLY node captured by html-to-image. */}
-                        <div
-                            className="slide-export-node"
-                            style={{
-                                width: '1080px',
-                                height: '1350px',
-                                backgroundColor: data.theme.background,
-                                color: data.theme.text,
-                                position: 'relative',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                padding: '120px',
-                                boxSizing: 'border-box',
-                                overflow: 'hidden',
-                                fontFamily: fontFamily,
-                                backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center'
-                            }}
-                        >
-                            {/* THE MINIMALIST PROGRESS BAR */}
-                            <div style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                height: '8px',
-                                backgroundColor: accentColor,
-                                width: `${(slide.slide_number / data.slides.length) * 100}%`,
-                                zIndex: 10
-                            }} />
+                        {/* THE MINIMALIST PROGRESS BAR */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            height: '8px',
+                            backgroundColor: accentColor,
+                            width: `${(slide.slide_number / data.slides.length) * 100}%`,
+                            zIndex: 10
+                        }} />
 
-                            {/* BACKGROUND OVERLAY FOR READABILITY */}
-                            {backgroundImage && (
-                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.8))', zIndex: 1 }} />
-                            )}
+                        {/* BACKGROUND OVERLAY FOR READABILITY */}
+                        {backgroundImage && (
+                            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.8))', zIndex: 1 }} />
+                        )}
 
-                            {/* CINEMATIC SVG NOISE */}
-                            <div style={{
-                                position: 'absolute',
-                                inset: 0,
-                                opacity: 0.04,
-                                mixBlendMode: 'overlay',
-                                pointerEvents: 'none',
-                                backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")',
-                                zIndex: 1
-                            }} />
+                        {/* CINEMATIC SVG NOISE */}
+                        <div style={{
+                            position: 'absolute',
+                            inset: 0,
+                            opacity: 0.04,
+                            mixBlendMode: 'overlay',
+                            pointerEvents: 'none',
+                            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")',
+                            zIndex: 1
+                        }} />
 
-                            {/* ═══════════════════════════════════════════════ */}
-                            {/* TEMPLATE: MINIMAL (Default)                    */}
-                            {/* ═══════════════════════════════════════════════ */}
-                            {activeTemplate === 'minimal' && (
-                                <>
-                                    <div style={{
-                                        marginBottom: '160px',
-                                        textAlign: (slide.type === 'title' || slide.type === 'cta') ? 'center' : 'left',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: (slide.type === 'title' || slide.type === 'cta') ? 'center' : 'flex-start',
-                                        position: 'relative',
-                                        zIndex: 2
-                                    }}>
-                                        {slide.type === 'title' && (
-                                            <>
-                                                <h1 style={{ fontSize: '110px', fontWeight: '900', lineHeight: '1.1', margin: '0 0 40px 0', letterSpacing: '-2px' }}>
-                                                    {renderHighlightedText(slide.headline || '', activeTemplate, accentColor)}
-                                                </h1>
-                                                {slide.subheadline && (
-                                                    <h2 style={{ fontSize: '60px', fontWeight: '500', opacity: 0.8, margin: 0 }}>
-                                                        {renderHighlightedText(slide.subheadline || '', activeTemplate, accentColor)}
-                                                    </h2>
-                                                )}
-                                            </>
-                                        )}
-
-                                        {(slide.type === 'content' || slide.type === 'cta') && (
-                                            <p style={{ fontSize: '75px', fontWeight: '700', lineHeight: '1.3', margin: 0, whiteSpace: 'pre-wrap' }}>
-                                                {renderHighlightedText(slide.body || '', activeTemplate, accentColor)}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* ABSOLUTE FOOTER */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        bottom: '80px',
-                                        left: '120px',
-                                        right: '120px',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        zIndex: 2
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                            <div style={{
-                                                width: '80px',
-                                                height: '80px',
-                                                borderRadius: '50%',
-                                                backgroundColor: 'rgba(255,255,255,0.1)',
-                                                overflow: 'hidden',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                border: '1px solid rgba(255,255,255,0.1)'
-                                            }}>
-                                                {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
-                                            </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
-                                                <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
-                                            </div>
-                                        </div>
-
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-                                            {slide.slide_number === 1 && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', opacity: 0.6, fontWeight: 'bold' }}>
-                                                    <span style={{ fontSize: '35px' }}>SWIPE</span>
-                                                    <ArrowRight size={40} strokeWidth={3} />
-                                                </div>
+                        {/* ═══════════════════════════════════════════════ */}
+                        {/* TEMPLATE: MINIMAL (Default)                    */}
+                        {/* ═══════════════════════════════════════════════ */}
+                        {activeTemplate === 'minimal' && (
+                            <>
+                                <div style={{
+                                    marginBottom: '160px',
+                                    textAlign: (slide.type === 'title' || slide.type === 'cta') ? 'center' : 'left',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: (slide.type === 'title' || slide.type === 'cta') ? 'center' : 'flex-start',
+                                    position: 'relative',
+                                    zIndex: 2
+                                }}>
+                                    {slide.type === 'title' && (
+                                        <>
+                                            <h1 style={{ fontSize: '110px', fontWeight: '900', lineHeight: '1.1', margin: '0 0 40px 0', letterSpacing: '-2px' }}>
+                                                {renderHighlightedText(slide.headline || '', activeTemplate, accentColor)}
+                                            </h1>
+                                            {slide.subheadline && (
+                                                <h2 style={{ fontSize: '60px', fontWeight: '500', opacity: 0.8, margin: 0 }}>
+                                                    {renderHighlightedText(slide.subheadline || '', activeTemplate, accentColor)}
+                                                </h2>
                                             )}
-                                            <div style={{
-                                                width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)',
-                                                display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '35px', fontWeight: 'bold',
-                                                border: '1px solid rgba(255,255,255,0.1)'
-                                            }}>
-                                                {slide.slide_number}
-                                            </div>
+                                        </>
+                                    )}
+
+                                    {(slide.type === 'content' || slide.type === 'cta') && (
+                                        <p style={{ fontSize: '75px', fontWeight: '700', lineHeight: '1.3', margin: 0, whiteSpace: 'pre-wrap' }}>
+                                            {renderHighlightedText(slide.body || '', activeTemplate, accentColor)}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* ABSOLUTE FOOTER */}
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '80px',
+                                    left: '120px',
+                                    right: '120px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    zIndex: 2
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                        <div style={{
+                                            width: '80px',
+                                            height: '80px',
+                                            borderRadius: '50%',
+                                            backgroundColor: 'rgba(255,255,255,0.1)',
+                                            overflow: 'hidden',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '1px solid rgba(255,255,255,0.1)'
+                                        }}>
+                                            {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
+                                            <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
                                         </div>
                                     </div>
-                                </>
-                            )}
 
-                            {/* ═══════════════════════════════════════════════ */}
-                            {/* TEMPLATE: HIGHLIGHT (Marker-style underline)   */}
-                            {/* ═══════════════════════════════════════════════ */}
-                            {activeTemplate === 'highlight' && (
-                                <>
-                                    <div style={{
-                                        marginBottom: '160px',
-                                        textAlign: (slide.type === 'title' || slide.type === 'cta') ? 'center' : 'left',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: (slide.type === 'title' || slide.type === 'cta') ? 'center' : 'flex-start',
-                                        position: 'relative',
-                                        zIndex: 2
-                                    }}>
-                                        {slide.type === 'title' && (
-                                            <>
-                                                <h1 style={{ fontSize: '100px', fontWeight: '900', lineHeight: '1.15', margin: '0 0 40px 0', letterSpacing: '-1px' }}>
-                                                    {renderHighlightedText(slide.headline || '', activeTemplate, accentColor)}
-                                                </h1>
-                                                {slide.subheadline && (
-                                                    <h2 style={{ fontSize: '55px', fontWeight: '500', opacity: 0.8, margin: 0 }}>
-                                                        {renderHighlightedText(slide.subheadline || '', activeTemplate, accentColor)}
-                                                    </h2>
-                                                )}
-                                            </>
-                                        )}
-
-                                        {(slide.type === 'content' || slide.type === 'cta') && (
-                                            <p style={{ fontSize: '70px', fontWeight: '700', lineHeight: '1.35', margin: 0, whiteSpace: 'pre-wrap' }}>
-                                                {renderHighlightedText(slide.body || '', activeTemplate, accentColor)}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* ABSOLUTE FOOTER */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        bottom: '80px',
-                                        left: '120px',
-                                        right: '120px',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        zIndex: 2
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                            <div style={{
-                                                width: '80px',
-                                                height: '80px',
-                                                borderRadius: '50%',
-                                                backgroundColor: 'rgba(255,255,255,0.1)',
-                                                overflow: 'hidden',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                border: '1px solid rgba(255,255,255,0.1)'
-                                            }}>
-                                                {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
+                                        {slide.slide_number === 1 && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', opacity: 0.6, fontWeight: 'bold' }}>
+                                                <span style={{ fontSize: '35px' }}>SWIPE</span>
+                                                <ArrowRight size={40} strokeWidth={3} />
                                             </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
-                                                <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
-                                            </div>
-                                        </div>
-
+                                        )}
                                         <div style={{
                                             width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)',
                                             display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '35px', fontWeight: 'bold',
@@ -329,142 +247,218 @@ const CarouselPreview: React.FC<Props> = ({
                                             {slide.slide_number}
                                         </div>
                                     </div>
-                                </>
-                            )}
+                                </div>
+                            </>
+                        )}
 
-                            {/* ═══════════════════════════════════════════════ */}
-                            {/* TEMPLATE: FAUX TWEET (Justin Welsh Style)      */}
-                            {/* ═══════════════════════════════════════════════ */}
-                            {activeTemplate === 'tweet' && (
+                        {/* ═══════════════════════════════════════════════ */}
+                        {/* TEMPLATE: HIGHLIGHT (Marker-style underline)   */}
+                        {/* ═══════════════════════════════════════════════ */}
+                        {activeTemplate === 'highlight' && (
+                            <>
                                 <div style={{
-                                    border: '2px solid rgba(255,255,255,0.1)',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    borderRadius: '30px',
-                                    padding: '60px',
-                                    width: '90%',
-                                    alignSelf: 'center',
+                                    marginBottom: '160px',
+                                    textAlign: (slide.type === 'title' || slide.type === 'cta') ? 'center' : 'left',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: (slide.type === 'title' || slide.type === 'cta') ? 'center' : 'flex-start',
+                                    position: 'relative',
+                                    zIndex: 2
+                                }}>
+                                    {slide.type === 'title' && (
+                                        <>
+                                            <h1 style={{ fontSize: '100px', fontWeight: '900', lineHeight: '1.15', margin: '0 0 40px 0', letterSpacing: '-1px' }}>
+                                                {renderHighlightedText(slide.headline || '', activeTemplate, accentColor)}
+                                            </h1>
+                                            {slide.subheadline && (
+                                                <h2 style={{ fontSize: '55px', fontWeight: '500', opacity: 0.8, margin: 0 }}>
+                                                    {renderHighlightedText(slide.subheadline || '', activeTemplate, accentColor)}
+                                                </h2>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {(slide.type === 'content' || slide.type === 'cta') && (
+                                        <p style={{ fontSize: '70px', fontWeight: '700', lineHeight: '1.35', margin: 0, whiteSpace: 'pre-wrap' }}>
+                                            {renderHighlightedText(slide.body || '', activeTemplate, accentColor)}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* ABSOLUTE FOOTER */}
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '80px',
+                                    left: '120px',
+                                    right: '120px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    zIndex: 2
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                        <div style={{
+                                            width: '80px',
+                                            height: '80px',
+                                            borderRadius: '50%',
+                                            backgroundColor: 'rgba(255,255,255,0.1)',
+                                            overflow: 'hidden',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '1px solid rgba(255,255,255,0.1)'
+                                        }}>
+                                            {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
+                                            <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
+                                        </div>
+                                    </div>
+
+                                    <div style={{
+                                        width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)',
+                                        display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '35px', fontWeight: 'bold',
+                                        border: '1px solid rgba(255,255,255,0.1)'
+                                    }}>
+                                        {slide.slide_number}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {/* ═══════════════════════════════════════════════ */}
+                        {/* TEMPLATE: FAUX TWEET (Justin Welsh Style)      */}
+                        {/* ═══════════════════════════════════════════════ */}
+                        {activeTemplate === 'tweet' && (
+                            <div style={{
+                                border: '2px solid rgba(255,255,255,0.1)',
+                                background: 'rgba(255,255,255,0.05)',
+                                borderRadius: '30px',
+                                padding: '60px',
+                                width: '90%',
+                                alignSelf: 'center',
+                                zIndex: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '40px'
+                            }}>
+                                {/* Tweet Header */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                    <div style={{
+                                        width: '100px',
+                                        height: '100px',
+                                        borderRadius: '50%',
+                                        overflow: 'hidden',
+                                        border: '2px solid rgba(255,255,255,0.1)',
+                                        flexShrink: 0,
+                                        backgroundColor: 'rgba(255,255,255,0.1)'
+                                    }}>
+                                        {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <span style={{ fontSize: '50px', fontWeight: '800' }}>{authorName}</span>
+                                            <div style={{
+                                                backgroundColor: '#1D9BF0',
+                                                borderRadius: '50%',
+                                                width: '36px',
+                                                height: '36px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                flexShrink: 0
+                                            }}>
+                                                <Check size={22} color="#fff" strokeWidth={4} />
+                                            </div>
+                                        </div>
+                                        <span style={{ fontSize: '40px', opacity: 0.6 }}>{authorHandle}</span>
+                                    </div>
+                                </div>
+
+                                {/* Tweet Body */}
+                                <div style={{ fontSize: '65px', fontWeight: '500', lineHeight: '1.4', textAlign: 'left' }}>
+                                    {renderHighlightedText(slide.headline || slide.body || slide.subheadline || '', activeTemplate, accentColor)}
+                                </div>
+
+                                {/* Tweet Metrics Footer */}
+                                <div style={{ display: 'flex', gap: '80px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '40px', opacity: 0.6 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                        <MessageCircle size={40} />
+                                        <span style={{ fontSize: '30px' }}>{comments}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                        <Repeat2 size={40} />
+                                        <span style={{ fontSize: '30px' }}>{retweets}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                        <Heart size={40} />
+                                        <span style={{ fontSize: '30px' }}>{likes >= 1000 ? `${(likes / 1000).toFixed(1)}k` : likes}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ═══════════════════════════════════════════════ */}
+                        {/* TEMPLATE: BRUTALIST (Magazine Style)            */}
+                        {/* ═══════════════════════════════════════════════ */}
+                        {activeTemplate === 'brutalist' && (
+                            <>
+                                <div style={{
                                     zIndex: 2,
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    gap: '40px'
+                                    gap: '40px',
+                                    width: '100%'
                                 }}>
-                                    {/* Tweet Header */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                        <div style={{
-                                            width: '100px',
-                                            height: '100px',
-                                            borderRadius: '50%',
-                                            overflow: 'hidden',
-                                            border: '2px solid rgba(255,255,255,0.1)',
-                                            flexShrink: 0,
-                                            backgroundColor: 'rgba(255,255,255,0.1)'
+                                    {slide.type === 'title' && (
+                                        <h1 style={{
+                                            fontSize: '120px',
+                                            fontWeight: '900',
+                                            lineHeight: '0.95',
+                                            textTransform: 'uppercase',
+                                            margin: 0,
+                                            textAlign: 'left'
                                         }}>
-                                            {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <span style={{ fontSize: '50px', fontWeight: '800' }}>{authorName}</span>
-                                                <div style={{
-                                                    backgroundColor: '#1D9BF0',
-                                                    borderRadius: '50%',
-                                                    width: '36px',
-                                                    height: '36px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    flexShrink: 0
-                                                }}>
-                                                    <Check size={22} color="#fff" strokeWidth={4} />
-                                                </div>
-                                            </div>
-                                            <span style={{ fontSize: '40px', opacity: 0.6 }}>{authorHandle}</span>
-                                        </div>
-                                    </div>
+                                            {renderHighlightedText(slide.headline || '', activeTemplate, accentColor)}
+                                        </h1>
+                                    )}
 
-                                    {/* Tweet Body */}
-                                    <div style={{ fontSize: '65px', fontWeight: '500', lineHeight: '1.4', textAlign: 'left' }}>
-                                        {renderHighlightedText(slide.headline || slide.body || slide.subheadline || '', activeTemplate, accentColor)}
-                                    </div>
-
-                                    {/* Tweet Metrics Footer */}
-                                    <div style={{ display: 'flex', gap: '80px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '40px', opacity: 0.6 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                            <MessageCircle size={40} />
-                                            <span style={{ fontSize: '30px' }}>{comments}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                            <Repeat2 size={40} />
-                                            <span style={{ fontSize: '30px' }}>{retweets}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                            <Heart size={40} />
-                                            <span style={{ fontSize: '30px' }}>{likes >= 1000 ? `${(likes / 1000).toFixed(1)}k` : likes}</span>
-                                        </div>
-                                    </div>
+                                    {(slide.type === 'content' || slide.type === 'cta') && (
+                                        <p style={{
+                                            fontSize: '80px',
+                                            fontWeight: '900',
+                                            lineHeight: '0.95',
+                                            textTransform: 'uppercase',
+                                            margin: 0,
+                                            textAlign: 'left'
+                                        }}>
+                                            {renderHighlightedText(slide.body || '', activeTemplate, accentColor)}
+                                        </p>
+                                    )}
                                 </div>
-                            )}
 
-                            {/* ═══════════════════════════════════════════════ */}
-                            {/* TEMPLATE: BRUTALIST (Magazine Style)            */}
-                            {/* ═══════════════════════════════════════════════ */}
-                            {activeTemplate === 'brutalist' && (
-                                <>
-                                    <div style={{
-                                        zIndex: 2,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '40px',
-                                        width: '100%'
-                                    }}>
-                                        {slide.type === 'title' && (
-                                            <h1 style={{
-                                                fontSize: '120px',
-                                                fontWeight: '900',
-                                                lineHeight: '0.95',
-                                                textTransform: 'uppercase',
-                                                margin: 0,
-                                                textAlign: 'left'
-                                            }}>
-                                                {renderHighlightedText(slide.headline || '', activeTemplate, accentColor)}
-                                            </h1>
-                                        )}
-
-                                        {(slide.type === 'content' || slide.type === 'cta') && (
-                                            <p style={{
-                                                fontSize: '80px',
-                                                fontWeight: '900',
-                                                lineHeight: '0.95',
-                                                textTransform: 'uppercase',
-                                                margin: 0,
-                                                textAlign: 'left'
-                                            }}>
-                                                {renderHighlightedText(slide.body || '', activeTemplate, accentColor)}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* BRUTALIST FOOTER */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        bottom: '80px',
-                                        left: '120px',
-                                        right: '120px',
-                                        borderTop: `8px solid ${accentColor}`,
-                                        paddingTop: '20px',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        zIndex: 2,
-                                        fontWeight: '900',
-                                        fontSize: '35px',
-                                        textTransform: 'uppercase'
-                                    }}>
-                                        <span>{authorHandle}</span>
-                                        <span>SLIDE {slide.slide_number} / {data.slides.length}</span>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                                {/* BRUTALIST FOOTER */}
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '80px',
+                                    left: '120px',
+                                    right: '120px',
+                                    borderTop: `8px solid ${accentColor}`,
+                                    paddingTop: '20px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    zIndex: 2,
+                                    fontWeight: '900',
+                                    fontSize: '35px',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    <span>{authorHandle}</span>
+                                    <span>SLIDE {slide.slide_number} / {data.slides.length}</span>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             );
@@ -472,7 +466,7 @@ const CarouselPreview: React.FC<Props> = ({
     }, [
         data, accentColor, activeTemplate,
         authorName, authorHandle, authorAvatar,
-        backgroundImage, fontFamily, scale,
+        backgroundImage, fontFamily, effectiveScale,
         onDeleteSlide, onMoveSlide
     ]);
 
@@ -494,13 +488,21 @@ const CarouselPreview: React.FC<Props> = ({
     }
 
     return (
-        <div className="w-full h-full flex flex-col items-center overflow-y-auto custom-scrollbar">
+        <div className="w-full h-full flex flex-col items-center overflow-hidden bg-zinc-900/50">
             <div className="w-full max-w-[450px] mb-6 sticky top-0 z-20 pt-4 bg-zinc-900/80 backdrop-blur-md pb-4 px-4 border-b border-white/5">
-                <ExportControls data={data} />
+                {data && (
+                    <ExportControls
+                        data={data}
+                        activeTemplate={activeTemplate}
+                        setActiveTemplate={setActiveTemplate}
+                    />
+                )}
             </div>
 
-            <div className="preview-scale-wrapper flex flex-col gap-8 md:gap-12 items-center w-full px-4 pb-20 no-scrollbar">
-                {slideElements}
+            <div className="w-full h-full overflow-auto flex items-start justify-center p-8 custom-scrollbar">
+                <div className="flex flex-col gap-12 pb-24">
+                    {slideElements}
+                </div>
             </div>
         </div>
     );

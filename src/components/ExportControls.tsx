@@ -8,9 +8,11 @@ import { saveAs } from 'file-saver';
 
 interface Props {
     data: CarouselData;
+    activeTemplate: string;
+    setActiveTemplate: (template: string) => void;
 }
 
-const ExportControls: React.FC<Props> = ({ data }) => {
+const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTemplate }) => {
     const [exportType, setExportType] = useState<'pdf' | 'zip' | null>(null);
     const [showLeadModal, setShowLeadModal] = useState(false);
     const [userEmail, setUserEmail] = useState('');
@@ -41,16 +43,6 @@ const ExportControls: React.FC<Props> = ({ data }) => {
         // 4. Allow export and increment
         localStorage.setItem('carousel_export_count', (exportCount + 1).toString());
         return true;
-    };
-
-    const base64ToBlob = (base64: string, type: string) => {
-        const binStr = atob(base64.split(',')[1]);
-        const len = binStr.length;
-        const arr = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            arr[i] = binStr.charCodeAt(i);
-        }
-        return new Blob([arr], { type });
     };
 
     const exportToPDF = async () => {
@@ -98,40 +90,50 @@ const ExportControls: React.FC<Props> = ({ data }) => {
 
     const exportToZip = async () => {
         if (!checkExportLimit()) return;
-        // FONT EXPORT SAFETY: Wait for all fonts to load before capturing
-        await document.fonts.ready;
-
         setExportType('zip');
+
         try {
-            const slideNodes = Array.from(document.querySelectorAll('.slide-export-node')) as HTMLElement[];
-            if (slideNodes.length === 0) return;
-
+            await document.fonts.ready;
             const zip = new JSZip();
+            const templates = ['minimal', 'tweet', 'brutalist'];
+            const originalTemplate = activeTemplate;
 
-            for (let i = 0; i < slideNodes.length; i++) {
-                const node = slideNodes[i];
+            // Loop through each template
+            for (const tpl of templates) {
+                setActiveTemplate(tpl); // Change the UI
 
-                let imgData: string | null = await toJpeg(node, {
-                    quality: 0.90,
-                    pixelRatio: 1,
-                    style: { transform: 'scale(1)', transformOrigin: 'top left', margin: '0' }
-                });
-                const imageBlob = base64ToBlob(imgData, 'image/jpeg');
-                zip.file(`slide-${i + 1}.jpg`, imageBlob);
+                // CRITICAL: Wait 500ms for React to reconcile the DOM and CSS to apply
+                await new Promise(resolve => setTimeout(resolve, 500));
 
-                // PERF: Null the dataUrl immediately so GC can reclaim memory before next slide
-                imgData = null;
+                const slideNodes = document.querySelectorAll('.slide-export-node');
+                const folder = zip.folder(tpl); // Create a subfolder in the ZIP
+
+                for (let i = 0; i < slideNodes.length; i++) {
+                    const node = slideNodes[i] as HTMLElement;
+
+                    // Force natural capture size
+                    const dataUrl = await toJpeg(node, {
+                        quality: 0.90,
+                        pixelRatio: 1,
+                        style: { transform: 'scale(1)', transformOrigin: 'top left', margin: '0' }
+                    });
+
+                    const response = await fetch(dataUrl);
+                    const blob = await response.blob();
+                    folder?.file(`slide-${i + 1}.jpg`, blob);
+                }
             }
 
-            let content: Blob | null = await zip.generateAsync({ type: 'blob' });
-            saveAs(content, `carousel-social-${data.slides.length}.zip`);
+            // Revert to user's original template
+            setActiveTemplate(originalTemplate);
 
-            // MEMORY LEAK FIX: Force garbage collection of the zip Blob to prevent
-            // browser crashes on mobile devices with limited memory
-            content = null;
-        } catch {
-            console.error('Export Error: ZIP generation failed.');
-            alert('Failed to export ZIP.');
+            // Generate and download
+            const content = await zip.generateAsync({ type: 'blob' });
+            saveAs(content, `Carousel_Content_Pack_${data.slides.length}.zip`);
+
+        } catch (error) {
+            console.error("ZIP Export failed", error);
+            alert('ZIP Export failed. Please try again.');
         } finally {
             setExportType(null);
         }
