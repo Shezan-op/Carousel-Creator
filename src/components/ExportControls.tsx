@@ -17,6 +17,7 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
     const [showLeadModal, setShowLeadModal] = useState(false);
     const [userEmail, setUserEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     const checkExportLimit = () => {
         // 1. Check if already unlocked
@@ -28,6 +29,7 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
         const today = new Date().toISOString().slice(0, 10);
         const lastExportDate = localStorage.getItem('carousel_export_date');
         let exportCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
+        if (isNaN(exportCount)) exportCount = 0;
 
         // Reset count if it's a new day
         if (lastExportDate !== today) {
@@ -92,12 +94,12 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
     const exportToZip = async () => {
         if (!checkExportLimit()) return;
         setExportType('zip');
+        const originalTemplate = activeTemplate;
 
         try {
             await document.fonts.ready;
             const zip = new JSZip();
             const templates = ['minimal', 'tweet', 'brutalist'];
-            const originalTemplate = activeTemplate;
 
             // Loop through each template
             for (const tpl of templates) {
@@ -125,9 +127,6 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
                 }
             }
 
-            // Revert to user's original template
-            setActiveTemplate(originalTemplate);
-
             // Generate and download
             const content = await zip.generateAsync({ type: 'blob' });
             saveAs(content, `Carousel_Content_Pack_${data.slides.length}.zip`);
@@ -136,6 +135,8 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             console.error("ZIP Export failed", error);
             alert('ZIP Export failed. Please try again.');
         } finally {
+            // STABILITY: Always revert the template, even on error
+            setActiveTemplate(originalTemplate);
             setExportType(null);
         }
     };
@@ -143,31 +144,28 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
     const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!userEmail) return;
+        setSubmitError(null);
 
         // SEC: Basic email format validation (client-side deterrent)
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(userEmail)) {
-            alert('Please enter a valid email address.');
+            setSubmitError('Please enter a valid email address.');
             return;
         }
 
         // SEC: Client-side rate limiter — 30s cooldown between submissions
-        // NOTE: This is a DETERRENT only. A determined attacker can bypass this
-        // via DevTools. The real fix must be server-side in the Google Apps Script:
-        //   - Check for duplicate emails before appending
-        //   - Enforce a row cap (e.g., 5000 rows)
-        //   - Use LockService.getScriptLock() for concurrency safety
         const RATE_LIMIT_KEY = 'email_submit_ts';
         const RATE_LIMIT_MS = 30_000;
         const lastSubmit = parseInt(localStorage.getItem(RATE_LIMIT_KEY) || '0', 10);
         if (Date.now() - lastSubmit < RATE_LIMIT_MS) {
-            alert('Please wait a moment before submitting again.');
+            setSubmitError('Please wait a moment before submitting again.');
             return;
         }
 
         setIsSubmitting(true);
         try {
-            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSTejTd1NMUnWwF6NAK8Mmq6EmxNmddflmAaBG2dWORSeZ-HAO_TvTKjtihRkzU-LnCg/exec';
+            const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL
+                || 'https://script.google.com/macros/s/AKfycbzSTejTd1NMUnWwF6NAK8Mmq6EmxNmddflmAaBG2dWORSeZ-HAO_TvTKjtihRkzU-LnCg/exec';
 
             localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
 
@@ -178,15 +176,14 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
                 body: new URLSearchParams({ email: userEmail })
             });
 
-            // Unlock the app permanently
+            // SUCCESS: Unlock the app permanently
             localStorage.setItem('carousel_unlocked', 'true');
             setShowLeadModal(false);
 
         } catch {
-            console.error("Failed to save lead");
-            // Fallback: Unlock them anyway so a network error doesn't ruin their UX
-            localStorage.setItem('carousel_unlocked', 'true');
-            setShowLeadModal(false);
+            console.error('Failed to save lead');
+            // FAIL: Do NOT unlock — show inline error in modal
+            setSubmitError('Failed to save. Please check your connection and try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -240,9 +237,12 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
                                 required
                                 placeholder="founder@startup.com"
                                 value={userEmail}
-                                onChange={(e) => setUserEmail(e.target.value)}
+                                onChange={(e) => { setUserEmail(e.target.value); setSubmitError(null); }}
                                 className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
                             />
+                            {submitError && (
+                                <p className="text-red-400 text-xs font-medium bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{submitError}</p>
+                            )}
                             <button
                                 type="submit"
                                 disabled={isSubmitting}

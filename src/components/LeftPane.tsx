@@ -156,7 +156,7 @@ const LeftPane: React.FC<Props> = ({
     };
 
     const generateCarousel = async () => {
-        if (!openRouterKey) {
+        if (!openRouterKey.trim()) {
             setError('Please provide an OpenRouter API key');
             return;
         }
@@ -178,7 +178,7 @@ const LeftPane: React.FC<Props> = ({
                 signal: controller.signal,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${openRouterKey}`,
+                    'Authorization': `Bearer ${openRouterKey.trim()}`,
                     'HTTP-Referer': window.location.origin,
                     'X-Title': 'Carousel Creator'
                 },
@@ -229,6 +229,12 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
             }
 
             const result = await response.json();
+
+            // GUARD: Validate response structure before parsing
+            if (!result?.choices?.[0]?.message?.content) {
+                throw new Error('Invalid AI response: missing choices[0].message.content');
+            }
+
             const content = result.choices[0].message.content;
             const raw = JSON.parse(extractJSON(content));
 
