@@ -1,6 +1,6 @@
 # Carousel AI Creator - Step-by-Step Walkthrough
 
-This guide takes you from a blank screen to a professional social media carousel in under 60 seconds.
+This guide can get you from a blank screen to a professional social media carousel in as little as 60 seconds, depending on system response.
 
 ## Step 1: Branding Setup
 
@@ -22,11 +22,12 @@ Go to the **Auto** tab.
 
 ## Step 3: Manual Fine-Tuning
 
-Go to the **Settings** tab.
+Go to the **Setup** and **Manual JSON** tabs.
 
-- Switch between **Templates** (Minimal, Tweet, Brutalist) to see your content transform.
-- Adjust the **Preview Scale** if you are on a small screen to see the full composition.
-- Use the **Footer Layout** dropdown to position your branding badge.
+- Switch between **Templates** in the **Setup** tab (Minimal, Tweet, Brutalist) to see your content transform.
+- Adjust the **Preview Scale** in the **Setup** tab if you are on a small screen to see the full composition.
+- Use the **Footer Layout** dropdown in the **Setup** tab to position your branding badge.
+- Use the **Manual JSON** tab for direct access to the raw slide data.
 
 ## Step 4: Visual Accents
 
@@ -41,7 +42,7 @@ Go to the **Manual JSON** tab.
 Use the buttons at the top right:
 
 - **Download PDF**: Standard for LinkedIn posts.
-- **Download ZIP**: Triggers the **Content Pack Engine**. This captures your carousel in all 3 styles simultaneously, giving you a full variation pack for all social channels.
+- **Download ZIP**: Triggers the **Content Pack Engine**. This captures your carousel in all 3 styles simultaneously, giving you a ready-to-post variation pack.
 
 ---
-*Pro Tip: Your 1080x1350 exports are mathematically perfect for the highest quality visibility on algorithms.*
+*Pro Tip: 1080×1350 (4:5) is the recommended LinkedIn carousel size because it preserve image resolution while matching the platform's aspect ratio to avoid cropping and scaling, resulting in optimal display in feeds.*

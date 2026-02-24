@@ -2,7 +2,7 @@
 
 **Transform raw text into viral social media carousels in seconds.** 100% serverless, private, and built for modern creators.
 
-[![Carousel Creator Preview](/public/Logo.png)](https://carousel-creator.vercel.app)
+[![Carousel Creator Preview](./public/Logo.png)](https://carousel-creator.vercel.app)
 
 ## 🚀 The Ultimate AI-Powered Carousel Engine
 
@@ -12,7 +12,7 @@ Carousel Creator is a high-performance React application designed to eliminate t
 
 * **Responsive Document Flow:** Our new architecture ensures a seamless experience across all devices. Enjoy natural, native scrolling on mobile with a rock-solid, professional workspace on desktop.
 * **The Rigid Canvas (1080x1350):** Mathematical scaling ensures every export is perfectly formatted for LinkedIn and Instagram at professional `4:5` aspect ratio.
-* **The Highlight Engine:** Use simple markdown-style syntax (`*highlight*`, `**bold**`, `_italic_`) to trigger complex visual template behaviors instantly.
+* **The Highlight Engine:** Use simple ``*highlight*``, ``**bold**``, or ``_italic_`` to trigger complex visual template behaviors instantly.
 * **ZIP Content Pack Engine:** Generate 3x the content in one click. The engine automatically cycles through all templates (Minimal, Tweet, Brutalist) and packages them into organized folders.
 * **Persistent Creator Identity:** Upload your avatar, set your handle, and choose your favorite Google Font once. Everything stays saved in your browser's local storage.
 * **Privacy-First & BYOK:** Zero backend. Your OpenRouter API keys and content never touch a server.
@@ -32,12 +32,20 @@ Carousel Creator is a high-performance React application designed to eliminate t
 2. **Install:** `npm install`
 3. **Run:** `npm run dev`
 
-### Production Build
+### Production Build & Deployment
 
-```bash
-npm run build
-npx vercel --prod
-```
+To deploy your own instance to Vercel:
+
+1. **Login:** `npx vercel login`
+2. **Link Project:** `npx vercel link`
+3. **Build & Deploy:**
+
+    ```bash
+    npm run build
+    npx vercel --prod
+    ```
+
+    *Note: For non-interactive CI/CD, use the `--yes` flag or environment tokens.*
 
 ## 📈 SEO & Discovery Keywords
 

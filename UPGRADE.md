@@ -60,7 +60,7 @@ WARNING: The font injection engine must be built flawlessly or the export engine
 - [x] **Responsive Document Flow**: Switched from a 'locked body' architecture to a natural document flow for mobile devices.
 - [x] **Native Scrolling**: Removed global `overflow-hidden` to allow standard browser scrolling on iOS/Android.
 - [x] **Fluid Shell**: Implemented `lg:` prefixes to separate desktop (locked 100vh) and mobile (natural stack) behaviors.
-- [x] **Unlocked Preview**: Carousel canvas viewport now allows multi-axis scrolling for better mobile inspection.
+- [x] **Unlocked Preview**: Carousel canvas viewport now allows horizontal inspection (recommended: `overflow-x: auto` and `overflow-y: hidden` with `touch-action: pan-x` to preserve carousel swipe navigation).
 - [x] **SEO Optimization**: Updated documentation and metadata for better search visibility.
 
 ## 3. IMPLEMENT THE SWITCH STATEMENT

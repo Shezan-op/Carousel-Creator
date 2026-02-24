@@ -186,7 +186,7 @@ function App() {
       </div>
 
       {/* RIGHT PANE — PREVIEW CANVAS */}
-      <div className="flex-1 h-[85vh] lg:h-full lg:overflow-y-auto bg-zinc-900/50 relative flex flex-col custom-scrollbar">
+      <div className="flex-1 h-[85vh] lg:h-full overflow-y-auto bg-zinc-900/50 relative flex flex-col custom-scrollbar">
         <CarouselPreview
           data={carouselData}
           authorName={authorName}
