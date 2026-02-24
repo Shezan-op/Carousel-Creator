@@ -38,14 +38,16 @@ To deploy your own instance to Vercel:
 
 1. **Login:** `npx vercel login`
 2. **Link Project:** `npx vercel link`
-3. **Build & Deploy:**
+3. **Deploy:** `npx vercel --prod` (Vercel runs the build remotely for you)
 
-    ```bash
-    npm run build
-    npx vercel --prod
-    ```
+**CI/CD (Non-Interactive):**
 
-    *Note: For non-interactive CI/CD, use the `--yes` flag or environment tokens.*
+Set the following environment variables in your CI runner: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` (found after running `vercel link`). Then:
+
+```bash
+npx vercel build --prod --token=$VERCEL_TOKEN
+npx vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+```
 
 ## 📈 SEO & Discovery Keywords
 

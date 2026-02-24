@@ -22,7 +22,7 @@ Go to the **Setup** tab to fine-tune the output:
 ## 3. Generate Content (AI Powered)
 
 1. Go to the **Auto** tab.
-2. **Enter** your **OpenRouter API Key**. (Private & BYOK).
+2. Enter your **OpenRouter API Key**. (Private & Bring Your Own Key (BYOK)).
 3. Choose your model (e.g., `google/gemini-2.0-flash-lite-preview-02-05:free`).
 4. Paste your raw content (LinkedIn posts, blogs, or brain-dumps).
 5. Click **Generate**. The AI will automatically structure your slides, write hooks, and apply highlights.
