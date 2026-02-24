@@ -12,6 +12,36 @@ interface Props {
 
 const ExportControls: React.FC<Props> = ({ data }) => {
     const [exportType, setExportType] = useState<'pdf' | 'zip' | null>(null);
+    const [showLeadModal, setShowLeadModal] = useState(false);
+    const [userEmail, setUserEmail] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const checkExportLimit = () => {
+        // 1. Check if already unlocked
+        const isUnlocked = localStorage.getItem('carousel_unlocked') === 'true';
+        if (isUnlocked) return true;
+
+        // 2. Check today's usage
+        const today = new Date().toDateString();
+        const lastExportDate = localStorage.getItem('carousel_export_date');
+        let exportCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
+
+        // Reset count if it's a new day
+        if (lastExportDate !== today) {
+            exportCount = 0;
+            localStorage.setItem('carousel_export_date', today);
+        }
+
+        // 3. Block if limit reached
+        if (exportCount >= 5) {
+            setShowLeadModal(true);
+            return false;
+        }
+
+        // 4. Allow export and increment
+        localStorage.setItem('carousel_export_count', (exportCount + 1).toString());
+        return true;
+    };
 
     const base64ToBlob = (base64: string, type: string) => {
         const binStr = atob(base64.split(',')[1]);
@@ -24,6 +54,7 @@ const ExportControls: React.FC<Props> = ({ data }) => {
     };
 
     const exportToPDF = async () => {
+        if (!checkExportLimit()) return;
         // FONT EXPORT SAFETY: Wait for all fonts to load before capturing
         await document.fonts.ready;
 
@@ -66,6 +97,7 @@ const ExportControls: React.FC<Props> = ({ data }) => {
     };
 
     const exportToZip = async () => {
+        if (!checkExportLimit()) return;
         // FONT EXPORT SAFETY: Wait for all fonts to load before capturing
         await document.fonts.ready;
 
@@ -105,35 +137,104 @@ const ExportControls: React.FC<Props> = ({ data }) => {
         }
     };
 
+    const handleEmailSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!userEmail) return;
+
+        setIsSubmitting(true);
+        try {
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSTejTd1NMUnWwF6NAK8Mmq6EmxNmddflmAaBG2dWORSeZ-HAO_TvTKjtihRkzU-LnCg/exec';
+
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Critical for Google Apps Script
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ email: userEmail })
+            });
+
+            // Unlock the app permanently
+            localStorage.setItem('carousel_unlocked', 'true');
+            setShowLeadModal(false);
+
+        } catch {
+            console.error("Failed to save lead");
+            // Fallback: Unlock them anyway so a network error doesn't ruin their UX
+            localStorage.setItem('carousel_unlocked', 'true');
+            setShowLeadModal(false);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const isExporting = exportType !== null;
 
     return (
-        <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
-            <button
-                onClick={exportToPDF}
-                disabled={isExporting}
-                className="flex-1 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center transition-all shadow-sm active:scale-[0.98]"
-            >
-                {exportType === 'pdf' ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                    <FileText className="w-4 h-4 mr-2" />
-                )}
-                <span>Download PDF (LinkedIn)</span>
-            </button>
-            <button
-                onClick={exportToZip}
-                disabled={isExporting}
-                className="flex-1 bg-transparent border border-white/10 hover:bg-white/5 disabled:bg-zinc-800/20 disabled:text-zinc-500 text-zinc-100 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center transition-all active:scale-[0.98]"
-            >
-                {exportType === 'zip' ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                    <FileArchive className="w-4 h-4 mr-2" />
-                )}
-                <span>Download ZIP (X / Instagram)</span>
-            </button>
-        </div>
+        <>
+            <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+                <button
+                    onClick={exportToPDF}
+                    disabled={isExporting}
+                    className="flex-1 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center transition-all shadow-sm active:scale-[0.98]"
+                >
+                    {exportType === 'pdf' ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                        <FileText className="w-4 h-4 mr-2" />
+                    )}
+                    <span>Download PDF (LinkedIn)</span>
+                </button>
+                <button
+                    onClick={exportToZip}
+                    disabled={isExporting}
+                    className="flex-1 bg-transparent border border-white/10 hover:bg-white/5 disabled:bg-zinc-800/20 disabled:text-zinc-500 text-zinc-100 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center transition-all active:scale-[0.98]"
+                >
+                    {exportType === 'zip' ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                        <FileArchive className="w-4 h-4 mr-2" />
+                    )}
+                    <span>Download ZIP (X / Instagram)</span>
+                </button>
+            </div>
+
+            {showLeadModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-zinc-950 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl relative flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6">
+                            <span className="text-blue-500 text-3xl">🚀</span>
+                        </div>
+                        <h2 className="text-2xl font-bold text-white mb-2">You're crushing it.</h2>
+                        <p className="text-zinc-400 mb-8 leading-relaxed">
+                            You've reached your limit of 5 free exports for today. Enter your email to unlock <strong className="text-white">unlimited lifetime exports</strong> for free while we're in Beta.
+                        </p>
+
+                        <form onSubmit={handleEmailSubmit} className="w-full flex flex-col gap-4">
+                            <input
+                                type="email"
+                                required
+                                placeholder="founder@startup.com"
+                                value={userEmail}
+                                onChange={(e) => setUserEmail(e.target.value)}
+                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                            />
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full bg-white text-black font-bold rounded-xl px-4 py-4 hover:bg-zinc-200 transition-colors disabled:opacity-50 flex justify-center items-center"
+                            >
+                                {isSubmitting ? 'Unlocking...' : 'Unlock Unlimited Exports'}
+                            </button>
+                        </form>
+                        <button
+                            onClick={() => setShowLeadModal(false)}
+                            className="mt-6 text-xs text-zinc-500 hover:text-white transition-colors"
+                        >
+                            I'll just wait until tomorrow
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 
