@@ -515,7 +515,7 @@ const CarouselPreview: React.FC<Props> = ({
     }
 
     return (
-        <div className="w-full h-full flex flex-col items-center overflow-hidden bg-zinc-900/50">
+        <div className="w-full h-full flex flex-col items-center bg-zinc-900/50">
             <div className="w-full max-w-[450px] mb-6 sticky top-0 z-20 pt-4 bg-zinc-900/80 backdrop-blur-md pb-4 px-4 border-b border-white/5">
                 {data && (
                     <ExportControls

@@ -114,10 +114,10 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen w-full bg-zinc-950 text-zinc-50 font-sans">
+    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen w-full bg-zinc-950 text-zinc-50 font-sans lg:overflow-hidden">
 
       {/* LEFT PANE — CONTROLS */}
-      <div className="w-full lg:w-[450px] xl:w-[500px] h-auto lg:h-full lg:overflow-y-auto border-b lg:border-b-0 lg:border-r border-white/10 bg-zinc-950 p-6 flex flex-col gap-6 shrink-0 z-10 relative">
+      <div className="w-full lg:w-[450px] xl:w-[500px] h-auto lg:h-full lg:overflow-y-auto border-b lg:border-b-0 lg:border-r border-white/10 bg-zinc-950 p-6 flex flex-col gap-6 shrink-0 z-10 relative custom-scrollbar">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 border border-white/10 flex-shrink-0">
             <img src="/Logo.png" alt="Carousel Creator Logo" className="w-full h-full object-cover" />
@@ -186,7 +186,7 @@ function App() {
       </div>
 
       {/* RIGHT PANE — PREVIEW CANVAS */}
-      <div className="flex-1 h-[80vh] lg:h-full bg-zinc-900/50 relative overflow-hidden flex flex-col">
+      <div className="flex-1 h-[85vh] lg:h-full lg:overflow-y-auto bg-zinc-900/50 relative flex flex-col custom-scrollbar">
         <CarouselPreview
           data={carouselData}
           authorName={authorName}

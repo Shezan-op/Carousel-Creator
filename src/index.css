@@ -17,8 +17,10 @@
 
 @layer base {
   body {
-    @apply bg-[#09090B] text-zinc-50 overflow-hidden;
+    @apply bg-[#09090B] text-zinc-50;
+    /* REMOVED overflow-hidden */
     font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 }
 

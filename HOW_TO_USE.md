@@ -1,34 +1,44 @@
 # 📖 How to Use Carousel Creator
 
-Welcome to the fastest way to build social media carousels. Because this tool has no backend, it relies on your browser. Here is the ultimate guide to getting the most out of it.
+Welcome to the fastest way to build social media carousels. Because this tool is 100% serverless, it relies on your browser's power. Here is how to master the workflow.
 
 ## 1. Setup Your Creator Identity
 
-Go to the **Setup** tab.
+Before generating, head to the **Setup** tab to define your personal brand:
 
-1. Enter your Name and Handle (e.g., @creator).
-2. Type in a Google Font name (e.g., `Inter`, `Playfair Display`, `Space Grotesk`). The app will dynamically pull it from Google Fonts.
-3. Upload an Avatar.
-*Note: All of this is saved in your browser's local storage. You only have to do it once.*
+* **Identity:** Enter your Name and Handle (e.g., @creator).
+* **Typography:** Enter any Google Font name (e.g., `Inter`, `Bebas Neue`, `Montserrat`). The app fetches it dynamically.
+* **Branding:** Upload your Avatar and optional Background Image.
+* **Persistence:** All settings are saved to `localStorage`, so your identity persists across sessions.
 
-## 2. Generate Content (The AI Way)
+## 2. Advanced Content Controls
+
+Go to the **Settings** tab to fine-tune the output:
+
+* **Preview Scale:** Use the slider to zoom the preview canvas in or out. This doesn't affect the export quality; it just helps you design comfortably.
+* **Footer Layout:** Choose between Left, Center, or Right alignment for your social badge on the slides.
+* **Profile Toggle:** Hide or show your avatar/handle globally with one click.
+
+## 3. Generate Content (AI Powered)
 
 1. Go to the **Auto** tab.
-2. Paste your OpenRouter API Key. *(Don't have one? Get it at OpenRouter.ai. It costs fractions of a penny per generation and keeps this tool free).*
-3. Paste your messy brain-dump, a Twitter thread, or a blog post into the Raw Content box.
-4. Click Generate. The AI is strictly trained to extract hooks, format pacing, and highlight core metrics.
+2. Input your **OpenRouter API Key**. (Private & BYOK).
+3. Choose your model (e.g., `google/gemini-2.0-flash-lite-preview-02-05:free`).
+4. Paste your raw content (LinkedIn posts, blogs, or brain-dumps).
+5. Click **Generate**. The AI will automatically structure your slides, write hooks, and apply highlights.
 
-## 3. The Highlight Engine (The Secret Weapon)
+## 4. The Magic Highlight Engine
 
-The magic of this tool is the `*asterisk*` engine.
-If you go to the **JSON** tab, you can manually edit the text. If you wrap any word in asterisks (e.g., `People spend *12 hours* making slides`), the app will visually isolate it based on your chosen template:
+Format your text using simple markdown to trigger visual effects:
 
-* **Brutalist Template:** Creates a massive, solid-colored background block behind the word.
-* **Minimal Template:** Bolds the word and changes it to your accent color.
+* `*highlight*`: Triggers the template's primary visual accent (e.g., background blocks in Brutalist, colored text in Minimal).
+* `**bold**`: Makes text extra heavy.
+* `_italic_`: italicizes text for emphasis.
 
-## 4. Exporting
+## 5. High-Resolution Exports
 
-* **Download PDF:** Best for LinkedIn. Exports your currently selected template as a high-resolution, multi-page PDF document.
-* **Download ZIP (The Content Pack):** Best for X/Twitter and Instagram. This triggers our macro-engine. It will automatically cycle through our 3 templates (Minimal, Tweet, Brutalist), capture all slides, and deliver them to you in a single, neatly organized ZIP file.
+* **Download PDF:** Best for LinkedIn. Generates a high-res PDF with all slides.
+* **Download ZIP (Variation Engine):** Best for Instagram/X. Our engine automatically renders your carousel in **all 3 templates** (Minimal, Tweet, Brutalist) and packages them into organized folders.
 
-Enjoy building at lightspeed.
+---
+*Built for speed. Built for creators.*

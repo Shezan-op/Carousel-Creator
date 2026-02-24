@@ -1,35 +1,47 @@
-# Carousel Creator 🎠
+# Carousel Creator 🎠 - Professional LinkedIn & Instagram Carousel Generator
 
-A 100% serverless, client-side React application that converts raw text into stunning, high-resolution social media carousels. Built for speed, privacy, and zero-friction content creation.
+**Transform raw text into viral social media carousels in seconds.** 100% serverless, private, and built for modern creators.
 
-![Carousel Creator Preview](/public/Logo.png)
+[![Carousel Creator Preview](/public/Logo.png)](https://carousel-creator.vercel.app)
 
-## Why I Built This
+## 🚀 The Ultimate AI-Powered Carousel Engine
 
-Creators spend hours wrestling with heavy design tools (Canva, Figma) just to format simple text. I wanted a tool where I could dump raw text, apply a theme, and instantly export a `1080x1350` PDF ready for LinkedIn or Instagram.
+Carousel Creator is a high-performance React application designed to eliminate the friction of content design. Stop wrestling with Canva and start shipping.
 
-Most AI tools charge $30/month for this. I built it for free using a Bring-Your-Own-Key (BYOK) architecture.
+### ✨ Key Features
 
-## The Architecture
+* **Responsive Document Flow:** Our new architecture ensures a seamless experience across all devices. Enjoy natural, native scrolling on mobile with a rock-solid, professional workspace on desktop.
+* **The Rigid Canvas (1080x1350):** Mathematical scaling ensures every export is perfectly formatted for LinkedIn and Instagram at professional `4:5` aspect ratio.
+* **The Highlight Engine:** Use simple markdown-style syntax (`*highlight*`, `**bold**`, `_italic_`) to trigger complex visual template behaviors instantly.
+* **ZIP Content Pack Engine:** Generate 3x the content in one click. The engine automatically cycles through all templates (Minimal, Tweet, Brutalist) and packages them into organized folders.
+* **Persistent Creator Identity:** Upload your avatar, set your handle, and choose your favorite Google Font once. Everything stays saved in your browser's local storage.
+* **Privacy-First & BYOK:** Zero backend. Your OpenRouter API keys and content never touch a server.
 
-* **Frontend:** React 19 + Vite + TypeScript
+## 🛠️ The Tech Stack
+
+* **Framework:** React 19 + Vite + TypeScript
 * **Styling:** Tailwind CSS 4.0
 * **Export Engine:** `html-to-image` + `jsPDF` + `JSZip`
-* **Backend:** Absolutely none. 100% Client-side.
-* **AI Engine:** OpenRouter API (BYOK - Your key stays in your browser's local storage).
+* **Intelligence:** OpenRouter API (Bring Your Own Key)
 
-## Features
+## 🚦 Getting Started
 
-* **The Rigid Canvas:** Mathematical scaling ensures your exports are always crisp `1080x1350` resolution, regardless of your screen size.
-* **The Highlight Engine:** Wrap words in `*asterisks*` to automatically render them as high-contrast background blocks or marker highlights.
-* **Content Pack Export:** Clicking "Download ZIP" automatically loops through all 3 templates (Minimal, Tweet, Brutalist) and packages them into organized folders so you have variations for different platforms.
-* **Privacy First:** Your API keys and content never leave your browser.
+### Quick Start (Local Development)
 
-## Running Locally
+1. **Clone:** `git clone https://github.com/Shezan-op/Carousel-Creator.git`
+2. **Install:** `npm install`
+3. **Run:** `npm run dev`
 
-1. Clone the repo: `git clone https://github.com/Shezan-op/Carousel-Creator.git`
-2. Install dependencies: `npm install`
-3. Run the dev server: `npm run dev`
+### Production Build
+
+```bash
+npm run build
+npx vercel --prod
+```
+
+## 📈 SEO & Discovery Keywords
+
+`LinkedIn Carousel Generator`, `Instagram Carousel Maker`, `Free AI Carousel Tool`, `Open Source Content Creation`, `1080x1350 Image Converter`, `Social Media Design Automation`, `React Carousel Export`.
 
 ---
-*Built by [Shezan - Founder @LeadLinked](https://www.linkedin.com/company/lead-linked/)*
+*Built with passion by [Shezan - Founder @LeadLinked](https://www.linkedin.com/company/lead-linked/)*

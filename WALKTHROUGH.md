@@ -1,50 +1,47 @@
-# Carousel AI Creator - User Guide
+# Carousel AI Creator - Step-by-Step Walkthrough
 
-This application allows you to transform any text or raw JSON into professional-grade social media carousels (1080x1350px).
+This guide takes you from a blank screen to a professional social media carousel in under 60 seconds.
 
-## Getting Started
+## Step 1: Branding Setup
 
-1. **Configure API Key**: Go to the **AI Generator** tab and enter your OpenRouter API key.
-2. **Setup Branding**: Go to the **Settings** tab to upload your profile picture and set your social media handle.
-3. **Generate**:
-   - Paste a LinkedIn post, article, or raw text into the AI Generator input.
-   - Click **Generate Carousel**.
-   - The AI will automatically structure your content into Title, Content, and CTA slides with a balanced theme.
-4. **Export**: Click the **Download PDF** button at the top of the preview pane to save your high-resolution carousel.
+Go to the **Setup** tab.
 
-## JSON Schema (For Manual Control)
+- Enter your name and social handle (e.g., @JaneDoe).
+- Name your favorite Google Font (e.g., `Playfair Display`).
+- Upload your square avatar image.
+- *Everything is saved to your browser automatically.*
 
-If you prefer to manually edit the layout, use the **Manual JSON** tab with the following structure:
+## Step 2: Content Generation
 
-```json
-{
-  "theme": {
-    "background": "#000000",
-    "text": "#ffffff"
-  },
-  "slides": [
-    {
-      "slide_number": 1,
-      "type": "title",
-      "headline": "Massive Title",
-      "subheadline": "Catchy subheadline"
-    },
-    {
-      "slide_number": 2,
-      "type": "content",
-      "body": "Your main value proposition here..."
-    },
-    {
-      "slide_number": 3,
-      "type": "cta",
-      "body": "Join the community today!"
-    }
-  ]
-}
-```
+Go to the **Auto** tab.
 
-## Technical Details
+- Paste your OpenRouter API Key.
+- Select an AI Model (Free options like `Gemini Flash` work great).
+- Paste your messy notes or a link to a post in the input box.
+- Hit **Generate**. The AI will rewrite your content into high-impact slides.
 
-- **Aspect Ratio**: 4:5 (Professional standard for carousels).
-- **Export Resolution**: 3x Pixel Ratio for crystal clear text on mobile.
-- **Privacy**: API keys and avatar images are handled entirely in the browser (localStorage and Object URLs).
+## Step 3: Manual Fine-Tuning
+
+Go to the **Settings** tab.
+
+- Switch between **Templates** (Minimal, Tweet, Brutalist) to see your content transform.
+- Adjust the **Preview Scale** if you are on a small screen to see the full composition.
+- Use the **Footer Layout** dropdown to position your branding badge.
+
+## Step 4: Visual Accents
+
+Go to the **Manual JSON** tab.
+
+- You can edit the text directly.
+- Wrap any word in `*asterisks*` to highlight it.
+- In Brutalist, this creates a heavy background block. In Minimal, it changes the text color and weight.
+
+## Step 5: High-Quality Export
+
+Use the buttons at the top right:
+
+- **Download PDF**: Standard for LinkedIn posts.
+- **Download ZIP**: Triggers the **Content Pack Engine**. This captures your carousel in all 3 styles simultaneously, giving you a full variation pack for all social channels.
+
+---
+*Pro Tip: Your 1080x1350 exports are mathematically perfect for the highest quality visibility on algorithms.*

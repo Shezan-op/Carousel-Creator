@@ -55,6 +55,14 @@ WARNING: The font injection engine must be built flawlessly or the export engine
 - [x] **Theme Presets Expansion**: Added 'Solarized', 'Nord', 'Dracula', 'Forest', and 'Royal' palettes.
 - [x] **Canvas Zoom**: Dedicated slider in Setup for manual workspace scaling.
 
+## Phase 8: Mobile UX & Responsive Flow (COMPLETE)
+
+- [x] **Responsive Document Flow**: Switched from a 'locked body' architecture to a natural document flow for mobile devices.
+- [x] **Native Scrolling**: Removed global `overflow-hidden` to allow standard browser scrolling on iOS/Android.
+- [x] **Fluid Shell**: Implemented `lg:` prefixes to separate desktop (locked 100vh) and mobile (natural stack) behaviors.
+- [x] **Unlocked Preview**: Carousel canvas viewport now allows multi-axis scrolling for better mobile inspection.
+- [x] **SEO Optimization**: Updated documentation and metadata for better search visibility.
+
 ## 3. IMPLEMENT THE SWITCH STATEMENT
 
 Inside `.slide-export-node`, replace the direct rendering of the text/footer with a switch statement based on `activeTemplate`:
