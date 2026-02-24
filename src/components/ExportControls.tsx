@@ -200,7 +200,7 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             </div>
 
             {showLeadModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 pointer-events-auto">
                     <div className="bg-zinc-950 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl relative flex flex-col items-center text-center">
                         <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6">
                             <span className="text-blue-500 text-3xl">🚀</span>

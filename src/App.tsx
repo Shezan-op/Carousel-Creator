@@ -39,6 +39,25 @@ function App() {
     }
   };
 
+  const [showProfile, setShowProfile] = useState(() => {
+    const saved = localStorage.getItem('showProfile');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  // Update local storage when toggled
+  useEffect(() => {
+    localStorage.setItem('showProfile', showProfile.toString());
+  }, [showProfile]);
+
+  const [footerLayout, setFooterLayout] = useState(() => {
+    return localStorage.getItem('footerLayout') || 'left';
+  });
+
+  // Save to local storage on change
+  useEffect(() => {
+    localStorage.setItem('footerLayout', footerLayout);
+  }, [footerLayout]);
+
   useEffect(() => {
     localStorage.setItem('previewScale', previewScale.toString());
   }, [previewScale]);
@@ -75,7 +94,7 @@ function App() {
       link.rel = 'stylesheet';
       document.head.appendChild(link);
     }
-    link.href = `https://fonts.googleapis.com/css2?family=${formattedFont}:wght@400;600;700;900&display=swap`;
+    link.href = `https://fonts.googleapis.com/css2?family=${formattedFont}:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600;1,700;1,900&display=swap`;
   }, [fontFamily]);
 
   const deleteSlide = (index: number) => {
@@ -128,6 +147,10 @@ function App() {
           carouselData={carouselData}
           customTheme={customTheme}
           applyCustomTheme={applyCustomTheme}
+          showProfile={showProfile}
+          setShowProfile={setShowProfile}
+          footerLayout={footerLayout}
+          setFooterLayout={setFooterLayout}
         />
 
         {/* THE PRODUCTION FOOTER */}
@@ -176,6 +199,8 @@ function App() {
           onDeleteSlide={deleteSlide}
           onMoveSlide={moveSlide}
           previewScale={previewScale}
+          showProfile={showProfile}
+          footerLayout={footerLayout}
         />
       </div>
     </div>

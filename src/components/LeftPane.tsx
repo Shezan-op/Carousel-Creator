@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { CarouselData } from '../types';
-import { Sparkles, Code, Settings, ListTree, RotateCcw } from 'lucide-react';
+import { Sparkles, Code, Settings, ListTree, RotateCcw, Trash2 } from 'lucide-react';
 
 const MAX_SLIDES = 50;
 
@@ -43,17 +43,23 @@ interface Props {
     carouselData: CarouselData | null;
     customTheme: { background: string; text: string; accent: string };
     applyCustomTheme: (key: string, value: string) => void;
+    showProfile: boolean;
+    setShowProfile: (val: boolean) => void;
+    footerLayout: string;
+    setFooterLayout: (val: string) => void;
 }
 
 const LeftPane: React.FC<Props> = ({
     setCarouselData, openRouterKey, setOpenRouterKey, authorName, setAuthorName, authorHandle, setAuthorHandle, authorAvatar, setAuthorAvatar,
     backgroundImage, setBackgroundImage, fontFamily, setFontFamily, activeTemplate, setActiveTemplate,
-    previewScale, setPreviewScale, carouselData, customTheme, applyCustomTheme
+    previewScale, setPreviewScale, carouselData, customTheme, applyCustomTheme,
+    showProfile, setShowProfile, footerLayout, setFooterLayout
 }) => {
     const [activeTab, setActiveTab] = useState<'auto' | 'json' | 'setup' | 'bulk'>('auto');
     const [jsonInput, setJsonInput] = useState('');
     const [rawInput, setRawInput] = useState('');
     const [bulkText, setBulkText] = useState('');
+    const [useFreeModel, setUseFreeModel] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -117,7 +123,7 @@ const LeftPane: React.FC<Props> = ({
                     'X-Title': 'Carousel Creator'
                 },
                 body: JSON.stringify({
-                    model: 'anthropic/claude-3.5-sonnet',
+                    model: useFreeModel ? "arcee-ai/trinity-large-preview:free" : "anthropic/claude-3.5-sonnet",
                     response_format: { type: 'json_object' },
                     messages: [
                         {
@@ -241,7 +247,15 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                 {/* ─── JSON TAB ─── */}
                 {activeTab === 'json' && (
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Paste JSON</label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Paste JSON</label>
+                            <button
+                                onClick={() => setJsonInput('')}
+                                className="text-[10px] text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                            >
+                                <Trash2 size={10} /> Clear
+                            </button>
+                        </div>
                         <textarea
                             className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white h-[300px] font-mono resize-none"
                             placeholder="Paste your generated JSON here..."
@@ -254,6 +268,21 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                 {/* ─── AUTO TAB ─── */}
                 {activeTab === 'auto' && (
                     <div className="flex flex-col gap-4">
+                        <div className="flex items-center justify-between bg-black/40 border border-white/5 rounded-xl p-1">
+                            <button
+                                onClick={() => setUseFreeModel(true)}
+                                className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${useFreeModel ? 'bg-[#27272A] text-white shadow-sm border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            >
+                                Free Model (Test)
+                            </button>
+                            <button
+                                onClick={() => setUseFreeModel(false)}
+                                className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${!useFreeModel ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            >
+                                Claude 3.5 (Pro)
+                            </button>
+                        </div>
+
                         <div className="flex flex-col gap-2">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">OpenRouter API Key</label>
@@ -274,7 +303,15 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                             <p className="text-[10px] text-zinc-500">Stored locally in browser. Never sent to our servers.</p>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Raw Content</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Raw Content</label>
+                                <button
+                                    onClick={() => setRawInput('')}
+                                    className="text-[10px] text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                                >
+                                    <Trash2 size={10} /> Clear
+                                </button>
+                            </div>
                             <textarea
                                 className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white h-[200px] resize-none"
                                 placeholder="Paste your rough draft, tweet thread, or notes here..."
@@ -296,7 +333,15 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                 {activeTab === 'bulk' && (
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Bulk Slide Import</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Bulk Slide Import</label>
+                                <button
+                                    onClick={() => setBulkText('')}
+                                    className="text-[10px] text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                                >
+                                    <Trash2 size={10} /> Clear
+                                </button>
+                            </div>
                             <textarea
                                 value={bulkText}
                                 onChange={(e) => setBulkText(e.target.value)}
@@ -360,6 +405,31 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                             <div className="flex flex-col gap-1">
                                 <h3 className="text-xs font-bold text-white uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-md inline-block w-fit">Creator Profile (Saved Locally)</h3>
                                 <p className="text-[10px] text-zinc-500 pl-1">Your identity reflects across all templates.</p>
+                            </div>
+
+                            <div className="flex items-center justify-between bg-zinc-900 border border-white/10 rounded-xl p-3 mb-4">
+                                <span className="text-sm font-medium text-zinc-300">Show Profile on Slides</span>
+                                <button
+                                    onClick={() => setShowProfile(!showProfile)}
+                                    className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-1 ${showProfile ? 'bg-blue-600' : 'bg-zinc-700'}`}
+                                >
+                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${showProfile ? 'translate-x-6' : 'translate-x-0'}`} />
+                                </button>
+                            </div>
+
+                            <div className="flex flex-col gap-2 mb-6">
+                                <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Footer Alignment</label>
+                                <div className="flex bg-zinc-900 border border-white/10 rounded-xl p-1">
+                                    {['left', 'center', 'right'].map((align) => (
+                                        <button
+                                            key={align}
+                                            onClick={() => setFooterLayout(align)}
+                                            className={`flex-1 py-2 text-xs font-medium rounded-lg capitalize transition-all ${footerLayout === align ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                        >
+                                            {align}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

@@ -13,34 +13,47 @@ interface Props {
     activeTemplate: string;
     setActiveTemplate: (template: string) => void;
     previewScale: number;
+    showProfile: boolean;
+    footerLayout: string;
     onDeleteSlide?: (index: number) => void;
     onMoveSlide?: (index: number, direction: 'up' | 'down') => void;
 }
 
 const renderHighlightedText = (text: string, templateType: string, accentColor: string) => {
     if (!text) return null;
-    const parts = text.split(/(\*[^*]+\*)/g);
+
+    // Regex matches **bold**, _italic_, and *highlight*
+    const parts = text.split(/(\*\*.*?\*\*|_.*?_|\*.*?\*)/g);
 
     return parts.map((part, i) => {
+        // 1. Bold: **text**
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={i} style={{ fontWeight: '900' }}>{part.slice(2, -2)}</strong>;
+        }
+        // 2. Italic: _text_
+        if (part.startsWith('_') && part.endsWith('_')) {
+            return <em key={i} style={{ fontStyle: 'italic' }}>{part.slice(1, -1)}</em>;
+        }
+        // 3. The Highlight Engine: *text*
         if (part.startsWith('*') && part.endsWith('*')) {
             const cleanText = part.slice(1, -1);
-
             if (templateType === 'brutalist') {
                 return <span key={i} style={{ backgroundColor: accentColor, color: '#000', padding: '0 16px', display: 'inline-block', transform: 'translateY(-4px)' }}>{cleanText}</span>;
             }
             if (templateType === 'tweet') {
                 return <span key={i} style={{ color: accentColor }}>{cleanText}</span>;
             }
-            // Default Minimal Layout
+            // Default Minimal
             return <span key={i} style={{ color: accentColor, fontWeight: '900' }}>{cleanText}</span>;
         }
+        // Standard text
         return <span key={i}>{part}</span>;
     });
 };
 
 const CarouselPreview: React.FC<Props> = ({
     data, authorName, authorHandle, authorAvatar, fontFamily, backgroundImage,
-    activeTemplate, setActiveTemplate, onDeleteSlide, onMoveSlide, previewScale
+    activeTemplate, setActiveTemplate, onDeleteSlide, onMoveSlide, previewScale, showProfile, footerLayout
 }) => {
     const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
 
@@ -66,7 +79,7 @@ const CarouselPreview: React.FC<Props> = ({
             document.head.appendChild(link);
         }
 
-        link.href = `https://fonts.googleapis.com/css2?family=${formattedName}:wght@400;600;800;900&display=swap`;
+        link.href = `https://fonts.googleapis.com/css2?family=${formattedName}:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800;1,900&display=swap`;
     }, [fontFamily]);
 
     // RULES OF HOOKS: useMemo must be called unconditionally, before any early returns.
@@ -83,14 +96,16 @@ const CarouselPreview: React.FC<Props> = ({
             const comments = 50 + (index * 3) % 100;
 
             return (
-                /* THE SCALER WRAPPER: Matches the visual scaled size so scrollbars work perfectly */
+                /* THE SCALER WRAPPER: Physically resizes the DOM block so Flexbox and Scrollbars work */
                 <div
                     key={index}
                     style={{
-                        width: 1080 * effectiveScale,
-                        height: 1350 * effectiveScale
+                        width: `${1080 * effectiveScale}px`,
+                        height: `${1350 * effectiveScale}px`,
+                        position: 'relative',
+                        overflow: 'hidden'
                     }}
-                    className="relative shrink-0 shadow-2xl shadow-black/50 group"
+                    className="shrink-0 shadow-2xl shadow-black/50 rounded-2xl bg-zinc-900 group"
                 >
                     {/* SLIDE CONTROLS (Hover only) */}
                     <div className="absolute -left-12 top-0 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30">
@@ -117,9 +132,9 @@ const CarouselPreview: React.FC<Props> = ({
                         </button>
                     </div>
 
-                    {/* THE RIGID CANVAS: Always 1080x1350, sharp corners, flat rectangle. This is the ONLY node captured by html-to-image. */}
+                    /* THE RIGID CANVAS: Always 1080x1350, absolutely positioned to prevent DOM flow warp */
                     <div
-                        className="slide-export-node absolute top-0 left-0"
+                        className="slide-export-node"
                         style={{
                             width: '1080px',
                             height: '1350px',
@@ -127,14 +142,16 @@ const CarouselPreview: React.FC<Props> = ({
                             transformOrigin: 'top left',
                             backgroundColor: data.theme.background,
                             color: data.theme.text,
-                            position: 'relative',
+                            fontFamily: fontFamily || 'Inter',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
                             display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'center',
                             padding: '120px',
                             boxSizing: 'border-box',
                             overflow: 'hidden',
-                            fontFamily: fontFamily || 'Inter',
                             backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
                             backgroundSize: 'cover',
                             backgroundPosition: 'center'
@@ -212,28 +229,32 @@ const CarouselPreview: React.FC<Props> = ({
                                     alignItems: 'center',
                                     zIndex: 2
                                 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                        <div style={{
-                                            width: '80px',
-                                            height: '80px',
-                                            borderRadius: '50%',
-                                            backgroundColor: 'rgba(255,255,255,0.1)',
-                                            overflow: 'hidden',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '1px solid rgba(255,255,255,0.1)'
-                                        }}>
-                                            {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
-                                            <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
-                                        </div>
+                                    {/* Left spacer for centering balance */}
+                                    {footerLayout === 'center' && <div style={{ width: '80px' }}></div>}
+
+                                    {/* Creator Profile */}
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '24px',
+                                        flex: footerLayout === 'center' ? 'none' : '1',
+                                        justifyContent: footerLayout === 'right' ? 'flex-end' : footerLayout === 'center' ? 'center' : 'flex-start',
+                                        marginRight: footerLayout === 'right' ? '40px' : '0'
+                                    }}>
+                                        {showProfile && (
+                                            <>
+                                                {authorAvatar ? (
+                                                    <img src={authorAvatar} style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+                                                )}
+                                                <span style={{ fontSize: '40px', fontWeight: '600', opacity: 0.9 }}>{authorHandle || '@creator'}</span>
+                                            </>
+                                        )}
                                     </div>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-                                        {slide.slide_number === 1 && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '30px', order: footerLayout === 'right' ? -1 : 1 }}>
+                                        {slide.slide_number === 1 && footerLayout !== 'right' && (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', opacity: 0.6, fontWeight: 'bold' }}>
                                                 <span style={{ fontSize: '35px' }}>SWIPE</span>
                                                 <ArrowRight size={40} strokeWidth={3} />
@@ -297,23 +318,27 @@ const CarouselPreview: React.FC<Props> = ({
                                     zIndex: 2
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                        <div style={{
-                                            width: '80px',
-                                            height: '80px',
-                                            borderRadius: '50%',
-                                            backgroundColor: 'rgba(255,255,255,0.1)',
-                                            overflow: 'hidden',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '1px solid rgba(255,255,255,0.1)'
-                                        }}>
-                                            {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
-                                            <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
-                                        </div>
+                                        {showProfile && (
+                                            <>
+                                                <div style={{
+                                                    width: '80px',
+                                                    height: '80px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: 'rgba(255,255,255,0.1)',
+                                                    overflow: 'hidden',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    border: '1px solid rgba(255,255,255,0.1)'
+                                                }}>
+                                                    {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
+                                                    <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
 
                                     <div style={{
@@ -344,37 +369,39 @@ const CarouselPreview: React.FC<Props> = ({
                                 gap: '40px'
                             }}>
                                 {/* Tweet Header */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                    <div style={{
-                                        width: '100px',
-                                        height: '100px',
-                                        borderRadius: '50%',
-                                        overflow: 'hidden',
-                                        border: '2px solid rgba(255,255,255,0.1)',
-                                        flexShrink: 0,
-                                        backgroundColor: 'rgba(255,255,255,0.1)'
-                                    }}>
-                                        {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <span style={{ fontSize: '50px', fontWeight: '800' }}>{authorName}</span>
-                                            <div style={{
-                                                backgroundColor: '#1D9BF0',
-                                                borderRadius: '50%',
-                                                width: '36px',
-                                                height: '36px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                flexShrink: 0
-                                            }}>
-                                                <Check size={22} color="#fff" strokeWidth={4} />
-                                            </div>
+                                {showProfile && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                        <div style={{
+                                            width: '100px',
+                                            height: '100px',
+                                            borderRadius: '50%',
+                                            overflow: 'hidden',
+                                            border: '2px solid rgba(255,255,255,0.1)',
+                                            flexShrink: 0,
+                                            backgroundColor: 'rgba(255,255,255,0.1)'
+                                        }}>
+                                            {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                                         </div>
-                                        <span style={{ fontSize: '40px', opacity: 0.6 }}>{authorHandle}</span>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <span style={{ fontSize: '50px', fontWeight: '800' }}>{authorName}</span>
+                                                <div style={{
+                                                    backgroundColor: '#1D9BF0',
+                                                    borderRadius: '50%',
+                                                    width: '36px',
+                                                    height: '36px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0
+                                                }}>
+                                                    <Check size={22} color="#fff" strokeWidth={4} />
+                                                </div>
+                                            </div>
+                                            <span style={{ fontSize: '40px', opacity: 0.6 }}>{authorHandle}</span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Tweet Body */}
                                 <div style={{ fontSize: '65px', fontWeight: '500', lineHeight: '1.4', textAlign: 'left' }}>
@@ -454,7 +481,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     fontSize: '35px',
                                     textTransform: 'uppercase'
                                 }}>
-                                    <span>{authorHandle}</span>
+                                    <span>{showProfile ? authorHandle : ''}</span>
                                     <span>SLIDE {slide.slide_number} / {data.slides.length}</span>
                                 </div>
                             </>
@@ -465,7 +492,7 @@ const CarouselPreview: React.FC<Props> = ({
         });
     }, [
         data, accentColor, activeTemplate,
-        authorName, authorHandle, authorAvatar,
+        authorName, authorHandle, authorAvatar, showProfile, footerLayout,
         backgroundImage, fontFamily, effectiveScale,
         onDeleteSlide, onMoveSlide
     ]);
