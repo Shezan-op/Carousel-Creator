@@ -230,12 +230,19 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
 
             const result = await response.json();
             const content = result.choices[0].message.content;
-            const parsed = JSON.parse(extractJSON(content));
-            if (parsed.slides?.length > MAX_SLIDES) {
-                parsed.slides = parsed.slides.slice(0, MAX_SLIDES);
+            const raw = JSON.parse(extractJSON(content));
+
+            // SEC: Route AI response through the same schema sanitizer as the JSON tab
+            const sanitized = sanitizeCarouselData(raw);
+            if (!sanitized) {
+                setError('AI returned an invalid carousel structure. Try regenerating.');
+                return;
             }
-            setCarouselData(parsed);
-            setJsonInput(JSON.stringify(parsed, null, 2));
+            if (raw.slides?.length > MAX_SLIDES) {
+                setError(`Warning: Capped at ${MAX_SLIDES} slides to prevent browser crash.`);
+            }
+            setCarouselData(sanitized);
+            setJsonInput(JSON.stringify(sanitized, null, 2));
         } catch (e: unknown) {
             if (e instanceof Error && e.name === 'AbortError') return;
             const raw = e instanceof Error ? e.message : 'Failed to generate carousel';
@@ -273,14 +280,21 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
 
     const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            if (backgroundUrlRef.current) {
-                URL.revokeObjectURL(backgroundUrlRef.current);
-            }
-            const url = URL.createObjectURL(file);
-            backgroundUrlRef.current = url;
-            setBackgroundImage(url);
+        if (!file) return;
+
+        // SEC: Runtime MIME-type guard — mirrors the avatar handler
+        const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            setError('Only PNG, JPEG, or WebP images are allowed for backgrounds.');
+            return;
         }
+
+        if (backgroundUrlRef.current) {
+            URL.revokeObjectURL(backgroundUrlRef.current);
+        }
+        const url = URL.createObjectURL(file);
+        backgroundUrlRef.current = url;
+        setBackgroundImage(url);
     };
 
     return (
@@ -531,7 +545,13 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                                 <input
                                     type="text"
                                     value={fontFamily}
-                                    onChange={(e) => setFontFamily(e.target.value)}
+                                    onChange={(e) => {
+                                        // SEC: Only allow safe characters in font names (letters, numbers, spaces)
+                                        const val = e.target.value;
+                                        if (val === '' || /^[a-zA-Z0-9\s]+$/.test(val)) {
+                                            setFontFamily(val);
+                                        }
+                                    }}
                                     placeholder="e.g., Playfair Display, Space Grotesk"
                                     className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white"
                                 />

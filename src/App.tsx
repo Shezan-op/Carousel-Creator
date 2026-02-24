@@ -28,7 +28,7 @@ function App() {
   const applyCustomTheme = (key: string, value: string) => {
     const newTheme = { ...customTheme, [key]: value };
     setCustomTheme(newTheme);
-    localStorage.setItem(`custom_${key}`, value);
+    try { localStorage.setItem(`custom_${key}`, value); } catch { /* quota */ }
 
     // If a carousel is actively rendered, force the new color instantly
     if (carouselData) {

@@ -24,7 +24,8 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
         if (isUnlocked) return true;
 
         // 2. Check today's usage
-        const today = new Date().toDateString();
+        // SEC: Use UTC date to prevent timezone-manipulation bypass
+        const today = new Date().toISOString().slice(0, 10);
         const lastExportDate = localStorage.getItem('carousel_export_date');
         let exportCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
 
