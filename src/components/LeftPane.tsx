@@ -240,7 +240,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                     <div className="flex flex-col gap-2">
                         <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Paste JSON</label>
                         <textarea
-                            className="w-full h-[300px] bg-zinc-900 border border-white/10 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-zinc-300 font-mono resize-none"
+                            className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white h-[300px] font-mono resize-none"
                             placeholder="Paste your generated JSON here..."
                             value={jsonInput}
                             onChange={(e) => handleJsonChange(e.target.value)}
@@ -258,7 +258,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                             </div>
                             <input
                                 type="password"
-                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white"
                                 placeholder="sk-or-v1-..."
                                 value={openRouterKey}
                                 onChange={(e) => setOpenRouterKey(e.target.value)}
@@ -268,7 +268,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Raw Content</label>
                             <textarea
-                                className="w-full h-[200px] bg-zinc-900 border border-white/10 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all resize-none"
+                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white h-[200px] resize-none"
                                 placeholder="Paste your rough draft, tweet thread, or notes here..."
                                 value={rawInput}
                                 onChange={(e) => setRawInput(e.target.value)}
@@ -277,7 +277,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                         <button
                             onClick={generateCarousel}
                             disabled={isGenerating}
-                            className="w-full bg-white text-black font-bold rounded-xl px-4 py-3 hover:bg-zinc-200 transition-colors disabled:opacity-50 flex items-center justify-center active:scale-[0.99]"
+                            className="w-full bg-white text-black font-bold rounded-xl px-4 py-3 hover:bg-zinc-200 transition-colors disabled:opacity-50 flex justify-center items-center"
                         >
                             {isGenerating ? 'Generating...' : 'Auto-Generate Carousel'}
                         </button>
@@ -294,7 +294,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                                 onChange={(e) => setBulkText(e.target.value)}
                                 placeholder="Enter each slide content on a new line..."
                                 rows={12}
-                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-sm focus:ring-2 focus:ring-green-500/50 outline-none transition-all resize-none placeholder:text-zinc-600 leading-relaxed"
+                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white resize-none placeholder:text-zinc-600 leading-relaxed"
                             />
                             <p className="text-[10px] text-zinc-500 italic">Each line will become one 'Content' slide.</p>
                         </div>
@@ -361,7 +361,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                                         type="text"
                                         value={authorName}
                                         onChange={(e) => setAuthorName(e.target.value)}
-                                        className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                                        className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
@@ -370,7 +370,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                                         type="text"
                                         value={authorHandle}
                                         onChange={(e) => setAuthorHandle(e.target.value)}
-                                        className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                                        className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white"
                                     />
                                 </div>
                             </div>
@@ -382,7 +382,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                                     value={fontFamily}
                                     onChange={(e) => setFontFamily(e.target.value)}
                                     placeholder="e.g., Playfair Display, Space Grotesk"
-                                    className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                                    className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-white"
                                 />
                             </div>
 

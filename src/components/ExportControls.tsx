@@ -174,7 +174,7 @@ const ExportControls: React.FC<Props> = ({ data }) => {
                 <button
                     onClick={exportToPDF}
                     disabled={isExporting}
-                    className="flex-1 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center transition-all shadow-sm active:scale-[0.98]"
+                    className="flex-1 bg-white text-black font-bold rounded-xl px-4 py-3 hover:bg-zinc-200 transition-colors disabled:opacity-50 flex justify-center items-center"
                 >
                     {exportType === 'pdf' ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -186,7 +186,7 @@ const ExportControls: React.FC<Props> = ({ data }) => {
                 <button
                     onClick={exportToZip}
                     disabled={isExporting}
-                    className="flex-1 bg-transparent border border-white/10 hover:bg-white/5 disabled:bg-zinc-800/20 disabled:text-zinc-500 text-zinc-100 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center transition-all active:scale-[0.98]"
+                    className="flex-1 bg-transparent border border-white/10 hover:bg-white/5 disabled:bg-zinc-800/20 disabled:text-zinc-500 text-zinc-100 font-bold rounded-xl px-4 py-3 transition-all active:scale-[0.98] flex justify-center items-center"
                 >
                     {exportType === 'zip' ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -77,7 +77,7 @@ function App() {
     <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden bg-zinc-950 text-zinc-50 font-sans">
 
       {/* LEFT PANE — CONTROLS */}
-      <div className="w-full md:w-[450px] lg:w-[500px] h-1/2 md:h-full overflow-y-auto border-b md:border-b-0 md:border-r border-white/10 bg-zinc-950 p-6 flex flex-col gap-6 shrink-0 z-10 relative custom-scrollbar">
+      <div className="w-full md:w-[450px] lg:w-[500px] h-full overflow-y-auto border-r border-white/10 bg-zinc-950 p-6 flex flex-col gap-6 shrink-0 z-10">
         <h1 className="text-2xl font-bold tracking-tight mb-4">Carousel Creator</h1>
 
         {/* Tab Controls, Inputs, and Settings */}
@@ -144,7 +144,7 @@ function App() {
 
       {/* RIGHT PANE — PREVIEW CANVAS */}
       <div
-        className="flex-1 h-1/2 md:h-full bg-zinc-900/50 relative overflow-hidden flex flex-col items-center justify-center p-4 md:p-8"
+        className="flex-1 h-full bg-zinc-900/50 relative overflow-hidden flex flex-col items-center justify-center p-8"
         style={{
           backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
           backgroundSize: '24px 24px'
