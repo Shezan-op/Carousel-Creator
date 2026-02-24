@@ -3,6 +3,62 @@ import type { CarouselData } from '../types';
 import { Sparkles, Code, Settings, ListTree, RotateCcw, Trash2 } from 'lucide-react';
 
 const MAX_SLIDES = 50;
+const MAX_FIELD_LENGTH = 2000;
+const AVATAR_MAX_PX = 256;
+const AVATAR_JPEG_QUALITY = 0.7;
+
+/** Compresses an image file to a max-width JPEG canvas and returns a Base64 data URL */
+const compressImage = (file: File, maxWidth = AVATAR_MAX_PX): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(1, maxWidth / img.width);
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return reject(new Error('Canvas context unavailable'));
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', AVATAR_JPEG_QUALITY));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image decode failed')); };
+        img.src = url;
+    });
+};
+
+/** Wraps localStorage.setItem in a try/catch to prevent QuotaExceededError crashes */
+const safeLocalStorageSet = (key: string, value: string): boolean => {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch {
+        console.error(`[SEC] localStorage quota exceeded for key "${key}". Value size: ${(value.length / 1024).toFixed(1)}KB.`);
+        return false;
+    }
+};
+
+/** Sanitizes a parsed JSON object to a safe CarouselData shape */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sanitizeCarouselData = (data: any) => {
+    if (!data || !Array.isArray(data.slides)) return null;
+    return {
+        theme: {
+            background: typeof data.theme?.background === 'string' ? data.theme.background.slice(0, 50) : '#09090B',
+            text: typeof data.theme?.text === 'string' ? data.theme.text.slice(0, 50) : '#FFFFFF',
+            accent: typeof data.theme?.accent === 'string' ? data.theme.accent.slice(0, 50) : '#3B82F6',
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        slides: data.slides.slice(0, MAX_SLIDES).map((s: any, i: number) => ({
+            slide_number: i + 1,
+            type: ['title', 'content', 'cta'].includes(s.type) ? s.type : 'content',
+            headline: typeof s.headline === 'string' ? s.headline.slice(0, MAX_FIELD_LENGTH) : undefined,
+            subheadline: typeof s.subheadline === 'string' ? s.subheadline.slice(0, MAX_FIELD_LENGTH) : undefined,
+            body: typeof s.body === 'string' ? s.body.slice(0, MAX_FIELD_LENGTH) : undefined,
+        }))
+    };
+};
 
 /** Extracts raw JSON from a string that may be wrapped in markdown code fences */
 const extractJSON = (raw: string): string => {
@@ -81,14 +137,18 @@ const LeftPane: React.FC<Props> = ({
         setJsonInput(val);
         try {
             if (val.trim()) {
-                const parsed = JSON.parse(extractJSON(val));
-                if (parsed.slides?.length > MAX_SLIDES) {
-                    parsed.slides = parsed.slides.slice(0, MAX_SLIDES);
+                const raw = JSON.parse(extractJSON(val));
+                const sanitized = sanitizeCarouselData(raw);
+                if (!sanitized) {
+                    setError('Invalid carousel structure: must contain a "slides" array.');
+                    return;
+                }
+                if (raw.slides?.length > MAX_SLIDES) {
                     setError(`Warning: Capped at ${MAX_SLIDES} slides to prevent browser crash.`);
                 } else {
                     setError(null);
                 }
-                setCarouselData(parsed);
+                setCarouselData(sanitized);
             }
         } catch {
             setError('Invalid JSON format');
@@ -185,16 +245,29 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
         }
     };
 
-    const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result as string;
-                setAuthorAvatar(base64);
-                localStorage.setItem('creatorAvatar', base64);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // SEC: Reject non-raster types that bypass the accept attribute
+        const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            setError('Only PNG, JPEG, or WebP images are allowed for avatars.');
+            return;
+        }
+
+        try {
+            // SEC: Compress to 256px JPEG to prevent localStorage quota bomb
+            const compressed = await compressImage(file, AVATAR_MAX_PX);
+            setAuthorAvatar(compressed);
+            if (!safeLocalStorageSet('creatorAvatar', compressed)) {
+                setError('Avatar saved for this session, but is too large to persist across reloads. Try a smaller image.');
+            } else {
+                setError(null);
+            }
+        } catch (err) {
+            console.error('[SEC] Avatar compression failed:', err);
+            setError('Failed to process avatar image.');
         }
     };
 
@@ -471,7 +544,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                                     </div>
                                     <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
                                         <span className="text-[8px] font-bold uppercase">Upload</span>
-                                        <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                                        <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleAvatarUpload} className="hidden" />
                                     </label>
                                 </div>
                                 <div className="flex-1">
@@ -499,7 +572,7 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                                     </div>
                                     <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-lg">
                                         <span className="text-[8px] font-bold uppercase">Upload</span>
-                                        <input type="file" accept="image/*" onChange={handleBackgroundUpload} className="hidden" />
+                                        <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleBackgroundUpload} className="hidden" />
                                     </label>
                                 </div>
                                 <div className="flex-1">

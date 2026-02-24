@@ -46,7 +46,7 @@ function App() {
 
   // Update local storage when toggled
   useEffect(() => {
-    localStorage.setItem('showProfile', showProfile.toString());
+    try { localStorage.setItem('showProfile', showProfile.toString()); } catch { /* quota */ }
   }, [showProfile]);
 
   const [footerLayout, setFooterLayout] = useState(() => {
@@ -55,32 +55,38 @@ function App() {
 
   // Save to local storage on change
   useEffect(() => {
-    localStorage.setItem('footerLayout', footerLayout);
+    try { localStorage.setItem('footerLayout', footerLayout); } catch { /* quota */ }
   }, [footerLayout]);
 
   useEffect(() => {
-    localStorage.setItem('previewScale', previewScale.toString());
+    try { localStorage.setItem('previewScale', previewScale.toString()); } catch { /* quota */ }
   }, [previewScale]);
 
   useEffect(() => {
-    localStorage.setItem('openRouterKey', openRouterKey);
+    try { localStorage.setItem('openRouterKey', openRouterKey); } catch { /* quota */ }
   }, [openRouterKey]);
 
   useEffect(() => {
-    localStorage.setItem('authorName', authorName);
-    localStorage.setItem('authorHandle', authorHandle);
+    try {
+      localStorage.setItem('authorName', authorName);
+      localStorage.setItem('authorHandle', authorHandle);
+    } catch { /* quota */ }
   }, [authorName, authorHandle]);
 
   useEffect(() => {
-    if (authorAvatar) {
-      localStorage.setItem('creatorAvatar', authorAvatar);
-    } else {
-      localStorage.removeItem('creatorAvatar');
+    try {
+      if (authorAvatar) {
+        localStorage.setItem('creatorAvatar', authorAvatar);
+      } else {
+        localStorage.removeItem('creatorAvatar');
+      }
+    } catch (e) {
+      console.error('[SEC] Failed to persist avatar to localStorage — quota likely exceeded.', e);
     }
   }, [authorAvatar]);
 
   useEffect(() => {
-    localStorage.setItem('carouselFont', fontFamily);
+    try { localStorage.setItem('carouselFont', fontFamily); } catch { /* quota */ }
   }, [fontFamily]);
 
   useEffect(() => {

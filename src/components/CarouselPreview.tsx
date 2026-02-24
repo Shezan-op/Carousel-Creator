@@ -22,8 +22,11 @@ interface Props {
 const renderHighlightedText = (text: string, templateType: string, accentColor: string) => {
     if (!text) return null;
 
+    // SEC: Defense-in-depth — cap input length to prevent ReDoS or DOM explosion
+    const safeText = text.length > 10_000 ? text.slice(0, 10_000) : text;
+
     // Regex matches **bold**, _italic_, and *highlight*
-    const parts = text.split(/(\*\*.*?\*\*|_.*?_|\*.*?\*)/g);
+    const parts = safeText.split(/(\*\*.*?\*\*|_.*?_|\*.*?\*)/g);
 
     return parts.map((part, i) => {
         // 1. Bold: **text**

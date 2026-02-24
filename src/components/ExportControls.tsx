@@ -143,9 +143,32 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
         e.preventDefault();
         if (!userEmail) return;
 
+        // SEC: Basic email format validation (client-side deterrent)
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(userEmail)) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        // SEC: Client-side rate limiter — 30s cooldown between submissions
+        // NOTE: This is a DETERRENT only. A determined attacker can bypass this
+        // via DevTools. The real fix must be server-side in the Google Apps Script:
+        //   - Check for duplicate emails before appending
+        //   - Enforce a row cap (e.g., 5000 rows)
+        //   - Use LockService.getScriptLock() for concurrency safety
+        const RATE_LIMIT_KEY = 'email_submit_ts';
+        const RATE_LIMIT_MS = 30_000;
+        const lastSubmit = parseInt(localStorage.getItem(RATE_LIMIT_KEY) || '0', 10);
+        if (Date.now() - lastSubmit < RATE_LIMIT_MS) {
+            alert('Please wait a moment before submitting again.');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSTejTd1NMUnWwF6NAK8Mmq6EmxNmddflmAaBG2dWORSeZ-HAO_TvTKjtihRkzU-LnCg/exec';
+
+            localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
 
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
