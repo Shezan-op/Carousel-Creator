@@ -40,12 +40,15 @@ interface Props {
     setActiveTemplate: (val: string) => void;
     previewScale: number;
     setPreviewScale: (val: number) => void;
+    carouselData: CarouselData | null;
+    customTheme: { background: string; text: string; accent: string };
+    applyCustomTheme: (key: string, value: string) => void;
 }
 
 const LeftPane: React.FC<Props> = ({
     setCarouselData, openRouterKey, setOpenRouterKey, authorName, setAuthorName, authorHandle, setAuthorHandle, authorAvatar, setAuthorAvatar,
     backgroundImage, setBackgroundImage, fontFamily, setFontFamily, activeTemplate, setActiveTemplate,
-    previewScale, setPreviewScale
+    previewScale, setPreviewScale, carouselData, customTheme, applyCustomTheme
 }) => {
     const [activeTab, setActiveTab] = useState<'auto' | 'json' | 'setup' | 'bulk'>('auto');
     const [jsonInput, setJsonInput] = useState('');
@@ -263,6 +266,11 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                                 value={openRouterKey}
                                 onChange={(e) => setOpenRouterKey(e.target.value)}
                             />
+                            <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                                <p className="text-xs text-blue-200 leading-relaxed">
+                                    Don't have an API key? Use our <a href="https://chatgpt.com/g/g-699c7a8989a88191a770f3d4990978a6-carousel-engineer" target="_blank" rel="noreferrer" className="font-bold underline hover:text-white transition-colors">Carousel Engineer Custom GPT</a> to generate the JSON for free, then paste it in the JSON tab.
+                                </p>
+                            </div>
                             <p className="text-[10px] text-zinc-500">Stored locally in browser. Never sent to our servers.</p>
                         </div>
                         <div className="flex flex-col gap-2">
@@ -428,6 +436,80 @@ You must output ONLY raw, valid JSON. No markdown wrappers. No conversational te
                                     <h3 className="text-xs font-semibold text-white">Background Texture</h3>
                                     <p className="text-[10px] text-zinc-500">Overlays entire carousel slides.</p>
                                 </div>
+                            </div>
+
+                            <div className="flex flex-col gap-4 mt-6 pt-6 border-t border-white/10">
+                                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Custom Brand Palette (Saved Locally)</span>
+
+                                <div className="grid grid-cols-1 gap-4">
+                                    {/* Background Color */}
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="color"
+                                            value={customTheme.background}
+                                            onChange={(e) => applyCustomTheme('background', e.target.value)}
+                                            className="w-10 h-10 rounded cursor-pointer bg-zinc-900 border border-white/10"
+                                        />
+                                        <div className="flex-1 flex flex-col">
+                                            <label className="text-[10px] text-zinc-500 uppercase">Background</label>
+                                            <input
+                                                type="text"
+                                                value={customTheme.background}
+                                                onChange={(e) => applyCustomTheme('background', e.target.value)}
+                                                className="w-full bg-transparent border-b border-white/10 text-sm text-white focus:outline-none focus:border-blue-500 uppercase font-mono"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Text Color */}
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="color"
+                                            value={customTheme.text}
+                                            onChange={(e) => applyCustomTheme('text', e.target.value)}
+                                            className="w-10 h-10 rounded cursor-pointer bg-zinc-900 border border-white/10"
+                                        />
+                                        <div className="flex-1 flex flex-col">
+                                            <label className="text-[10px] text-zinc-500 uppercase">Text</label>
+                                            <input
+                                                type="text"
+                                                value={customTheme.text}
+                                                onChange={(e) => applyCustomTheme('text', e.target.value)}
+                                                className="w-full bg-transparent border-b border-white/10 text-sm text-white focus:outline-none focus:border-blue-500 uppercase font-mono"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Accent Color (For Highlights) */}
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="color"
+                                            value={customTheme.accent}
+                                            onChange={(e) => applyCustomTheme('accent', e.target.value)}
+                                            className="w-10 h-10 rounded cursor-pointer bg-zinc-900 border border-white/10"
+                                        />
+                                        <div className="flex-1 flex flex-col">
+                                            <label className="text-[10px] text-zinc-500 uppercase">Accent / Highlight</label>
+                                            <input
+                                                type="text"
+                                                value={customTheme.accent}
+                                                onChange={(e) => applyCustomTheme('accent', e.target.value)}
+                                                className="w-full bg-transparent border-b border-white/10 text-sm text-white focus:outline-none focus:border-blue-500 uppercase font-mono"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        if (carouselData) {
+                                            setCarouselData({ ...carouselData, theme: customTheme });
+                                        }
+                                    }}
+                                    className="mt-2 w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold rounded-lg transition-colors border border-white/5 active:scale-[0.98]"
+                                >
+                                    Apply Palette to Current Preview
+                                </button>
                             </div>
                         </div>
                     </div>

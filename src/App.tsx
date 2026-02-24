@@ -17,6 +17,28 @@ function App() {
   const [activeTemplate, setActiveTemplate] = useState('minimal');
   const [previewScale, setPreviewScale] = useState(() => Number(localStorage.getItem('previewScale')) || 0.35);
 
+  // Initialize Custom Theme from local storage or default fallbacks
+  const [customTheme, setCustomTheme] = useState({
+    background: localStorage.getItem('custom_background') || '#09090B',
+    text: localStorage.getItem('custom_text') || '#FFFFFF',
+    accent: localStorage.getItem('custom_accent') || '#F59E0B'
+  });
+
+  // The Override Function
+  const applyCustomTheme = (key: string, value: string) => {
+    const newTheme = { ...customTheme, [key]: value };
+    setCustomTheme(newTheme);
+    localStorage.setItem(`custom_${key}`, value);
+
+    // If a carousel is actively rendered, force the new color instantly
+    if (carouselData) {
+      setCarouselData({
+        ...carouselData,
+        theme: { ...carouselData.theme, [key]: value }
+      });
+    }
+  };
+
   useEffect(() => {
     localStorage.setItem('previewScale', previewScale.toString());
   }, [previewScale]);
@@ -103,6 +125,9 @@ function App() {
           setActiveTemplate={setActiveTemplate}
           previewScale={previewScale}
           setPreviewScale={setPreviewScale}
+          carouselData={carouselData}
+          customTheme={customTheme}
+          applyCustomTheme={applyCustomTheme}
         />
 
         {/* THE PRODUCTION FOOTER */}
