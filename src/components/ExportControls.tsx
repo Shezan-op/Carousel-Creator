@@ -173,7 +173,7 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
                 method: 'POST',
                 mode: 'no-cors', // Critical for Google Apps Script
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ email: userEmail })
+                body: new URLSearchParams({ email: userEmail.trim() })
             });
 
             // SUCCESS: Unlock the app permanently

@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import LeftPane from './components/LeftPane';
 import CarouselPreview from './components/CarouselPreview';
+import NetflixIntro from './components/NetflixIntro';
 import type { CarouselData } from './types';
 
 function App() {
@@ -13,11 +14,22 @@ function App() {
   const [authorName, setAuthorName] = useState(() => localStorage.getItem('authorName') || 'Creator Name');
   const [authorHandle, setAuthorHandle] = useState(() => localStorage.getItem('authorHandle') || '@creator');
   const [authorAvatar, setAuthorAvatar] = useState<string | null>(() => localStorage.getItem('creatorAvatar'));
+  const [activePreviewSlideIndex, setActivePreviewSlideIndex] = useState(0);
 
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+
   const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('carouselFont') || 'Inter');
   const [activeTemplate, setActiveTemplate] = useState('minimal');
   const [previewScale, setPreviewScale] = useState(() => Number(localStorage.getItem('previewScale')) || 0.35);
+
+  // Design & Typography Engine State
+  const [headingSize, setHeadingSize] = useState(() => Number(localStorage.getItem('headingSize')) || 78);
+  const [subheadingSize, setSubheadingSize] = useState(() => Number(localStorage.getItem('subheadingSize')) || 44);
+  const [bodySize, setBodySize] = useState(() => Number(localStorage.getItem('bodySize')) || 30);
+  const [sectionSize, setSectionSize] = useState(() => Number(localStorage.getItem('sectionSize')) || 38);
+  const [textAlign, setTextAlign] = useState(() => localStorage.getItem('textAlign') || 'left');
+  const [textYOffset, setTextYOffset] = useState(() => Number(localStorage.getItem('textYOffset')) || 0);
+  const [noiseOpacity, setNoiseOpacity] = useState(() => Number(localStorage.getItem('noiseOpacity')) || 5);
+  const [customBgImage, setCustomBgImage] = useState<string | null>(() => localStorage.getItem('customBgImage'));
 
   // Initialize Custom Theme from local storage or default fallbacks
   const [customTheme, setCustomTheme] = useState({
@@ -63,6 +75,24 @@ function App() {
   useEffect(() => {
     try { localStorage.setItem('previewScale', previewScale.toString()); } catch { /* quota */ }
   }, [previewScale]);
+
+  // Persist Design & Typography Engine state
+  useEffect(() => {
+    try {
+      localStorage.setItem('headingSize', headingSize.toString());
+      localStorage.setItem('subheadingSize', subheadingSize.toString());
+      localStorage.setItem('bodySize', bodySize.toString());
+      localStorage.setItem('sectionSize', sectionSize.toString());
+      localStorage.setItem('textAlign', textAlign);
+      localStorage.setItem('textYOffset', textYOffset.toString());
+      localStorage.setItem('noiseOpacity', noiseOpacity.toString());
+      if (customBgImage) {
+        localStorage.setItem('customBgImage', customBgImage);
+      } else {
+        localStorage.removeItem('customBgImage');
+      }
+    } catch { /* quota */ }
+  }, [headingSize, subheadingSize, bodySize, sectionSize, textAlign, textYOffset, noiseOpacity, customBgImage]);
 
   useEffect(() => {
     try { localStorage.setItem('openRouterKey', openRouterKey); } catch { /* quota */ }
@@ -122,98 +152,131 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen w-full bg-zinc-950 text-zinc-50 font-sans lg:overflow-hidden">
+    <div className="min-h-screen lg:h-screen bg-[#000000] text-[#F3F4F6] selection:bg-blue-500/30 font-sans antialiased flex flex-col lg:flex-row p-4 lg:p-6 gap-6 lg:overflow-hidden">
+      <NetflixIntro />
 
-      {/* LEFT PANE — CONTROLS */}
-      <div className="w-full lg:w-[450px] xl:w-[500px] h-auto lg:h-full lg:overflow-y-auto border-b lg:border-b-0 lg:border-r border-white/10 bg-zinc-950 p-6 flex flex-col gap-6 shrink-0 z-10 relative custom-scrollbar">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 border border-white/10 flex-shrink-0">
-            <img src="/Logo.png" alt="Carousel Creator Logo" className="w-full h-full object-cover" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">Carousel Creator</h1>
-        </div>
+      {/* LEFT PANE — THE CONTROL CENTER */}
+      <div className="w-full lg:w-[480px] lg:h-full flex flex-col gap-5 relative z-10 glass rounded-[32px] p-5 lg:p-7 shadow-2xl premium-shadow">
 
-        {/* Tab Controls, Inputs, and Settings */}
-        <LeftPane
-          setCarouselData={setCarouselData}
-          openRouterKey={openRouterKey}
-          setOpenRouterKey={setOpenRouterKey}
-          authorName={authorName}
-          setAuthorName={setAuthorName}
-          authorHandle={authorHandle}
-          setAuthorHandle={setAuthorHandle}
-          authorAvatar={authorAvatar}
-          setAuthorAvatar={setAuthorAvatar}
-          backgroundImage={backgroundImage}
-          setBackgroundImage={setBackgroundImage}
-          fontFamily={fontFamily}
-          setFontFamily={setFontFamily}
-          activeTemplate={activeTemplate}
-          setActiveTemplate={setActiveTemplate}
-          previewScale={previewScale}
-          setPreviewScale={setPreviewScale}
-          carouselData={carouselData}
-          customTheme={customTheme}
-          applyCustomTheme={applyCustomTheme}
-          showProfile={showProfile}
-          setShowProfile={setShowProfile}
-          footerLayout={footerLayout}
-          setFooterLayout={setFooterLayout}
-        />
-
-        {/* THE PRODUCTION FOOTER */}
-        <div className="mt-auto pt-6 border-t border-white/10 flex flex-col gap-6 text-xs text-zinc-500">
-          {/* Documentation Links */}
-          <div className="flex flex-col gap-2">
-            <span className="font-semibold text-zinc-400 uppercase tracking-wider text-[10px]">Core Documentation</span>
-            <div className="flex flex-wrap gap-3">
-              <a href="https://github.com/Shezan-op/Carousel-Creator/blob/main/HOW_TO_USE.md" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">📖 How To Use Guide</a>
-              <a href="https://github.com/Shezan-op/Carousel-Creator/blob/main/README.md" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">💻 GitHub Repo</a>
+        <div className="flex flex-col gap-1 shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-white/5 p-1.5 flex items-center justify-center shadow-2xl">
+              <img src="/Logo.png" className="w-full h-full object-contain" alt="Carousel Creator Logo" />
             </div>
-          </div>
-
-          {/* Example Results */}
-          <div className="flex flex-col gap-2">
-            <span className="font-semibold text-zinc-400 uppercase tracking-wider text-[10px]">Example Outputs</span>
-            <div className="flex flex-wrap gap-3">
-              <a href="/Minimal%20Carousel.pdf" target="_blank" className="hover:text-blue-400 transition-colors flex items-center gap-1">📄 Minimal</a>
-              <a href="/Tweet%20Carousel.pdf" target="_blank" className="hover:text-blue-400 transition-colors flex items-center gap-1">📄 Tweet</a>
-              <a href="/Brutalist%20Carousel.pdf" target="_blank" className="hover:text-blue-400 transition-colors flex items-center gap-1">📄 Brutalist</a>
-            </div>
-          </div>
-
-          {/* Credits */}
-          <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-            <p>Built by <a href="https://www.linkedin.com/company/lead-linked/" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline font-medium">Shezan @LeadLinked</a></p>
-            <div className="flex gap-3">
-              <a href="https://x.com/UShezan4" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">X</a>
-              <a href="https://www.linkedin.com/in/shezanahmed29/" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">IN</a>
+            <div>
+              <h1 className="text-2xl font-black tracking-tighter font-display bg-gradient-to-br from-white to-zinc-500 bg-clip-text text-transparent">
+                CAROUSEL <span className="text-zinc-600 font-light italic">CREATOR</span>
+              </h1>
+              <p className="text-[9px] text-zinc-500 uppercase tracking-[0.3em] font-bold">Fast. Clean. Professional.</p>
             </div>
           </div>
         </div>
+
+        {/* MAIN CONTROLS — scroll is FLUSH with the surface, no inset */}
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+          <LeftPane
+            setCarouselData={setCarouselData}
+            openRouterKey={openRouterKey}
+            setOpenRouterKey={setOpenRouterKey}
+            authorName={authorName}
+            setAuthorName={setAuthorName}
+            authorHandle={authorHandle}
+            setAuthorHandle={setAuthorHandle}
+            authorAvatar={authorAvatar}
+            setAuthorAvatar={setAuthorAvatar}
+            fontFamily={fontFamily}
+            setFontFamily={setFontFamily}
+            activeTemplate={activeTemplate}
+            setActiveTemplate={setActiveTemplate}
+            previewScale={previewScale}
+            setPreviewScale={setPreviewScale}
+            customTheme={customTheme}
+            applyCustomTheme={applyCustomTheme}
+            showProfile={showProfile}
+            setShowProfile={setShowProfile}
+            footerLayout={footerLayout}
+            setFooterLayout={setFooterLayout}
+            headingSize={headingSize}
+            setHeadingSize={setHeadingSize}
+            subheadingSize={subheadingSize}
+            setSubheadingSize={setSubheadingSize}
+            bodySize={bodySize}
+            setBodySize={setBodySize}
+            sectionSize={sectionSize}
+            setSectionSize={setSectionSize}
+            textAlign={textAlign}
+            setTextAlign={setTextAlign}
+            textYOffset={textYOffset}
+            setTextYOffset={setTextYOffset}
+            noiseOpacity={noiseOpacity}
+            setNoiseOpacity={setNoiseOpacity}
+            customBgImage={customBgImage}
+            setCustomBgImage={setCustomBgImage}
+            activePreviewSlideIndex={activePreviewSlideIndex}
+          />
+        </div>
+
+        {/* MINIMALIST FOOTER */}
+        <div className="shrink-0 pt-6 border-t border-white/5 flex flex-col gap-4">
+          <div className="flex flex-wrap gap-4 text-[9px] font-black uppercase text-zinc-500 tracking-widest">
+            <a href="/README.md" target="_blank" className="hover:text-white transition-colors">README</a>
+            <a href="/HOW_TO_USE.md" target="_blank" className="hover:text-white transition-colors">GUIDE</a>
+            <a href="/Brutalist Carousel.pdf" target="_blank" className="hover:text-white transition-colors">BRUTALIST</a>
+            <a href="/Minimal Carousel.pdf" target="_blank" className="hover:text-white transition-colors">MINIMAL</a>
+            <a href="/Tweet Carousel.pdf" target="_blank" className="hover:text-white transition-colors">TWEET</a>
+          </div>
+          <p className="text-[10px] text-zinc-600 font-bold">V2.0.4 PRODUCTION READY • PREMIUM 🚀</p>
+        </div>
+        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center">
+              <span className="text-[10px]">SA</span>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-zinc-200">Shezan Ahmed</p>
+              <p className="text-[9px] text-zinc-500">Lead Product Architect</p>
+            </div>
+          </div>
+          <a href="https://www.linkedin.com/in/shezanahmed29/" target="_blank" rel="noreferrer" className="text-[10px] py-1.5 px-3 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition-colors">FOLLOW</a>
+        </div>
       </div>
 
-      {/* RIGHT PANE — PREVIEW CANVAS */}
-      <div className="flex-1 h-[85vh] lg:h-full overflow-y-auto bg-zinc-900/50 relative flex flex-col custom-scrollbar">
-        <CarouselPreview
-          data={carouselData}
-          authorName={authorName}
-          authorHandle={authorHandle}
-          authorAvatar={authorAvatar}
-          backgroundImage={backgroundImage}
-          fontFamily={fontFamily}
-          activeTemplate={activeTemplate}
-          setActiveTemplate={setActiveTemplate}
-          onDeleteSlide={deleteSlide}
-          onMoveSlide={moveSlide}
-          previewScale={previewScale}
-          showProfile={showProfile}
-          footerLayout={footerLayout}
-        />
+      {/* RIGHT PANE — THE GALLERY PREVIEW */}
+      <div className="flex-1 overflow-hidden relative glass rounded-[32px] p-2 lg:p-4 flex flex-col shadow-2xl">
+        {/* Subtle Background textures to pop the slides */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_50%_0%,_#3b82f633_0%,_transparent_50%)]" />
+
+        <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 flex flex-col items-center py-8 lg:py-16">
+          <CarouselPreview
+            data={carouselData}
+            authorName={authorName}
+            authorHandle={authorHandle}
+            authorAvatar={authorAvatar}
+            fontFamily={fontFamily}
+            activeTemplate={activeTemplate}
+            setActiveTemplate={setActiveTemplate}
+            onDeleteSlide={deleteSlide}
+            onMoveSlide={moveSlide}
+            previewScale={previewScale}
+            showProfile={showProfile}
+            footerLayout={footerLayout}
+            headingSize={headingSize}
+            subheadingSize={subheadingSize}
+            sectionSize={sectionSize}
+            bodySize={bodySize}
+            textAlign={textAlign}
+            textYOffset={textYOffset}
+            noiseOpacity={noiseOpacity}
+            customBgImage={customBgImage}
+            setActivePreviewSlideIndex={setActivePreviewSlideIndex}
+            activePreviewSlideIndex={activePreviewSlideIndex}
+          />
+        </div>
       </div>
+
       <Analytics />
       <SpeedInsights />
-    </div>
+    </div >
   );
 }
 

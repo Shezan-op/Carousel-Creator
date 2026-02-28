@@ -1,7 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
+  --color-gold: #D4AF37;
+  --color-silver: #C0C0C0;
+  --color-platinum: #E5E4E2;
   --color-zinc-50: #fafafa;
   --color-zinc-100: #f4f4f5;
   --color-zinc-200: #e4e4e7;
@@ -12,34 +15,72 @@
   --color-zinc-700: #3f3f46;
   --color-zinc-800: #27272a;
   --color-zinc-900: #18181b;
-  --color-zinc-950: #09090b;
+  --color-zinc-950: #050505;
 }
 
 @layer base {
   body {
-    @apply bg-[#09090B] text-zinc-50;
-    /* REMOVED overflow-hidden */
+    @apply bg-[#050505] text-[#F3F4F6];
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+
+  /* Make ALL scrollbars overlay-style globally — they float ON TOP of content */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
   }
 }
 
 @layer utilities {
+  .glass {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/10;
+  }
+
+  .gloss {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  .premium-shadow {
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Overlay scrollbar — sits ON TOP of content, not in its own sunken track */
   .custom-scrollbar {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    overflow-y: auto;
   }
 
+  /* Webkit browsers: thin, rounded, floating scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 8px 0;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Flush sub-panel — no additional depth/inset, stays on the same visual plane */
+  .flush-panel {
+    @apply bg-transparent border-0 p-0;
   }
 }
 
@@ -50,4 +91,22 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Textarea scrollbar — same overlay treatment */
+textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.25);
 }
