@@ -16,13 +16,8 @@ interface Props {
     footerLayout: string;
     onDeleteSlide?: (index: number) => void;
     onMoveSlide?: (index: number, direction: 'up' | 'down') => void;
-    // Design & Typography Engine
-    headingSize: number;
-    subheadingSize: number;
-    sectionSize: number;
-    bodySize: number;
+    // Retained global states
     textAlign: string;
-    textYOffset: number;
     noiseOpacity: number;
     customBgImage: string | null;
     setActivePreviewSlideIndex: (index: number) => void;
@@ -67,7 +62,7 @@ const renderHighlightedText = (text: string, templateType: string, accentColor: 
 const CarouselPreview: React.FC<Props> = ({
     data, authorName, authorHandle, authorAvatar, fontFamily,
     activeTemplate, setActiveTemplate, onDeleteSlide, onMoveSlide, previewScale, showProfile, footerLayout,
-    headingSize, subheadingSize, sectionSize, bodySize, textAlign, textYOffset, noiseOpacity, customBgImage,
+    textAlign, noiseOpacity, customBgImage,
     activePreviewSlideIndex, setActivePreviewSlideIndex
 }) => {
     const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
@@ -216,7 +211,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     width: '100%',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    transform: `translateY(${slide.y_offset ?? textYOffset}px)`,
+                                    transform: `translateY(${slide.y_offset || 0}px)`,
                                     textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign'],
                                     alignItems: (slide.text_align || textAlign) === 'center' ? 'center' : (slide.text_align || textAlign) === 'right' ? 'flex-end' : 'flex-start',
                                     marginBottom: '160px'
@@ -224,7 +219,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 1. THE HEADLINE LAYER */}
                                     {slide.headline && (
                                         <h1 style={{
-                                            fontSize: `${slide.heading_size || headingSize}px`,
+                                            fontSize: `${slide.heading_size || 110}px`,
                                             fontWeight: '900',
                                             lineHeight: '1.1',
                                             marginBottom: '20px',
@@ -234,26 +229,26 @@ const CarouselPreview: React.FC<Props> = ({
                                         </h1>
                                     )}
 
-                                    {/* 2. THE SUBHEADLINE LAYER */}
+                                    {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
                                     {slide.subheadline && (
                                         <h2 style={{
-                                            fontSize: `${slide.subheadline_size || subheadingSize}px`,
+                                            fontSize: `${slide.subheading_size || 45}px`,
                                             fontWeight: '600',
                                             opacity: 0.8,
-                                            marginBottom: '40px',
+                                            marginTop: '16px',
                                             lineHeight: '1.2'
                                         }}>
                                             {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent)}
                                         </h2>
                                     )}
 
-                                    {/* 3. THE SECTION HEADER LAYER (/h3/ in Bulk) */}
+                                    {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
                                     {slide.subheading && (
                                         <h3 style={{
-                                            fontSize: `${slide.subheading_size || sectionSize}px`,
-                                            fontWeight: '800',
-                                            marginBottom: '15px',
-                                            lineHeight: '1.2',
+                                            fontSize: `${slide.subheading_size || 45}px`,
+                                            fontWeight: '700',
+                                            marginTop: '24px',
+                                            marginBottom: '12px',
                                             color: data.theme.accent
                                         }}>
                                             {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent)}
@@ -263,7 +258,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 4. THE BODY LAYER */}
                                     {slide.body && (
                                         <p style={{
-                                            fontSize: `${slide.body_size || bodySize}px`,
+                                            fontSize: `${slide.body_size || 35}px`,
                                             fontWeight: '500',
                                             lineHeight: '1.4',
                                             whiteSpace: 'pre-wrap'
@@ -339,7 +334,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     width: '100%',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    transform: `translateY(${slide.y_offset ?? textYOffset}px)`,
+                                    transform: `translateY(${slide.y_offset || 0}px)`,
                                     textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign'],
                                     alignItems: (slide.text_align || textAlign) === 'center' ? 'center' : (slide.text_align || textAlign) === 'right' ? 'flex-end' : 'flex-start',
                                     marginBottom: '160px'
@@ -347,7 +342,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 1. THE HEADLINE LAYER */}
                                     {slide.headline && (
                                         <h1 style={{
-                                            fontSize: `${slide.heading_size || headingSize}px`,
+                                            fontSize: `${slide.heading_size || 110}px`,
                                             fontWeight: '900',
                                             lineHeight: '1.15',
                                             marginBottom: '20px',
@@ -358,26 +353,26 @@ const CarouselPreview: React.FC<Props> = ({
                                         </h1>
                                     )}
 
-                                    {/* 2. THE SUBHEADLINE LAYER */}
+                                    {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
                                     {slide.subheadline && (
                                         <h2 style={{
-                                            fontSize: `${slide.subheadline_size || subheadingSize}px`,
+                                            fontSize: `${slide.subheading_size || 45}px`,
                                             fontWeight: '600',
                                             opacity: 0.8,
-                                            marginBottom: '40px',
+                                            marginTop: '16px',
                                             lineHeight: '1.2'
                                         }}>
                                             {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent)}
                                         </h2>
                                     )}
 
-                                    {/* 3. THE SECTION HEADER LAYER */}
+                                    {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
                                     {slide.subheading && (
                                         <h3 style={{
-                                            fontSize: `${slide.subheading_size || sectionSize}px`,
-                                            fontWeight: '800',
-                                            marginBottom: '15px',
-                                            lineHeight: '1.2',
+                                            fontSize: `${slide.subheading_size || 45}px`,
+                                            fontWeight: '700',
+                                            marginTop: '24px',
+                                            marginBottom: '12px',
                                             color: data.theme.accent
                                         }}>
                                             {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent)}
@@ -387,7 +382,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 4. THE BODY LAYER */}
                                     {slide.body && (
                                         <p style={{
-                                            fontSize: `${slide.body_size || bodySize}px`,
+                                            fontSize: `${slide.body_size || 35}px`,
                                             fontWeight: '500',
                                             lineHeight: '1.35',
                                             whiteSpace: 'pre-wrap'
@@ -458,7 +453,7 @@ const CarouselPreview: React.FC<Props> = ({
                                 display: 'flex',
                                 flexDirection: 'column',
                                 gap: '40px',
-                                transform: `translateY(${slide.y_offset ?? textYOffset}px)`,
+                                transform: `translateY(${slide.y_offset || 0}px)`,
                                 textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign']
                             }}>
                                 {/* Tweet Header */}
@@ -504,22 +499,22 @@ const CarouselPreview: React.FC<Props> = ({
                                     textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign']
                                 }}>
                                     {slide.headline && (
-                                        <div style={{ fontSize: `${slide.heading_size || headingSize}px`, fontWeight: '800', lineHeight: '1.2' }}>
+                                        <div style={{ fontSize: `${slide.heading_size || 110}px`, fontWeight: '800', lineHeight: '1.2' }}>
                                             {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent)}
                                         </div>
                                     )}
                                     {slide.subheadline && (
-                                        <div style={{ fontSize: `${slide.subheadline_size || subheadingSize}px`, fontWeight: '600', opacity: 0.8 }}>
+                                        <div style={{ fontSize: `${slide.subheading_size || 45}px`, fontWeight: '600', opacity: 0.8 }}>
                                             {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent)}
                                         </div>
                                     )}
                                     {slide.subheading && (
-                                        <div style={{ fontSize: `${slide.subheading_size || sectionSize}px`, fontWeight: '700', color: data.theme.accent, marginBottom: '4px' }}>
+                                        <div style={{ fontSize: `${slide.subheading_size || 45}px`, fontWeight: '700', color: data.theme.accent, marginBottom: '4px' }}>
                                             {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent)}
                                         </div>
                                     )}
                                     {slide.body && (
-                                        <div style={{ fontSize: `${slide.body_size || bodySize}px`, fontWeight: '400', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
+                                        <div style={{ fontSize: `${slide.body_size || 35}px`, fontWeight: '400', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
                                             {renderHighlightedText(slide.body, activeTemplate, data.theme.accent)}
                                         </div>
                                     )}
@@ -555,14 +550,14 @@ const CarouselPreview: React.FC<Props> = ({
                                     width: '100%',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    transform: `translateY(${slide.y_offset ?? textYOffset}px)`,
+                                    transform: `translateY(${slide.y_offset || 0}px)`,
                                     textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign'],
                                     alignItems: (slide.text_align || textAlign) === 'center' ? 'center' : (slide.text_align || textAlign) === 'right' ? 'flex-end' : 'flex-start'
                                 }}>
                                     {/* 1. THE HEADLINE LAYER */}
                                     {slide.headline && (
                                         <h1 style={{
-                                            fontSize: `${slide.heading_size || headingSize}px`,
+                                            fontSize: `${slide.heading_size || 110}px`,
                                             fontWeight: '900',
                                             lineHeight: '0.95',
                                             textTransform: 'uppercase',
@@ -573,23 +568,23 @@ const CarouselPreview: React.FC<Props> = ({
                                         </h1>
                                     )}
 
-                                    {/* 2. THE SUBHEADLINE LAYER */}
+                                    {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
                                     {slide.subheadline && (
                                         <h2 style={{
-                                            fontSize: `${slide.subheadline_size || subheadingSize}px`,
+                                            fontSize: `${slide.subheading_size || 45}px`,
                                             fontWeight: '600',
                                             opacity: 0.8,
-                                            marginBottom: '40px',
+                                            marginTop: '16px',
                                             lineHeight: '1.2'
                                         }}>
                                             {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent)}
                                         </h2>
                                     )}
 
-                                    {/* 3. THE SECTION HEADER LAYER */}
+                                    {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
                                     {slide.subheading && (
                                         <h3 style={{
-                                            fontSize: `${slide.subheading_size || sectionSize}px`,
+                                            fontSize: `${slide.subheading_size || 45}px`,
                                             fontWeight: '900',
                                             marginBottom: '15px',
                                             lineHeight: '1',
@@ -603,7 +598,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 4. THE BODY LAYER */}
                                     {slide.body && (
                                         <p style={{
-                                            fontSize: `${slide.body_size || bodySize}px`,
+                                            fontSize: `${slide.body_size || 35}px`,
                                             fontWeight: '900',
                                             lineHeight: '0.95',
                                             textTransform: 'uppercase',
@@ -644,7 +639,7 @@ const CarouselPreview: React.FC<Props> = ({
         authorName, authorHandle, authorAvatar, showProfile, footerLayout,
         fontFamily, effectiveScale,
         onDeleteSlide, onMoveSlide,
-        headingSize, subheadingSize, sectionSize, bodySize, textAlign, textYOffset, noiseOpacity, customBgImage,
+        textAlign, noiseOpacity, customBgImage,
         activePreviewSlideIndex, setActivePreviewSlideIndex
     ]);
 

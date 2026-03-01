@@ -16,18 +16,12 @@ function App() {
   const [authorAvatar, setAuthorAvatar] = useState<string | null>(() => localStorage.getItem('creatorAvatar'));
   const [activePreviewSlideIndex, setActivePreviewSlideIndex] = useState(0);
 
-
   const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('carouselFont') || 'Inter');
   const [activeTemplate, setActiveTemplate] = useState('minimal');
   const [previewScale, setPreviewScale] = useState(() => Number(localStorage.getItem('previewScale')) || 0.35);
 
-  // Design & Typography Engine State
-  const [headingSize, setHeadingSize] = useState(() => Number(localStorage.getItem('headingSize')) || 78);
-  const [subheadingSize, setSubheadingSize] = useState(() => Number(localStorage.getItem('subheadingSize')) || 44);
-  const [bodySize, setBodySize] = useState(() => Number(localStorage.getItem('bodySize')) || 30);
-  const [sectionSize, setSectionSize] = useState(() => Number(localStorage.getItem('sectionSize')) || 38);
+  // Retained global states
   const [textAlign, setTextAlign] = useState(() => localStorage.getItem('textAlign') || 'left');
-  const [textYOffset, setTextYOffset] = useState(() => Number(localStorage.getItem('textYOffset')) || 0);
   const [noiseOpacity, setNoiseOpacity] = useState(() => Number(localStorage.getItem('noiseOpacity')) || 5);
   const [customBgImage, setCustomBgImage] = useState<string | null>(() => localStorage.getItem('customBgImage'));
 
@@ -76,15 +70,10 @@ function App() {
     try { localStorage.setItem('previewScale', previewScale.toString()); } catch { /* quota */ }
   }, [previewScale]);
 
-  // Persist Design & Typography Engine state
+  // Persist remaining global states
   useEffect(() => {
     try {
-      localStorage.setItem('headingSize', headingSize.toString());
-      localStorage.setItem('subheadingSize', subheadingSize.toString());
-      localStorage.setItem('bodySize', bodySize.toString());
-      localStorage.setItem('sectionSize', sectionSize.toString());
       localStorage.setItem('textAlign', textAlign);
-      localStorage.setItem('textYOffset', textYOffset.toString());
       localStorage.setItem('noiseOpacity', noiseOpacity.toString());
       if (customBgImage) {
         localStorage.setItem('customBgImage', customBgImage);
@@ -92,7 +81,7 @@ function App() {
         localStorage.removeItem('customBgImage');
       }
     } catch { /* quota */ }
-  }, [headingSize, subheadingSize, bodySize, sectionSize, textAlign, textYOffset, noiseOpacity, customBgImage]);
+  }, [textAlign, noiseOpacity, customBgImage]);
 
   useEffect(() => {
     try { localStorage.setItem('openRouterKey', openRouterKey); } catch { /* quota */ }
@@ -196,18 +185,8 @@ function App() {
             setShowProfile={setShowProfile}
             footerLayout={footerLayout}
             setFooterLayout={setFooterLayout}
-            headingSize={headingSize}
-            setHeadingSize={setHeadingSize}
-            subheadingSize={subheadingSize}
-            setSubheadingSize={setSubheadingSize}
-            bodySize={bodySize}
-            setBodySize={setBodySize}
-            sectionSize={sectionSize}
-            setSectionSize={setSectionSize}
             textAlign={textAlign}
             setTextAlign={setTextAlign}
-            textYOffset={textYOffset}
-            setTextYOffset={setTextYOffset}
             noiseOpacity={noiseOpacity}
             setNoiseOpacity={setNoiseOpacity}
             customBgImage={customBgImage}
@@ -225,7 +204,7 @@ function App() {
             <a href="/Minimal Carousel.pdf" target="_blank" className="hover:text-white transition-colors">MINIMAL</a>
             <a href="/Tweet Carousel.pdf" target="_blank" className="hover:text-white transition-colors">TWEET</a>
           </div>
-          <p className="text-[10px] text-zinc-600 font-bold">V2.0.4 PRODUCTION READY • PREMIUM 🚀</p>
+          <p className="text-[10px] text-zinc-600 font-bold">V2.0.5 PRODUCTION READY • PREMIUM 🚀</p>
         </div>
         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -260,12 +239,7 @@ function App() {
             previewScale={previewScale}
             showProfile={showProfile}
             footerLayout={footerLayout}
-            headingSize={headingSize}
-            subheadingSize={subheadingSize}
-            sectionSize={sectionSize}
-            bodySize={bodySize}
             textAlign={textAlign}
-            textYOffset={textYOffset}
             noiseOpacity={noiseOpacity}
             customBgImage={customBgImage}
             setActivePreviewSlideIndex={setActivePreviewSlideIndex}

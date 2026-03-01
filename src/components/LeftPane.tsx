@@ -69,8 +69,7 @@ const sanitizeCarouselData = (data: any): CarouselData | null => {
             subheading: (s.subheading as string) || undefined,
             body: (s.body as string) || undefined,
             heading_size: (s.heading_size as number) || undefined,
-            subheadline_size: (s.subheadline_size as number) || undefined,
-            subheading_size: (s.subheading_size as number) || undefined,
+            subheading_size: (s.subheading_size as number) || (s.subheadline_size as number) || undefined,
             body_size: (s.body_size as number) || undefined,
             text_align: (s.text_align as Slide['text_align']) || undefined,
             y_offset: (s.y_offset as number) || undefined,
@@ -100,18 +99,8 @@ interface Props {
     setShowProfile: (val: boolean) => void;
     footerLayout: string;
     setFooterLayout: (val: string) => void;
-    headingSize: number;
-    setHeadingSize: (val: number) => void;
-    subheadingSize: number;
-    setSubheadingSize: (val: number) => void;
-    sectionSize: number;
-    setSectionSize: (val: number) => void;
-    bodySize: number;
-    setBodySize: (val: number) => void;
     textAlign: string;
     setTextAlign: (val: string) => void;
-    textYOffset: number;
-    setTextYOffset: (val: number) => void;
     noiseOpacity: number;
     setNoiseOpacity: (val: number) => void;
     customBgImage: string | null;
@@ -124,12 +113,9 @@ const LeftPane: React.FC<Props> = (props) => {
         setCarouselData, openRouterKey, setOpenRouterKey, authorName, setAuthorName, authorHandle, setAuthorHandle,
         authorAvatar, setAuthorAvatar, fontFamily, setFontFamily, activeTemplate, setActiveTemplate,
         previewScale, setPreviewScale, customTheme, applyCustomTheme, showProfile, setShowProfile,
-        footerLayout, setFooterLayout, headingSize, setHeadingSize, subheadingSize, setSubheadingSize,
-        sectionSize, setSectionSize, bodySize, setBodySize, textAlign, setTextAlign, textYOffset,
+        footerLayout, setFooterLayout, textAlign, setTextAlign,
         noiseOpacity, setNoiseOpacity, customBgImage, setCustomBgImage, activePreviewSlideIndex
     } = props;
-    // setTextYOffset is handled via per-slide injectOverride, not the global setter
-    const _setTextYOffset = props.setTextYOffset; void _setTextYOffset;
 
     const [activeTab, setActiveTab] = useState<'auto' | 'bulk' | 'json' | 'setup'>('bulk');
     const [jsonInput, setJsonInput] = useState('');
@@ -159,49 +145,66 @@ const LeftPane: React.FC<Props> = (props) => {
         }
     }, [error]);
 
+    // ── BULLETPROOF REGEX PARSER ──────────────────────────────────────────────
+    // Handles combined options like /h, s:120, a:center/ or /sh, b_s:40/ cleanly.
     const compileBulkText = (text: string) => {
-        // Split slides by double line breaks
         const rawSlides = text.split(/\n\s*\n/).filter(s => s.trim());
 
         const slides = rawSlides.map((rawSlide, index) => {
-            const slideObj: Partial<Slide> = {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const slideObj: any = {
                 slide_number: index + 1,
-                type: index === 0 ? 'title' : 'content' // Default first to title, rest to content
+                type: index === 0 ? 'title' : 'content'
             };
 
             const lines = rawSlide.split('\n').filter(l => l.trim());
             const bodyLines: string[] = [];
 
             lines.forEach(line => {
-                const lowerLine = line.toLowerCase();
+                // Matches lines starting with /something/ and captures the config and the content
+                const match = line.match(/^\/([^/]+)\/\s*(.*)$/);
 
-                // Strict, simple prefix matching
-                if (lowerLine.startsWith('/h/')) {
-                    slideObj.headline = line.substring(3).trim();
-                }
-                else if (lowerLine.startsWith('/sh/')) {
-                    // Map to subheadline for title slides, subheading for content slides
-                    if (slideObj.type === 'title') {
-                        slideObj.subheadline = line.substring(4).trim();
+                if (match) {
+                    const configString = match[1].toLowerCase(); // e.g., "h", "h, s:120", "sh, a:center"
+                    const content = match[2];
+
+                    const parts = configString.split(',').map(p => p.trim());
+                    const type = parts[0]; // "h" or "sh"
+
+                    // Extract parameters
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const options: any = {};
+                    parts.slice(1).forEach(opt => {
+                        const [k, v] = opt.split(':').map(x => x?.trim());
+                        if (!k || !v) return;
+                        if (k === 's') options.heading_size = parseInt(v);
+                        if (k === 'sh_s') options.subheading_size = parseInt(v);
+                        if (k === 'sb_s') options.subheading_size = parseInt(v);
+                        if (k === 'b_s') options.body_size = parseInt(v);
+                        if (k === 'y') options.y_offset = parseInt(v);
+                        if (k === 'a') options.text_align = v;
+                    });
+
+                    // Assign to proper layer based ONLY on "h" or "sh"
+                    if (type === 'h') {
+                        slideObj.headline = content;
+                        Object.assign(slideObj, options);
+                    } else if (type === 'sh') {
+                        // Use subheadline for slide 1 (title), subheading for others
+                        if (slideObj.type === 'title') slideObj.subheadline = content;
+                        else slideObj.subheading = content;
+                        Object.assign(slideObj, options);
                     } else {
-                        slideObj.subheading = line.substring(4).trim();
+                        // If they typed something invalid like /body/, strip the tag and treat as body
+                        bodyLines.push(content);
                     }
-                }
-                else {
-                    // Anything without a prefix is automatically Body text
-                    // Strip the old /body/ tag if the user accidentally types it
-                    let cleanLine = line;
-                    if (lowerLine.startsWith('/body/')) cleanLine = line.substring(6).trim();
-                    else if (lowerLine.startsWith('/b/')) cleanLine = line.substring(3).trim();
-
-                    bodyLines.push(cleanLine);
+                } else {
+                    // No /tags/, this is standard body text
+                    bodyLines.push(line);
                 }
             });
 
-            if (bodyLines.length > 0) {
-                slideObj.body = bodyLines.join('\n');
-            }
-
+            if (bodyLines.length > 0) slideObj.body = bodyLines.join('\n');
             return slideObj as Slide;
         });
 
@@ -215,54 +218,60 @@ const LeftPane: React.FC<Props> = (props) => {
         }
     };
 
-    const injectOverride = (key: string, value: string | number) => {
-        const blocks = bulkText.split(/(\n\s*\n|---)/);
-        let contentBlockCount = 0;
-        let targetFullIndex = -1;
-        for (let i = 0; i < blocks.length; i++) {
-            if (blocks[i].trim() && !blocks[i].match(/^(\n\s*\n|---)$/)) {
-                if (contentBlockCount === activePreviewSlideIndex) {
-                    targetFullIndex = i;
-                    break;
-                }
-                contentBlockCount++;
-            }
-        }
-        if (targetFullIndex === -1) return;
-        const block = blocks[targetFullIndex];
-        const lines = block.split(/\r?\n/);
-        const tagLineIndex = lines.findIndex(l => l.trim().startsWith('/'));
+    // ── ROBUST CONFIG UPDATER ─────────────────────────────────────────────────
+    // Updates or injects a single key:value into the config tag of the active slide's
+    // heading line (/h/ or /sh/). Prevents key duplication on repeated calls.
+    const updateSlideConfig = (targetBlock: string, key: string, value: string | number): string => {
+        const lines = targetBlock.split(/\r?\n/);
+
+        // Find the first tagged line — heading takes priority, then subheading
+        const tagLineIndex = lines.findIndex(l => /^\/([^/]+)\//.test(l.trim()));
+
         if (tagLineIndex !== -1) {
             const line = lines[tagLineIndex].trim();
-            const match = line.match(/^\/(.+)\/\s*(.*)$/);
+            const match = line.match(/^\/([^/]+)\/\s*(.*)$/);
             if (match) {
-                const prefix = match[1];
+                const configBody = match[1]; // everything inside the slashes
                 const content = match[2];
-                const items = prefix.split(',').map(s => s.trim());
-                const tag = items[0];
-                const filteredOptions = items.slice(1).filter(o => !o.startsWith(`${key}:`));
+                const parts = configBody.split(',').map(s => s.trim());
+                const tag = parts[0]; // "h" or "sh"
+
+                // Remove existing occurrence of this key to prevent duplication
+                const filteredOptions = parts.slice(1).filter(o => !o.startsWith(`${key}:`));
                 filteredOptions.push(`${key}:${value}`);
-                lines[tagLineIndex] = `/${[tag, ...filteredOptions].sort().join(', ')}/ ${content}`;
+
+                lines[tagLineIndex] = `/${[tag, ...filteredOptions].join(', ')}/ ${content}`;
             }
         } else {
+            // No tagged line found — inject a new /h/ tag on the first non-empty line
             const firstContentLine = lines.findIndex(l => l.trim().length > 0);
             if (firstContentLine !== -1) {
-                lines[firstContentLine] = `/h1, ${key}:${value}/ ${lines[firstContentLine]}`;
+                lines[firstContentLine] = `/h, ${key}:${value}/ ${lines[firstContentLine].trim()}`;
             } else {
-                lines.push(`/h1, ${key}:${value}/ `);
+                lines.push(`/h, ${key}:${value}/ `);
             }
         }
-        blocks[targetFullIndex] = lines.join('\n');
-        const newText = blocks.join('');
+
+        return lines.join('\n');
+    };
+
+    const injectOverride = (key: string, value: string | number) => {
+        const contentBlocks = bulkText.split(/\n\s*\n/).filter(b => b.trim().length > 0);
+        if (activePreviewSlideIndex >= contentBlocks.length) return;
+
+        const updatedBlock = updateSlideConfig(contentBlocks[activePreviewSlideIndex], key, value);
+        contentBlocks[activePreviewSlideIndex] = updatedBlock;
+
+        const newText = contentBlocks.join('\n\n');
         setBulkText(newText);
         compileBulkText(newText);
     };
 
     const getOverride = (key: string, def: number): number => {
-        const tempBlocks = bulkText.split(/\n\s*\n|---/).filter(b => b.trim().length > 0);
-        const block = tempBlocks[activePreviewSlideIndex];
+        const contentBlocks = bulkText.split(/\n\s*\n/).filter(b => b.trim().length > 0);
+        const block = contentBlocks[activePreviewSlideIndex];
         if (!block) return def;
-        const match = block.match(/^\/(.+)\//);
+        const match = block.match(/^\/([^/]+)\//m);
         if (!match) return def;
         const options = match[1].split(',').map(s => s.trim());
         const found = options.find(o => o.startsWith(`${key}:`));
@@ -322,6 +331,12 @@ const LeftPane: React.FC<Props> = (props) => {
         { name: 'Slate', bg: '#1E293B', text: '#F8FAFC', accent: '#94A3B8' },
         { name: 'Neon', bg: '#000000', text: '#00FF88', accent: '#00FF88' },
     ];
+
+    // Hardcoded sensible defaults for the per-slide tuner (mirrors CarouselPreview fallbacks)
+    const DEFAULT_HEADING_SIZE = 110;
+    const DEFAULT_SUBHEADING_SIZE = 45;
+    const DEFAULT_BODY_SIZE = 35;
+    const DEFAULT_Y_OFFSET = 0;
 
     return (
         <div className="flex flex-col h-full gap-6 select-none">
@@ -415,7 +430,7 @@ const LeftPane: React.FC<Props> = (props) => {
                                 <textarea
                                     value={bulkText}
                                     onChange={(e) => { setBulkText(e.target.value); compileBulkText(e.target.value); }}
-                                    placeholder="/h1/ Title\n/h2/ Subtitle\n\n/body/ Slide 2..."
+                                    placeholder={`/h/ My Headline\n/sh/ My Subheading\nBody text goes here\n\n/h/ Slide 2 Headline\nMore body text`}
                                     rows={14}
                                     className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-sm text-zinc-300 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all resize-none relative z-10 box-border"
                                 />
@@ -430,7 +445,7 @@ const LeftPane: React.FC<Props> = (props) => {
                                         </div>
                                         <div className="flex gap-1.5">
                                             {['left', 'center', 'right'].map(a => {
-                                                const currentAlign = bulkText.split(/\n\s*\n|---/).filter(b => b.trim().length > 0)[activePreviewSlideIndex]?.match(/a:(\w+)/)?.[1];
+                                                const currentAlign = bulkText.split(/\n\s*\n/).filter(b => b.trim().length > 0)[activePreviewSlideIndex]?.match(/a:(\w+)/)?.[1];
                                                 return (
                                                     <button key={a} onClick={() => injectOverride('a', a)} className={`p-1 transition-colors ${currentAlign === a ? 'text-blue-400' : 'text-zinc-600 hover:text-white'}`}>
                                                         {a === 'left' && <AlignLeft size={14} />}
@@ -443,11 +458,11 @@ const LeftPane: React.FC<Props> = (props) => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                                         {[
-                                            { label: 'Headline', key: 's', def: headingSize },
-                                            { label: 'Subhead', key: 'sh_s', def: subheadingSize },
-                                            { label: 'Section', key: 'sb_s', def: sectionSize },
-                                            { label: 'Body', key: 'b_s', def: bodySize },
-                                            { label: 'Y-Offset', key: 'y', def: textYOffset }
+                                            { label: 'Headline', key: 's', def: DEFAULT_HEADING_SIZE },
+                                            { label: 'Subhead', key: 'sh_s', def: DEFAULT_SUBHEADING_SIZE },
+                                            { label: 'Section', key: 'sb_s', def: 38 },
+                                            { label: 'Body', key: 'b_s', def: DEFAULT_BODY_SIZE },
+                                            { label: 'Y-Offset', key: 'y', def: DEFAULT_Y_OFFSET }
                                         ].map(s => (
                                             <div key={s.key} className="space-y-1">
                                                 <div className="flex justify-between text-[8px] font-black tracking-widest text-zinc-600 uppercase">
@@ -605,22 +620,50 @@ const LeftPane: React.FC<Props> = (props) => {
                                 ))}
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4">
-                                {[
-                                    { label: 'BG', key: 'background' },
-                                    { label: 'TEXT', key: 'text' },
-                                    { label: 'ACCENT', key: 'accent' }
-                                ].map(c => (
-                                    <div key={c.key} className="space-y-2">
-                                        <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest text-center">{c.label}</p>
+                            {/* ── CUSTOM COLOR PICKERS: Strictly bound to hex strings ── */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest pl-1 text-center">BG</p>
+                                    <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-xl p-2 w-full transition-colors focus-within:border-white/30">
+                                        <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.background }} />
                                         <input
-                                            type="color" value={customTheme[c.key as keyof typeof customTheme]}
-                                            onChange={(e) => applyCustomTheme(c.key, e.target.value)}
-                                            className="w-full h-10 bg-transparent cursor-pointer rounded-xl overflow-hidden border border-white/10"
+                                            type="text"
+                                            value={customTheme.background}
+                                            onChange={(e) => applyCustomTheme('background', e.target.value)}
+                                            className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
+                                            placeholder="#HEX"
+                                            maxLength={7}
                                         />
-                                        <p className="text-[9px] font-mono text-zinc-500 text-center tracking-wide">{customTheme[c.key as keyof typeof customTheme]}</p>
                                     </div>
-                                ))}
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest pl-1 text-center">TEXT</p>
+                                    <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-xl p-2 w-full transition-colors focus-within:border-white/30">
+                                        <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.text }} />
+                                        <input
+                                            type="text"
+                                            value={customTheme.text}
+                                            onChange={(e) => applyCustomTheme('text', e.target.value)}
+                                            className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
+                                            placeholder="#HEX"
+                                            maxLength={7}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest pl-1 text-center">ACCENT</p>
+                                    <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-xl p-2 w-full transition-colors focus-within:border-white/30">
+                                        <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.accent }} />
+                                        <input
+                                            type="text"
+                                            value={customTheme.accent}
+                                            onChange={(e) => applyCustomTheme('accent', e.target.value)}
+                                            className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
+                                            placeholder="#HEX"
+                                            maxLength={7}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex items-center gap-4 p-5 bg-black/20 rounded-2xl border border-white/5 mt-4">
                                 <div className="relative group shrink-0">
@@ -684,6 +727,20 @@ const LeftPane: React.FC<Props> = (props) => {
                             </div>
                         </div>
 
+                        <div className="rounded-[24px] p-6 space-y-4 bg-white/[0.02] border border-white/[0.04]">
+                            <label className="text-[9px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Alignment / Footer</label>
+                            <div className="flex gap-1 bg-black/40 p-1 rounded-2xl border border-white/5">
+                                {['left', 'center', 'right'].map(a => (
+                                    <button
+                                        key={a} onClick={() => { setTextAlign(a); setFooterLayout(a); }}
+                                        className={`flex-1 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${textAlign === a && footerLayout === a ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-700 hover:text-zinc-400'}`}
+                                    >
+                                        {a}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         <button
                             onClick={() => { setCarouselData(null); setBulkText(''); setRawInput(''); setJsonInput(''); }}
                             className="w-full py-4 border border-white/5 bg-zinc-900 rounded-2xl flex items-center justify-center gap-2 text-zinc-600 hover:text-red-400 hover:bg-red-500/5 hover:border-red-500/20 transition-all font-black text-[10px] uppercase tracking-[0.3em]"
@@ -692,55 +749,6 @@ const LeftPane: React.FC<Props> = (props) => {
                         </button>
                     </div>
                 )}
-
-                {/* GLOBAL DESIGN CONTROLS (Always Visible) */}
-                <div className="mt-8 pt-6 border-t border-white/10 flex flex-col gap-6">
-                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Global Design Engine</h3>
-
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                        {[
-                            { label: 'Master Heading', val: headingSize, set: setHeadingSize, min: 40, max: 200 },
-                            { label: 'Master Subhead', val: subheadingSize, set: setSubheadingSize, min: 20, max: 120 },
-                            { label: 'Master Section', val: sectionSize, set: setSectionSize, min: 18, max: 100 },
-                            { label: 'Master Body', val: bodySize, set: setBodySize, min: 14, max: 80 }
-                        ].map(s => (
-                            <div key={s.label} className="space-y-2">
-                                <div className="flex justify-between text-[8px] font-black text-zinc-600 uppercase tracking-tighter">
-                                    <span>{s.label}</span>
-                                    <span className="text-zinc-400 font-mono">{s.val}px</span>
-                                </div>
-                                <input type="range" min={s.min} max={s.max} value={s.val} onChange={(e) => s.set(Number(e.target.value))} className="w-full h-1 bg-zinc-900 rounded-full appearance-none accent-white cursor-pointer" />
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="space-y-3">
-                        <div className="flex justify-between items-center text-[9px] font-black text-zinc-600 uppercase tracking-widest px-1">
-                            <span>Perspective Offset (Slide {activePreviewSlideIndex + 1})</span>
-                            <span className="text-zinc-400 font-mono">{getOverride('y', textYOffset)}px</span>
-                        </div>
-                        <input
-                            type="range" min="-500" max="500"
-                            value={getOverride('y', textYOffset)}
-                            onChange={(e) => injectOverride('y', Number(e.target.value))}
-                            className="w-full h-1 bg-zinc-900 rounded-full appearance-none accent-white cursor-pointer"
-                        />
-                    </div>
-
-                    <div className="space-y-4 pt-2">
-                        <label className="text-[9px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Alignment / Footer</label>
-                        <div className="flex gap-1 bg-black/40 p-1 rounded-2xl border border-white/5">
-                            {['left', 'center', 'right'].map(a => (
-                                <button
-                                    key={a} onClick={() => { setTextAlign(a); setFooterLayout(a); }}
-                                    className={`flex-1 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${textAlign === a && footerLayout === a ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-700 hover:text-zinc-400'}`}
-                                >
-                                    {a}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
 
             </div>
 
