@@ -1,57 +1,203 @@
-# Carousel Creator 🎠 - Professional LinkedIn & Instagram Carousel Generator
+<p align="center">
+  <img src="./public/Logo.png" alt="Carousel Creator Logo" width="80" />
+</p>
 
-**Transform raw text into viral social media carousels in seconds.** 100% serverless, private, and built for modern creators.
+<h1 align="center">Carousel Creator</h1>
 
-[![Carousel Creator Preview](./public/Logo.png)](https://carousel-creator.vercel.app)
+<p align="center">
+  <strong>Transform raw text into viral social media carousels in seconds.</strong><br/>
+  100% serverless. Privacy-first. Built for modern creators.
+</p>
 
-## 🚀 The Ultimate AI-Powered Carousel Engine
-
-Carousel Creator is a high-performance React application designed to eliminate the friction of content design. Stop wrestling with Canva and start shipping.
-
-### ✨ Key Features
-
-* **Responsive Document Flow:** Our new architecture ensures a seamless experience across all devices. Enjoy natural, native scrolling on mobile with a rock-solid, professional workspace on desktop.
-* **The Rigid Canvas (1080x1350):** Mathematical scaling ensures every export is perfectly formatted for LinkedIn and Instagram at professional `4:5` aspect ratio.
-* **The Highlight Engine:** Use simple ``*highlight*``, ``**bold**``, or ``_italic_`` to trigger complex visual template behaviors instantly.
-* **ZIP Content Pack Engine:** Generate 3x the content in one click. The engine automatically cycles through all templates (Minimal, Tweet, Brutalist) and packages them into organized folders.
-* **Persistent Creator Identity:** Upload your avatar, set your handle, and choose your favorite Google Font once. Everything stays saved in your browser's local storage.
-* **Privacy-First & BYOK:** Zero backend. Your OpenRouter API keys and content never touch a server.
-
-## 🛠️ The Tech Stack
-
-* **Framework:** React 19 + Vite + TypeScript
-* **Styling:** Tailwind CSS 4.0
-* **Export Engine:** `html-to-image` + `jsPDF` + `JSZip`
-* **Intelligence:** OpenRouter API (Bring Your Own Key)
-
-## 🚦 Getting Started
-
-### Quick Start (Local Development)
-
-1. **Clone:** `git clone https://github.com/Shezan-op/Carousel-Creator.git`
-2. **Install:** `npm install`
-3. **Run:** `npm run dev`
-
-### Production Build & Deployment
-
-To deploy your own instance to Vercel:
-
-1. **Login:** `npx vercel login`
-2. **Link Project:** `npx vercel link`
-3. **Deploy:** `npx vercel --prod` (Vercel runs the build remotely for you)
-
-**CI/CD (Non-Interactive):**
-
-Set the following environment variables in your CI runner: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` (found after running `vercel link`). Then:
-
-```bash
-npx vercel build --prod --token=$VERCEL_TOKEN
-npx vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
-```
-
-## 📈 SEO & Discovery Keywords
-
-`LinkedIn Carousel Generator`, `Instagram Carousel Maker`, `Free AI Carousel Tool`, `Open Source Content Creation`, `1080x1350 Image Converter`, `Social Media Design Automation`, `React Carousel Export`.
+<p align="center">
+  <a href="https://carousel-creator-kohl.vercel.app/" target="_blank">🚀 Live Demo</a> &nbsp;·&nbsp;
+  <a href="./HOW_TO_USE.md">📖 How to Use</a> &nbsp;·&nbsp;
+  <a href="./WALKTHROUGH.md">🎯 60-Second Walkthrough</a>
+</p>
 
 ---
-*Built with passion by [Shezan - Founder @LeadLinked](https://www.linkedin.com/company/lead-linked/)*
+
+## What is Carousel Creator?
+
+Carousel Creator is a **high-performance, browser-based design tool** that converts raw text into pixel-perfect LinkedIn and Instagram carousels — no Canva, no Figma, no design skills required.
+
+It was built from the ground up as a **React 19 + TypeScript** single-page application with a custom **Bulk Compiler**, a **Triple-Layer Markdown Engine**, and a **Multi-Template Export Pipeline** that generates print-ready assets in one click.
+
+---
+
+## ✨ Feature Highlights
+
+### 🎨 Three Professional Templates
+
+| Minimal | Faux Tweet | Brutalist |
+|---------|-----------|-----------|
+| Clean, modern typography with accent highlights | Simulates a viral X/Twitter post with engagement metrics | Heavy uppercase type with high-contrast block accents |
+
+### ⚡ The Bulk Compiler
+
+Write naturally, get structured slides. The compiler uses a tag-based syntax:
+
+```
+/h/ Your Headline Here
+/sh/ A subtitle or section header
+Body text flows naturally without any tags.
+
+/h/ Slide 2 Title
+More body content for slide 2.
+```
+
+Double-enter creates a new slide. Per-slide overrides are inline: `/h, s:120, a:center/ Big Title`.
+
+### 🖋 Triple-Layer Markdown Engine
+
+- `*highlight*` → Template-aware accent (color in Minimal, block in Brutalist, link-blue in Tweet)
+- `**bold**` → Extra-heavy weight
+- `_italic_` → Italic emphasis
+
+### 📦 ZIP Content Pack Engine
+
+One click generates your carousel across **all 3 templates simultaneously**, packaged into organized folders inside a single ZIP. Triple the content from a single input.
+
+### 🔒 Privacy-First & BYOK Architecture
+
+- **Zero backend** — all processing happens in your browser
+- **Bring Your Own Key (BYOK)** — your OpenRouter API key is stored locally, never transmitted to us
+- **Local persistence** — creator identity, preferences, and content saved to `localStorage`
+
+### 📱 Responsive Design
+
+- **Desktop**: Professional split-pane workspace with zoom controls
+- **Mobile**: Natural document flow with dynamic `transform: scale()` canvas fitting
+
+---
+
+## 🏗 Architecture & Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Framework** | React 19 + TypeScript | Type-safe component architecture |
+| **Build** | Vite 7 | Sub-second HMR, optimized production bundles |
+| **Styling** | Tailwind CSS 4.0 | Utility-first responsive design |
+| **Export: PDF** | `html-to-image` + `jsPDF` | DOM-to-JPEG capture → multi-page PDF |
+| **Export: ZIP** | `html-to-image` + `JSZip` + `file-saver` | Multi-template batch render → ZIP archive |
+| **AI** | OpenRouter API | Optional text-to-carousel generation (BYOK) |
+| **Analytics** | Vercel Analytics + Speed Insights | Production performance monitoring |
+| **Icons** | Lucide React | Consistent, tree-shakeable icon system |
+| **Hosting** | Vercel | Edge deployment with automatic CI/CD |
+
+### Key Engineering Decisions
+
+- **Rigid Canvas (1080×1350)**: All slides render at a fixed 4:5 aspect ratio inside a `transform: scale()` wrapper. The DOM node is always 1080×1350px — scaling is purely visual. This guarantees pixel-perfect exports regardless of viewport size.
+- **Safe Zone Padding**: 108px padding on all sides constrains text to an 864×1134px safe zone, preventing content from being cropped on any platform.
+- **Unified Typography Model**: A single `subheading_size` property controls both H2 (subheadline) and H3 (section header) elements across all templates, with backwards-compatible support for the deprecated `subheadline_size` field.
+- **Defensive Storage**: All `localStorage` operations are wrapped in try/catch to handle quota limits gracefully. Counter parsers guard against `NaN` pollution.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm
+
+### Local Development
+
+```bash
+git clone https://github.com/Shezan-op/Carousel-Creator.git
+cd Carousel-Creator
+npm install
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`.
+
+### Production Build
+
+```bash
+npm run build    # TypeScript check + Vite production bundle
+npm run preview  # Preview the production build locally
+```
+
+### Deploy to Vercel
+
+```bash
+# Option 1: CLI
+npx vercel --prod
+
+# Option 2: Git-based (recommended)
+# Push to main → Vercel auto-deploys
+git push origin main
+```
+
+### Environment Variables (Optional)
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_GOOGLE_SCRIPT_URL` | Google Apps Script endpoint for lead capture |
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── App.tsx                    # Root shell, global state, layout
+├── main.tsx                   # React DOM entry point
+├── types.ts                   # TypeScript interfaces (Slide, Theme, CarouselData)
+├── index.css                  # Global styles, Tailwind imports, custom scrollbar
+├── components/
+│   ├── LeftPane.tsx            # Bulk compiler, AI generator, tuner controls, setup
+│   ├── CarouselPreview.tsx     # Multi-template slide renderer, export nodes
+│   ├── ExportControls.tsx      # PDF/ZIP export engine, lead capture modal
+│   └── NetflixIntro.tsx        # Animated splash screen
+public/
+├── Logo.png                   # App logo
+├── manifest.json              # PWA manifest
+└── *.pdf                      # Sample exported carousels
+```
+
+---
+
+## 🧪 Bulk Compiler Syntax Reference
+
+| Syntax | Effect | Example |
+|--------|--------|---------|
+| `/h/ text` | Headline (H1) | `/h/ Why AI Matters` |
+| `/sh/ text` | Subheadline (H2) or Section Header (H3) | `/sh/ The 5 Key Trends` |
+| Plain text | Body paragraph | `AI is transforming every industry.` |
+| `/h, s:120/` | Headline with custom size | `/h, s:120/ BIG TITLE` |
+| `/sh, sh_s:60/` | Subhead with custom size | `/sh, sh_s:60/ Sized Subtitle` |
+| `, a:center` | Text alignment override | `/h, a:center/ Centered` |
+| `, y:50` | Y-offset (vertical shift) | `/h, y:50/ Shifted Down` |
+| `*text*` | Highlight accent | `This is *important*` |
+| `**text**` | Bold | `This is **critical**` |
+| `_text_` | Italic | `This is _emphasized_` |
+| Double newline | New slide | *(blank line between blocks)* |
+
+---
+
+## 🔐 Security Model
+
+- **Lead Capture**: `localStorage.setItem('carousel_unlocked', 'true')` is strictly inside the `try` block after a successful API call. Network failures refuse the unlock token.
+- **Rate Limiting**: 30-second cooldown between email submissions (client-side).
+- **Input Sanitization**: Text inputs capped at 10,000 characters to prevent ReDoS. Slide count capped at 50.
+- **API Key Handling**: OpenRouter key stored as a password input, persisted only to local `localStorage`.
+- **CORS Safety**: All images (avatar, background) are converted to base64 data URLs on ingestion, preventing tainted canvas errors during export.
+
+---
+
+## 📈 SEO & Discovery
+
+`LinkedIn Carousel Generator` · `Instagram Carousel Maker` · `Free AI Carousel Tool` · `Open Source Content Creation` · `1080x1350 Social Media Design` · `React Carousel Export` · `Bulk Text to Carousel` · `Professional Slide Generator`
+
+---
+
+## 📄 License
+
+MIT — free for personal and commercial use.
+
+---
+
+<p align="center">
+  Built with 🧠 by <a href="https://www.linkedin.com/in/shezanahmed29/" target="_blank"><strong>Shezan Ahmed</strong></a> · Founder @ <a href="https://www.linkedin.com/company/lead-linked/" target="_blank">LeadLinked</a>
+</p>

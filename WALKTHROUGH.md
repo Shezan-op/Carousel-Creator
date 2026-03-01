@@ -1,48 +1,74 @@
-# Carousel AI Creator - Step-by-Step Walkthrough
+# 🎯 60-Second Walkthrough
 
-This guide can get you from a blank screen to a professional social media carousel in as little as 60 seconds, depending on system response.
-
-## Step 1: Branding Setup
-
-Go to the **Setup** tab.
-
-- Enter your name and social handle (e.g., @JaneDoe).
-- Name your favorite Google Font (e.g., `Playfair Display`).
-- Upload your square avatar image.
-- *Everything is saved to your browser automatically.*
-
-## Step 2: Content Generation
-
-Go to the **Auto** tab.
-
-- Paste your OpenRouter API Key.
-- Select an AI Model (Free options like `Gemini Flash` work great).
-- Paste your messy notes or a link to a post in the input box.
-- Hit **Generate**. The AI will rewrite your content into high-impact slides.
-
-## Step 3: Manual Fine-Tuning
-
-Go to the **Setup** and **Manual JSON** tabs.
-
-- Switch between **Templates** in the **Setup** tab (Minimal, Tweet, Brutalist) to see your content transform.
-- Adjust the **Preview Scale** in the **Setup** tab if you are on a small screen to see the full composition.
-- Use the **Footer Layout** dropdown in the **Setup** tab to position your branding badge.
-- Use the **Manual JSON** tab for direct access to the raw slide data.
-
-## Step 4: Visual Accents
-
-Go to the **Manual JSON** tab.
-
-- You can edit the text directly.
-- Wrap any word in `*asterisks*` to highlight it.
-- In Brutalist, this creates a heavy background block. In Minimal, it changes the text color and weight.
-
-## Step 5: High-Quality Export
-
-Use the buttons at the top right:
-
-- **Download PDF**: Standard for LinkedIn posts.
-- **Download ZIP**: Triggers the **Content Pack Engine**. This captures your carousel in all 3 styles simultaneously, giving you a ready-to-post variation pack.
+Go from a blank screen to a professional carousel in under a minute.
 
 ---
-*Pro Tip: 1080×1350 (4:5) is the recommended LinkedIn carousel size because it preserve image resolution while matching the platform's aspect ratio to avoid cropping and scaling, resulting in optimal display in feeds.*
+
+### Step 1: Brand Yourself *(10 seconds)*
+
+Open the **Setup** tab → Enter your name, handle, and upload an avatar.  
+Pick a font. Done — it's saved forever.
+
+---
+
+### Step 2: Write Your Content *(20 seconds)*
+
+Switch to the **Bulk** tab and type:
+
+```
+/h/ 5 Lessons I Learned Building a Startup
+/sh/ A thread worth saving.
+
+/h/ Lesson 1: Ship Fast
+Speed beats perfection. Get your MVP out,
+then iterate based on *real feedback*.
+
+/h/ Lesson 2: Talk to Users
+**Every single day.** Not once a week.
+Not through surveys. _Face to face._
+
+/h/ Follow for More
+/sh/ @yourhandle
+```
+
+Slides appear instantly in the preview panel →
+
+---
+
+### Step 3: Style It *(10 seconds)*
+
+In Setup, pick a **Template** (Minimal, Tweet, or Brutalist) and a **Color Palette** (Midnight, Cyberpunk, Nord, etc.).
+
+Use the **Visual Tuner** sliders below the text area to adjust font sizes for the active slide.
+
+---
+
+### Step 4: Export *(5 seconds)*
+
+Click **Download PDF** for LinkedIn, or **Download ZIP** for a multi-template content pack (all 3 styles in one archive).
+
+---
+
+### That's it. You're done. 🚀
+
+> **Pro Tip:** All slides render at **1080×1350px (4:5 ratio)** — the optimal format for LinkedIn carousels. No cropping, no scaling, maximum visual impact in the feed.
+
+---
+
+## Quick Reference Card
+
+| Action | How |
+|--------|-----|
+| New slide | Blank line (double-enter) |
+| Headline | `/h/ Your text` |
+| Subtitle | `/sh/ Your text` |
+| Body | Just type (no prefix) |
+| Highlight | `*word*` |
+| Bold | `**word**` |
+| Italic | `_word_` |
+| Custom size | `/h, s:120/ Big Title` |
+| Center text | `/h, a:center/ Centered` |
+
+---
+
+*Built with 🧠 by [Shezan Ahmed](https://www.linkedin.com/in/shezanahmed29/) · Founder @ [LeadLinked](https://www.linkedin.com/company/lead-linked/)*

@@ -27,3 +27,7 @@ dist-ssr
 
 .vercel
 .env*.local
+
+# Internal dev files
+UPGRADE.md
+eslint-output.json
