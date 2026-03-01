@@ -179,7 +179,6 @@ const LeftPane: React.FC<Props> = (props) => {
                         if (!k || !v) return;
                         if (k === 's') options.heading_size = parseInt(v);
                         if (k === 'sh_s') options.subheading_size = parseInt(v);
-                        if (k === 'sb_s') options.subheading_size = parseInt(v);
                         if (k === 'b_s') options.body_size = parseInt(v);
                         if (k === 'y') options.y_offset = parseInt(v);
                         if (k === 'a') options.text_align = v;
@@ -194,9 +193,12 @@ const LeftPane: React.FC<Props> = (props) => {
                         if (slideObj.type === 'title') slideObj.subheadline = content;
                         else slideObj.subheading = content;
                         Object.assign(slideObj, options);
+                    } else if (type === 'config') {
+                        // Config-only tag — apply options to the slide without adding content
+                        Object.assign(slideObj, options);
                     } else {
-                        // If they typed something invalid like /body/, strip the tag and treat as body
-                        bodyLines.push(content);
+                        // Unknown tag — strip the tag and treat content as body
+                        if (content) bodyLines.push(content);
                     }
                 } else {
                     // No /tags/, this is standard body text
@@ -243,12 +245,13 @@ const LeftPane: React.FC<Props> = (props) => {
                 lines[tagLineIndex] = `/${[tag, ...filteredOptions].join(', ')}/ ${content}`;
             }
         } else {
-            // No tagged line found — inject a new /h/ tag on the first non-empty line
+            // No tagged line found — insert a neutral config-only tag that won't alter content
             const firstContentLine = lines.findIndex(l => l.trim().length > 0);
             if (firstContentLine !== -1) {
-                lines[firstContentLine] = `/h, ${key}:${value}/ ${lines[firstContentLine].trim()}`;
+                // Insert a standalone config line BEFORE the first content line
+                lines.splice(firstContentLine, 0, `/config, ${key}:${value}/`);
             } else {
-                lines.push(`/h, ${key}:${value}/ `);
+                lines.push(`/config, ${key}:${value}/`);
             }
         }
 
@@ -460,7 +463,6 @@ const LeftPane: React.FC<Props> = (props) => {
                                         {[
                                             { label: 'Headline', key: 's', def: DEFAULT_HEADING_SIZE },
                                             { label: 'Subhead', key: 'sh_s', def: DEFAULT_SUBHEADING_SIZE },
-                                            { label: 'Section', key: 'sb_s', def: 38 },
                                             { label: 'Body', key: 'b_s', def: DEFAULT_BODY_SIZE },
                                             { label: 'Y-Offset', key: 'y', def: DEFAULT_Y_OFFSET }
                                         ].map(s => (
