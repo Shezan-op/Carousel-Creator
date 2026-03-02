@@ -5,7 +5,6 @@ import LeftPane from './components/LeftPane';
 import CarouselPreview from './components/CarouselPreview';
 import NetflixIntro from './components/NetflixIntro';
 import type { CarouselData, Slide } from './types';
-import { AlignLeft, AlignCenter, AlignRight, Type } from 'lucide-react';
 import { renderHighlightedText } from './utils';
 
 function App() {
@@ -18,7 +17,10 @@ function App() {
   const [authorAvatar, setAuthorAvatar] = useState<string | null>(() => localStorage.getItem('creatorAvatar'));
   const [activePreviewSlideIndex, setActivePreviewSlideIndex] = useState(0);
 
-  const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('carouselFont') || 'Inter');
+  // Multi-Font Engine: per-element font states
+  const [headingFont, setHeadingFont] = useState(() => localStorage.getItem('heading_font') || 'Inter');
+  const [subheadingFont, setSubheadingFont] = useState(() => localStorage.getItem('subheading_font') || 'Inter');
+  const [bodyFont, setBodyFont] = useState(() => localStorage.getItem('body_font') || 'Inter');
   const [activeTemplate, setActiveTemplate] = useState('minimal');
   const [previewScale, setPreviewScale] = useState(() => Number(localStorage.getItem('previewScale')) || 0.35);
 
@@ -256,23 +258,35 @@ function App() {
     }
   }, [authorAvatar]);
 
+  // Multi-Font Engine: Deduped Google Fonts Injector
   useEffect(() => {
-    try { localStorage.setItem('carouselFont', fontFamily); } catch { /* quota */ }
-  }, [fontFamily]);
+    const uniqueFonts = Array.from(new Set([headingFont, subheadingFont, bodyFont])).filter(Boolean);
+    if (uniqueFonts.length === 0) return;
 
-  useEffect(() => {
-    if (!fontFamily) return;
-    const formattedFont = fontFamily.replace(/ /g, '+');
-    const linkId = 'dynamic-google-font';
-    let link = document.getElementById(linkId) as HTMLLinkElement;
+    const fontFamilies = uniqueFonts.map(font =>
+      `family=${font.replace(/ /g, '+')}:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900`
+    ).join('&');
+
+    const fontUrl = `https://fonts.googleapis.com/css2?${fontFamilies}&display=swap`;
+
+    let link = document.getElementById('dynamic-google-fonts') as HTMLLinkElement;
     if (!link) {
       link = document.createElement('link');
-      link.id = linkId;
+      link.id = 'dynamic-google-fonts';
       link.rel = 'stylesheet';
       document.head.appendChild(link);
     }
-    link.href = `https://fonts.googleapis.com/css2?family=${formattedFont}:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600;1,700;1,900&display=swap`;
-  }, [fontFamily]);
+
+    if (link.href !== fontUrl) {
+      link.href = fontUrl;
+    }
+
+    try {
+      localStorage.setItem('heading_font', headingFont);
+      localStorage.setItem('subheading_font', subheadingFont);
+      localStorage.setItem('body_font', bodyFont);
+    } catch { /* quota */ }
+  }, [headingFont, subheadingFont, bodyFont]);
 
   const deleteSlide = (index: number) => {
     if (!carouselData) return;
@@ -306,8 +320,12 @@ function App() {
           setAuthorHandle={setAuthorHandle}
           authorAvatar={authorAvatar}
           setAuthorAvatar={setAuthorAvatar}
-          fontFamily={fontFamily}
-          setFontFamily={setFontFamily}
+          headingFont={headingFont}
+          setHeadingFont={setHeadingFont}
+          subheadingFont={subheadingFont}
+          setSubheadingFont={setSubheadingFont}
+          bodyFont={bodyFont}
+          setBodyFont={setBodyFont}
           activeTemplate={activeTemplate}
           setActiveTemplate={setActiveTemplate}
           previewScale={previewScale}
@@ -345,7 +363,9 @@ function App() {
             authorName={authorName}
             authorHandle={authorHandle}
             authorAvatar={authorAvatar}
-            fontFamily={fontFamily}
+            headingFont={headingFont}
+            subheadingFont={subheadingFont}
+            bodyFont={bodyFont}
             activeTemplate={activeTemplate}
             setActiveTemplate={setActiveTemplate}
             onDeleteSlide={deleteSlide}
@@ -399,13 +419,14 @@ function App() {
                     display: 'flex',
                     flexDirection: 'column',
                     padding: '80px',
-                    fontFamily: fontFamily,
                     justifyContent: 'center',
-                    textAlign: carouselData.slides[focusedSlideIndex].text_align || 'left'
+                    textAlign: carouselData.slides[focusedSlideIndex].text_align || 'left',
+                    transform: `translateY(${carouselData.slides[focusedSlideIndex].y_offset || 0}px)`
                   }}
                 >
                   {carouselData.slides[focusedSlideIndex].headline && (
                     <h1 style={{
+                      fontFamily: `"${headingFont}", sans-serif`,
                       fontSize: `${carouselData.slides[focusedSlideIndex].heading_size || 120}px`,
                       fontWeight: '900',
                       lineHeight: '1.1',
@@ -416,6 +437,7 @@ function App() {
                   )}
                   {(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading) && (
                     <h2 style={{
+                      fontFamily: `"${subheadingFont}", sans-serif`,
                       fontSize: `${carouselData.slides[focusedSlideIndex].subheading_size || 60}px`,
                       fontWeight: '500',
                       opacity: 0.8,
@@ -426,6 +448,7 @@ function App() {
                   )}
                   {carouselData.slides[focusedSlideIndex].body && (
                     <div style={{
+                      fontFamily: `"${bodyFont}", sans-serif`,
                       fontSize: `${carouselData.slides[focusedSlideIndex].body_size || 40}px`,
                       lineHeight: '1.4',
                       opacity: 0.9,
@@ -456,6 +479,11 @@ function App() {
                   const currentHeadingSize = activeSlide.heading_size || 120;
                   const currentSubheadSize = activeSlide.subheading_size || 60;
                   const currentBodySize = activeSlide.body_size || 40;
+                  const currentAlign = activeSlide.text_align || 'left';
+                  const currentYOffset = activeSlide.y_offset || 0;
+
+                  const updateSlideConfig = (tag: string, key: string, value: string | number) =>
+                    injectOverride(focusedSlideIndex, tag, key, value);
 
                   return (
                     <>
@@ -519,35 +547,94 @@ function App() {
 
                       {tunerTab === 'font' && (
                         <div className="flex flex-col gap-4">
-                          <p className="text-xs text-zinc-500 text-center mb-2 font-medium">Coming Soon: Character Foundry</p>
-                          <div className="grid grid-cols-3 gap-2">
-                            {['Headline', 'Subhead', 'Body'].map(f => (
-                              <div key={f} className="bg-zinc-800/50 border border-white/10 p-4 rounded-2xl text-[10px] text-zinc-500 flex flex-col items-center gap-2 opacity-50 grayscale">
-                                <Type size={18} /> {f}
-                              </div>
-                            ))}
+
+                          <div className="flex items-center justify-between bg-zinc-800/50 p-3 rounded-xl border border-white/5">
+                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest w-24">Heading</span>
+                            <input
+                              type="text"
+                              value={headingFont}
+                              onChange={(e) => setHeadingFont(e.target.value)}
+                              placeholder="e.g. Playfair Display"
+                              className="flex-1 bg-zinc-950 border border-white/10 rounded-lg text-sm text-white px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
                           </div>
+
+                          <div className="flex items-center justify-between bg-zinc-800/50 p-3 rounded-xl border border-white/5">
+                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest w-24">Subhead</span>
+                            <input
+                              type="text"
+                              value={subheadingFont}
+                              onChange={(e) => setSubheadingFont(e.target.value)}
+                              placeholder="e.g. Montserrat"
+                              className="flex-1 bg-zinc-950 border border-white/10 rounded-lg text-sm text-white px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between bg-zinc-800/50 p-3 rounded-xl border border-white/5">
+                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest w-24">Body</span>
+                            <input
+                              type="text"
+                              value={bodyFont}
+                              onChange={(e) => setBodyFont(e.target.value)}
+                              placeholder="e.g. Inter"
+                              className="flex-1 bg-zinc-950 border border-white/10 rounded-lg text-sm text-white px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          <p className="text-[10px] text-zinc-500 text-center mt-2">Type any Google Font name perfectly (e.g., "Oswald", "Lora").</p>
                         </div>
                       )}
 
                       {tunerTab === 'align' && (
-                        <div className="flex flex-col gap-4">
-                          <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest text-center block">Alignment Tuning</label>
-                          <div className="flex justify-center gap-4">
-                            {[
-                              { id: 'left', icon: AlignLeft },
-                              { id: 'center', icon: AlignCenter },
-                              { id: 'right', icon: AlignRight }
-                            ].map(a => (
+                        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+
+                          {/* TEXT ALIGNMENT SEGMENTED CONTROL */}
+                          <div className="flex flex-col gap-3">
+                            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest text-center">Horizontal Alignment</span>
+                            <div className="flex bg-zinc-950 border border-white/10 rounded-xl p-1">
                               <button
-                                key={a.id}
-                                onClick={() => injectOverride(focusedSlideIndex, 'config', 'a', a.id)}
-                                className={`w-14 h-14 rounded-2xl border flex items-center justify-center transition-all ${activeSlide.text_align === a.id ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-zinc-800 border-white/5 text-zinc-500'}`}
+                                onClick={() => updateSlideConfig('h', 'a', 'left')}
+                                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${currentAlign === 'left' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
                               >
-                                <a.icon size={24} />
+                                Left
                               </button>
-                            ))}
+                              <button
+                                onClick={() => updateSlideConfig('h', 'a', 'center')}
+                                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${currentAlign === 'center' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+                              >
+                                Center
+                              </button>
+                              <button
+                                onClick={() => updateSlideConfig('h', 'a', 'right')}
+                                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${currentAlign === 'right' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+                              >
+                                Right
+                              </button>
+                            </div>
                           </div>
+
+                          {/* VERTICAL POSITION TUNER (Y-OFFSET) */}
+                          <div className="flex items-center justify-between bg-zinc-800/50 p-3 rounded-xl border border-white/5 mt-2">
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Vertical Position</span>
+                              <span className="text-[10px] text-zinc-500">Move block up/down</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {/* Note: We use 10px increments for Y-offset because 1px is too slow for vertical movement */}
+                              <button onClick={() => updateSlideConfig('h', 'y', currentYOffset - 10)} className="w-8 h-8 flex items-center justify-center bg-zinc-700 hover:bg-zinc-600 rounded-full text-white font-bold transition-colors">-</button>
+                              <input
+                                type="number"
+                                value={currentYOffset}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  if (!isNaN(val)) updateSlideConfig('h', 'y', val);
+                                }}
+                                className="w-14 bg-zinc-950 border border-white/10 rounded text-center text-sm font-mono text-white py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 [&::-webkit-inner-spin-button]:appearance-none appearance-none"
+                              />
+                              <button onClick={() => updateSlideConfig('h', 'y', currentYOffset + 10)} className="w-8 h-8 flex items-center justify-center bg-zinc-700 hover:bg-zinc-600 rounded-full text-white font-bold transition-colors">+</button>
+                            </div>
+                          </div>
+
                         </div>
                       )}
                     </>

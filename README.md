@@ -48,15 +48,22 @@ More body content for slide 2.
 
 Double-enter creates a new slide. Per-slide overrides are inline: `/h, s:120, a:center/ Big Title`.
 
-### 🖋 Triple-Layer Markdown Engine
+### 🖋 Multi-Font Markdown Engine
 
 - `*highlight*` → Template-aware accent (color in Minimal, block in Brutalist, link-blue in Tweet)
 - `**bold**` → Extra-heavy weight
 - `_italic_` → Italic emphasis
+- `__underline__` → Clean CSS-based underline
+- **Character Foundry**: Independently select any Google Font for **Headlines**, **Subheadings**, and **Body text**. Optimized deduped injection ensures fast loading.
 
-### 📦 ZIP Content Pack Engine
+### 📱 Focus Modal (Mobile Editor)
 
-One click generates your carousel across **all 3 templates simultaneously**, packaged into organized folders inside a single ZIP. Triple the content from a single input.
+A Figma-inspired mobile workspace that allows for per-slide precision tuning:
+
+- **Numerical Sizing**: Type exact pixel values for every primary text element.
+- **Segmented Alignment**: Toggle Horizontal alignment (Left/Center/Right) instantly.
+- **Vertical Drafting**: Micro-tune the Y-axis position with 10px increments.
+- **Live Font Preview**: Type the name of any Google Font and see it render instantly in the focus preview.
 
 ### 🔒 Privacy-First & BYOK Architecture
 
@@ -90,6 +97,8 @@ One click generates your carousel across **all 3 templates simultaneously**, pac
 - **Rigid Canvas (1080×1350)**: All slides render at a fixed 4:5 aspect ratio inside a `transform: scale()` wrapper. The DOM node is always 1080×1350px — scaling is purely visual. This guarantees pixel-perfect exports regardless of viewport size.
 - **Safe Zone Padding**: 108px padding on all sides constrains text to an 864×1134px safe zone, preventing content from being cropped on any platform.
 - **Unified Typography Model**: A single `subheading_size` property controls both H2 (subheadline) and H3 (section header) elements across all templates, with backwards-compatible support for the deprecated `subheadline_size` field.
+- **Multi-Font Orchestrator**: Uses a custom logic to merge multiple font requests into a single Google Fonts API call with full weight support (400-900 + italics), minimizing layout shift.
+- **Nested Markdown Parser**: A sequential HTML injector that allows for complex formatting combinations (e.g., ****bold + italic + underline****).
 - **Defensive Storage**: All `localStorage` operations are wrapped in try/catch to handle quota limits gracefully. Counter parsers guard against `NaN` pollution.
 
 ---
@@ -172,6 +181,7 @@ public/
 | `*text*` | Highlight accent | `This is *important*` |
 | `**text**` | Bold | `This is **critical**` |
 | `_text_` | Italic | `This is _emphasized_` |
+| `__text__` | Underline | `This is __underlined__` |
 | Double newline | New slide | *(blank line between blocks)* |
 
 ---

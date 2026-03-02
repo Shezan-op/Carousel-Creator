@@ -12,7 +12,7 @@ Navigate to the **Setup** tab (gear icon).
 |---------|-------------|
 | **Name & Handle** | Displayed on the slide footer (e.g., "Jane Doe" / "@janedoe") |
 | **Avatar** | Upload a square image — it's compressed to 256px and stored as base64 in your browser |
-| **Global Typeface** | Select from curated Google Fonts (Outfit, Inter, Montserrat, Playfair Display, Space Grotesk, Bebas Neue) |
+| **Character Foundry** | Independently select Google Fonts for **Headlines**, **Subheads**, and **Body**. Type any valid font name from [fonts.google.com](https://fonts.google.com). |
 | **Template** | Switch between Minimal, Tweet, and Brutalist visual styles |
 | **Footer Layout** | Position your branding badge: Left, Center, or Right |
 | **Profile Toggle** | Show or hide the avatar/handle on slides |
@@ -50,6 +50,7 @@ Body for slide 2.
 - `*highlight*` → Accent color (template-aware: colored text in Minimal, background block in Brutalist, link-blue in Tweet)
 - `**bold**` → Extra heavy weight
 - `_italic_` → Italic emphasis
+- `__underline__` → CSS-based underline
 
 ### Per-Slide Overrides
 
@@ -70,16 +71,14 @@ Add tuning parameters directly inside the tags:
 
 ---
 
-## 3. Use the Visual Tuner
+Below the text area (on desktop) or by tapping a slide (on mobile), you'll access the **Focus Modal / Visual Tuner**. This provides precision controls:
 
-Below the text area, you'll see the **Visual Tuner** panel. This provides slider controls for the currently active slide:
+- **Numerical Sizing** — Tap the size values and type exact pixels for H1, H2/H3, and Body.
+- **Character Foundry** — Type Google font names to see them live on the current slide.
+- **Horizontal Alignment** — Toggle Left, Center, or Right text alignment.
+- **Y-Offset (Vertical position)** — Shift the entire text block up or down in 10px increments.
 
-- **Headline** — Adjust the H1 font size
-- **Subhead** — Adjust the H2/H3 font size
-- **Body** — Adjust the body text size
-- **Y-Offset** — Shift all text up or down
-
-> **How it works:** Moving a slider automatically injects the correct syntax (e.g., `s:120`) into your bulk text. No manual typing needed.
+> **How it works:** Moving these controls automatically handles the complex tag-based syntax (e.g., `/h, s:120, a:center, y:-20/`) in your bulk text. No manual typing needed.
 
 ---
 

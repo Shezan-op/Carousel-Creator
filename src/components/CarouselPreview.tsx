@@ -9,7 +9,9 @@ interface Props {
     authorName: string;
     authorHandle: string;
     authorAvatar: string | null;
-    fontFamily: string;
+    headingFont: string;
+    subheadingFont: string;
+    bodyFont: string;
     activeTemplate: string;
     setActiveTemplate: (template: string) => void;
     previewScale: number;
@@ -30,7 +32,7 @@ interface Props {
 
 
 const CarouselPreview: React.FC<Props> = ({
-    data, authorName, authorHandle, authorAvatar, fontFamily,
+    data, authorName, authorHandle, authorAvatar, headingFont, subheadingFont, bodyFont,
     activeTemplate, setActiveTemplate, onDeleteSlide, onMoveSlide, previewScale, showProfile, footerLayout,
     textAlign, noiseOpacity, customBgImage,
     activePreviewSlideIndex, setActivePreviewSlideIndex,
@@ -48,8 +50,14 @@ const CarouselPreview: React.FC<Props> = ({
     const effectiveScale = isMobile ? (window.innerWidth - 64) / 1080 : previewScale;
 
     useEffect(() => {
-        if (!fontFamily) return;
-        const formattedName = fontFamily.replace(/\s+/g, '+');
+        const uniqueFonts = Array.from(new Set([headingFont, subheadingFont, bodyFont])).filter(Boolean);
+        if (uniqueFonts.length === 0) return;
+
+        const fontFamilies = uniqueFonts.map(font =>
+            `family=${font.replace(/\s+/g, '+')}:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900`
+        ).join('&');
+
+        const fontUrl = `https://fonts.googleapis.com/css2?${fontFamilies}&display=swap`;
         const linkId = 'google-font-injection';
         let link = document.getElementById(linkId) as HTMLLinkElement;
 
@@ -60,8 +68,10 @@ const CarouselPreview: React.FC<Props> = ({
             document.head.appendChild(link);
         }
 
-        link.href = `https://fonts.googleapis.com/css2?family=${formattedName}:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800;1,900&display=swap`;
-    }, [fontFamily]);
+        if (link.href !== fontUrl) {
+            link.href = fontUrl;
+        }
+    }, [headingFont, subheadingFont, bodyFont]);
 
     // RULES OF HOOKS: useMemo must be called unconditionally, before any early returns.
     const accentColor = data?.theme.accent || '#3B82F6';
@@ -127,7 +137,6 @@ const CarouselPreview: React.FC<Props> = ({
                             transformOrigin: 'top left',
                             backgroundColor: data.theme.background,
                             color: data.theme.text,
-                            fontFamily: fontFamily || 'Inter',
                             position: 'absolute',
                             top: 0,
                             left: 0,
@@ -193,6 +202,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 1. THE HEADLINE LAYER */}
                                     {slide.headline && (
                                         <h1 style={{
+                                            fontFamily: `"${headingFont}", sans-serif`,
                                             fontSize: `${slide.heading_size || 110}px`,
                                             fontWeight: '900',
                                             lineHeight: '1.1',
@@ -206,6 +216,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
                                     {slide.subheadline && (
                                         <h2 style={{
+                                            fontFamily: `"${subheadingFont}", sans-serif`,
                                             fontSize: `${slide.subheading_size || 45}px`,
                                             fontWeight: '600',
                                             opacity: 0.8,
@@ -219,6 +230,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
                                     {slide.subheading && (
                                         <h3 style={{
+                                            fontFamily: `"${subheadingFont}", sans-serif`,
                                             fontSize: `${slide.subheading_size || 45}px`,
                                             fontWeight: '700',
                                             marginTop: '24px',
@@ -232,6 +244,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 4. THE BODY LAYER */}
                                     {slide.body && (
                                         <p style={{
+                                            fontFamily: `"${bodyFont}", sans-serif`,
                                             fontSize: `${slide.body_size || 35}px`,
                                             fontWeight: '500',
                                             lineHeight: '1.4',
@@ -272,7 +285,7 @@ const CarouselPreview: React.FC<Props> = ({
                                                 ) : (
                                                     <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
                                                 )}
-                                                <span style={{ fontSize: '40px', fontWeight: '600', opacity: 0.9 }}>{authorHandle || '@creator'}</span>
+                                                <span style={{ fontFamily: `"${bodyFont}", sans-serif`, fontSize: '40px', fontWeight: '600', opacity: 0.9 }}>{authorHandle || '@creator'}</span>
                                             </>
                                         )}
                                     </div>
@@ -316,6 +329,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 1. THE HEADLINE LAYER */}
                                     {slide.headline && (
                                         <h1 style={{
+                                            fontFamily: `"${headingFont}", sans-serif`,
                                             fontSize: `${slide.heading_size || 110}px`,
                                             fontWeight: '900',
                                             lineHeight: '1.15',
@@ -330,6 +344,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
                                     {slide.subheadline && (
                                         <h2 style={{
+                                            fontFamily: `"${subheadingFont}", sans-serif`,
                                             fontSize: `${slide.subheading_size || 45}px`,
                                             fontWeight: '600',
                                             opacity: 0.8,
@@ -356,6 +371,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 4. THE BODY LAYER */}
                                     {slide.body && (
                                         <p style={{
+                                            fontFamily: `"${bodyFont}", sans-serif`,
                                             fontSize: `${slide.body_size || 35}px`,
                                             fontWeight: '500',
                                             lineHeight: '1.35',
@@ -393,7 +409,7 @@ const CarouselPreview: React.FC<Props> = ({
                                                 }}>
                                                     {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
                                                 </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', fontFamily: `"${bodyFont}", sans-serif` }}>
                                                     <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
                                                     <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
                                                 </div>
@@ -444,7 +460,7 @@ const CarouselPreview: React.FC<Props> = ({
                                         }}>
                                             {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                                         </div>
-                                        <div style={{ flex: 1 }}>
+                                        <div style={{ flex: 1, fontFamily: `"${bodyFont}", sans-serif` }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                 <span style={{ fontSize: '50px', fontWeight: '800' }}>{authorName}</span>
                                                 <div style={{
@@ -473,22 +489,22 @@ const CarouselPreview: React.FC<Props> = ({
                                     textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign']
                                 }}>
                                     {slide.headline && (
-                                        <div style={{ fontSize: `${slide.heading_size || 110}px`, fontWeight: '800', lineHeight: '1.2' }}>
+                                        <div style={{ fontFamily: `"${headingFont}", sans-serif`, fontSize: `${slide.heading_size || 110}px`, fontWeight: '800', lineHeight: '1.2' }}>
                                             {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent)}
                                         </div>
                                     )}
                                     {slide.subheadline && (
-                                        <div style={{ fontSize: `${slide.subheading_size || 45}px`, fontWeight: '600', opacity: 0.8 }}>
+                                        <div style={{ fontFamily: `"${subheadingFont}", sans-serif`, fontSize: `${slide.subheading_size || 45}px`, fontWeight: '600', opacity: 0.8 }}>
                                             {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent)}
                                         </div>
                                     )}
                                     {slide.subheading && (
-                                        <div style={{ fontSize: `${slide.subheading_size || 45}px`, fontWeight: '700', color: data.theme.accent, marginBottom: '4px' }}>
+                                        <div style={{ fontFamily: `"${subheadingFont}", sans-serif`, fontSize: `${slide.subheading_size || 45}px`, fontWeight: '700', color: data.theme.accent, marginBottom: '4px' }}>
                                             {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent)}
                                         </div>
                                     )}
                                     {slide.body && (
-                                        <div style={{ fontSize: `${slide.body_size || 35}px`, fontWeight: '400', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
+                                        <div style={{ fontFamily: `"${bodyFont}", sans-serif`, fontSize: `${slide.body_size || 35}px`, fontWeight: '400', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
                                             {renderHighlightedText(slide.body, activeTemplate, data.theme.accent)}
                                         </div>
                                     )}
@@ -531,6 +547,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 1. THE HEADLINE LAYER */}
                                     {slide.headline && (
                                         <h1 style={{
+                                            fontFamily: `"${headingFont}", sans-serif`,
                                             fontSize: `${slide.heading_size || 110}px`,
                                             fontWeight: '900',
                                             lineHeight: '0.95',
@@ -545,6 +562,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
                                     {slide.subheadline && (
                                         <h2 style={{
+                                            fontFamily: `"${subheadingFont}", sans-serif`,
                                             fontSize: `${slide.subheading_size || 45}px`,
                                             fontWeight: '600',
                                             opacity: 0.8,
@@ -558,6 +576,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
                                     {slide.subheading && (
                                         <h3 style={{
+                                            fontFamily: `"${subheadingFont}", sans-serif`,
                                             fontSize: `${slide.subheading_size || 45}px`,
                                             fontWeight: '900',
                                             marginBottom: '15px',
@@ -572,6 +591,7 @@ const CarouselPreview: React.FC<Props> = ({
                                     {/* 4. THE BODY LAYER */}
                                     {slide.body && (
                                         <p style={{
+                                            fontFamily: `"${bodyFont}", sans-serif`,
                                             fontSize: `${slide.body_size || 35}px`,
                                             fontWeight: '900',
                                             lineHeight: '0.95',
@@ -611,7 +631,7 @@ const CarouselPreview: React.FC<Props> = ({
     }, [
         data, accentColor, activeTemplate,
         authorName, authorHandle, authorAvatar, showProfile, footerLayout,
-        fontFamily, effectiveScale,
+        headingFont, subheadingFont, bodyFont, effectiveScale,
         onDeleteSlide, onMoveSlide,
         textAlign, noiseOpacity, customBgImage,
         activePreviewSlideIndex, setActivePreviewSlideIndex, setFocusedSlideIndex

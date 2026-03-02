@@ -86,8 +86,12 @@ interface Props {
     setAuthorHandle: (val: string) => void;
     authorAvatar: string | null;
     setAuthorAvatar: (val: string | null) => void;
-    fontFamily: string;
-    setFontFamily: (val: string) => void;
+    headingFont: string;
+    setHeadingFont: (val: string) => void;
+    subheadingFont: string;
+    setSubheadingFont: (val: string) => void;
+    bodyFont: string;
+    setBodyFont: (val: string) => void;
     activeTemplate: string;
     setActiveTemplate: (val: string) => void;
     previewScale: number;
@@ -116,7 +120,8 @@ interface Props {
 const LeftPane: React.FC<Props> = (props) => {
     const {
         setCarouselData, openRouterKey, setOpenRouterKey, authorName, setAuthorName, authorHandle, setAuthorHandle,
-        authorAvatar, setAuthorAvatar, fontFamily, setFontFamily, activeTemplate, setActiveTemplate,
+        authorAvatar, setAuthorAvatar, headingFont, setHeadingFont, subheadingFont, setSubheadingFont,
+        bodyFont, setBodyFont, activeTemplate, setActiveTemplate,
         previewScale, setPreviewScale, customTheme, applyCustomTheme, showProfile, setShowProfile,
         footerLayout, setFooterLayout, textAlign, setTextAlign,
         noiseOpacity, setNoiseOpacity, customBgImage, setCustomBgImage,
@@ -527,15 +532,38 @@ const LeftPane: React.FC<Props> = (props) => {
                             </summary>
                             <div className="p-6 space-y-6 border-t border-white/5">
                                 <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Global Typeface</label>
-                                        <select
-                                            className="w-full bg-black/60 border border-white/5 rounded-xl p-4 text-xs font-bold text-zinc-300 outline-none focus:ring-1 focus:ring-white/20 appearance-none shadow-inner"
-                                            value={fontFamily} onChange={(e) => setFontFamily(e.target.value)}
-                                        >
-                                            {['Outfit', 'Inter', 'Montserrat', 'Playfair Display', 'Space Grotesk', 'Bebas Neue'].map(f => <option key={f} value={f}>{f}</option>)}
-                                        </select>
+                                    <label className="text-[10px] uppercase font-bold text-zinc-600 tracking-widest pl-1 block mb-2">Character Foundry</label>
+                                    <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-white/5">
+                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest w-20">Heading</span>
+                                        <input
+                                            type="text"
+                                            value={headingFont}
+                                            onChange={(e) => setHeadingFont(e.target.value)}
+                                            placeholder="e.g. Playfair Display"
+                                            className="flex-1 bg-zinc-950 border border-white/5 rounded-lg text-xs text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-white/20"
+                                        />
                                     </div>
+                                    <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-white/5">
+                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest w-20">Subhead</span>
+                                        <input
+                                            type="text"
+                                            value={subheadingFont}
+                                            onChange={(e) => setSubheadingFont(e.target.value)}
+                                            placeholder="e.g. Montserrat"
+                                            className="flex-1 bg-zinc-950 border border-white/5 rounded-lg text-xs text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-white/20"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-white/5">
+                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest w-20">Body</span>
+                                        <input
+                                            type="text"
+                                            value={bodyFont}
+                                            onChange={(e) => setBodyFont(e.target.value)}
+                                            placeholder="e.g. Inter"
+                                            className="flex-1 bg-zinc-950 border border-white/5 rounded-lg text-xs text-white px-3 py-2 focus:outline-none focus:ring-1 focus:ring-white/20"
+                                        />
+                                    </div>
+                                    <p className="text-[9px] text-zinc-600 text-center">Type any Google Font name exactly (e.g., "Oswald", "Lora").</p>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase text-blue-400 tracking-[0.3em] flex items-center gap-2">
                                             <Layout size={12} /> Visual Motifs
