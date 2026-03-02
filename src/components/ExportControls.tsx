@@ -10,46 +10,21 @@ interface Props {
     data: CarouselData;
     activeTemplate: string;
     setActiveTemplate: (template: string) => void;
+    isUnlocked: boolean;
+    hasGivenFeedback: boolean;
 }
 
-const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTemplate }) => {
+const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTemplate, isUnlocked, hasGivenFeedback }) => {
     const [exportType, setExportType] = useState<'pdf' | 'zip' | null>(null);
-    const [showLeadModal, setShowLeadModal] = useState(false);
-    const [userEmail, setUserEmail] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitError, setSubmitError] = useState<string | null>(null);
-
-    const checkExportLimit = () => {
-        // 1. Check if already unlocked
-        const isUnlocked = localStorage.getItem('carousel_unlocked') === 'true';
-        if (isUnlocked) return true;
-
-        // 2. Check today's usage
-        // SEC: Use UTC date to prevent timezone-manipulation bypass
-        const today = new Date().toISOString().slice(0, 10);
-        const lastExportDate = localStorage.getItem('carousel_export_date');
-        let exportCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
-        if (isNaN(exportCount)) exportCount = 0;
-
-        // Reset count if it's a new day
-        if (lastExportDate !== today) {
-            exportCount = 0;
-            localStorage.setItem('carousel_export_date', today);
-        }
-
-        // 3. Block if limit reached
-        if (exportCount >= 5) {
-            setShowLeadModal(true);
-            return false;
-        }
-
-        // 4. Allow export and increment
-        localStorage.setItem('carousel_export_count', (exportCount + 1).toString());
-        return true;
-    };
 
     const exportToPDF = async () => {
-        if (!checkExportLimit()) return;
+        const currentCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
+        if (currentCount >= 3 && !isUnlocked) {
+            // @ts-expect-error - Tally from global script
+            if (window.Tally) window.Tally.openPopup('MeA7bM', { layout: 'modal', autoClose: 3000, formEventsForwarding: 1 });
+            return; // Block the export
+        }
+
         // FONT EXPORT SAFETY: Wait for all fonts to load before capturing
         await document.fonts.ready;
 
@@ -83,6 +58,18 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             }
 
             pdf.save('carousel.pdf');
+
+            // 1. Increment Count
+            let updatedCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
+            if (isNaN(updatedCount)) updatedCount = 0;
+            updatedCount += 1;
+            localStorage.setItem('carousel_export_count', updatedCount.toString());
+
+            // 2. The Feedback Loop (Ask on 1st export if not given)
+            if (updatedCount === 1 && !hasGivenFeedback) {
+                // @ts-expect-error - Tally from global script
+                if (window.Tally) window.Tally.openPopup('zxK1DR', { layout: 'modal', autoClose: 0, formEventsForwarding: 1 });
+            }
         } catch {
             console.error('Export Error: PDF generation failed.');
             alert('Failed to export PDF.');
@@ -92,7 +79,13 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
     };
 
     const exportToZip = async () => {
-        if (!checkExportLimit()) return;
+        const currentCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
+        if (currentCount >= 3 && !isUnlocked) {
+            // @ts-expect-error - Tally from global script
+            if (window.Tally) window.Tally.openPopup('MeA7bM', { layout: 'modal', autoClose: 3000, formEventsForwarding: 1 });
+            return; // Block the export
+        }
+
         setExportType('zip');
         const originalTemplate = activeTemplate;
 
@@ -131,6 +124,18 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             const content = await zip.generateAsync({ type: 'blob' });
             saveAs(content, `Carousel_Content_Pack_${data.slides.length}.zip`);
 
+            // 1. Increment Count
+            let updatedCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
+            if (isNaN(updatedCount)) updatedCount = 0;
+            updatedCount += 1;
+            localStorage.setItem('carousel_export_count', updatedCount.toString());
+
+            // 2. The Feedback Loop (Ask on 1st export if not given)
+            if (updatedCount === 1 && !hasGivenFeedback) {
+                // @ts-expect-error - Tally from global script
+                if (window.Tally) window.Tally.openPopup('zxK1DR', { layout: 'modal', autoClose: 0, formEventsForwarding: 1 });
+            }
+
         } catch (error) {
             console.error("ZIP Export failed", error);
             alert('ZIP Export failed. Please try again.');
@@ -138,54 +143,6 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             // STABILITY: Always revert the template, even on error
             setActiveTemplate(originalTemplate);
             setExportType(null);
-        }
-    };
-
-    const handleEmailSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!userEmail) return;
-        setSubmitError(null);
-
-        // SEC: Basic email format validation (client-side deterrent)
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(userEmail)) {
-            setSubmitError('Please enter a valid email address.');
-            return;
-        }
-
-        // SEC: Client-side rate limiter — 30s cooldown between submissions
-        const RATE_LIMIT_KEY = 'email_submit_ts';
-        const RATE_LIMIT_MS = 30_000;
-        const lastSubmit = parseInt(localStorage.getItem(RATE_LIMIT_KEY) || '0', 10);
-        if (Date.now() - lastSubmit < RATE_LIMIT_MS) {
-            setSubmitError('Please wait a moment before submitting again.');
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL
-                || 'https://script.google.com/macros/s/AKfycbzSTejTd1NMUnWwF6NAK8Mmq6EmxNmddflmAaBG2dWORSeZ-HAO_TvTKjtihRkzU-LnCg/exec';
-
-            localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
-
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors', // Critical for Google Apps Script
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ email: userEmail.trim() })
-            });
-
-            // SUCCESS: Unlock the app permanently
-            localStorage.setItem('carousel_unlocked', 'true');
-            setShowLeadModal(false);
-
-        } catch {
-            console.error('Failed to save lead');
-            // FAIL: Do NOT unlock — show inline error in modal
-            setSubmitError('Failed to save. Please check your connection and try again.');
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -219,47 +176,6 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
                     <span>Download ZIP (X / Instagram)</span>
                 </button>
             </div>
-
-            {showLeadModal && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 pointer-events-auto">
-                    <div className="bg-zinc-950 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl relative flex flex-col items-center text-center">
-                        <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6">
-                            <span className="text-blue-500 text-3xl">🚀</span>
-                        </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">You're crushing it.</h2>
-                        <p className="text-zinc-400 mb-8 leading-relaxed">
-                            You've reached your limit of 5 free exports for today. Enter your email to unlock <strong className="text-white">unlimited lifetime exports</strong> for free while we're in Beta.
-                        </p>
-
-                        <form onSubmit={handleEmailSubmit} className="w-full flex flex-col gap-4">
-                            <input
-                                type="email"
-                                required
-                                placeholder="founder@startup.com"
-                                value={userEmail}
-                                onChange={(e) => { setUserEmail(e.target.value); setSubmitError(null); }}
-                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
-                            />
-                            {submitError && (
-                                <p className="text-red-400 text-xs font-medium bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{submitError}</p>
-                            )}
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="w-full bg-white text-black font-bold rounded-xl px-4 py-4 hover:bg-zinc-200 transition-colors disabled:opacity-50 flex justify-center items-center"
-                            >
-                                {isSubmitting ? 'Unlocking...' : 'Unlock Unlimited Exports'}
-                            </button>
-                        </form>
-                        <button
-                            onClick={() => setShowLeadModal(false)}
-                            className="mt-6 text-xs text-zinc-500 hover:text-white transition-colors"
-                        >
-                            I'll just wait until tomorrow
-                        </button>
-                    </div>
-                </div>
-            )}
         </>
     );
 };

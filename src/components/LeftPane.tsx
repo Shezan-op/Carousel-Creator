@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { CarouselData, Slide } from '../types';
 import {
     Sparkles, Code, Settings, ListTree, RotateCcw,
-    Trash2, Loader2, Heart, AlignLeft, AlignCenter,
-    AlignRight, Palette, Type, Layout, User,
-    Layers, Zap, Image as ImageIcon, CheckCircle2
+    Trash2, Loader2, Heart, Palette, Type, Layout, User,
+    Zap, Image as ImageIcon, CheckCircle2
 } from 'lucide-react';
 
 const MAX_SLIDES = 50;
@@ -106,6 +105,12 @@ interface Props {
     customBgImage: string | null;
     setCustomBgImage: (val: string | null) => void;
     activePreviewSlideIndex: number;
+    bulkText: string;
+    setBulkText: (val: string) => void;
+    compileBulkText: (text: string) => void;
+    injectOverride: (index: number, tag: string, key: string, value: string | number) => void;
+    getOverride: (index: number, key: string, def: number) => number;
+    setFocusedSlideIndex: (index: number | null) => void;
 }
 
 const LeftPane: React.FC<Props> = (props) => {
@@ -114,28 +119,18 @@ const LeftPane: React.FC<Props> = (props) => {
         authorAvatar, setAuthorAvatar, fontFamily, setFontFamily, activeTemplate, setActiveTemplate,
         previewScale, setPreviewScale, customTheme, applyCustomTheme, showProfile, setShowProfile,
         footerLayout, setFooterLayout, textAlign, setTextAlign,
-        noiseOpacity, setNoiseOpacity, customBgImage, setCustomBgImage, activePreviewSlideIndex
+        noiseOpacity, setNoiseOpacity, customBgImage, setCustomBgImage,
+        bulkText, setBulkText, compileBulkText
     } = props;
 
     const [activeTab, setActiveTab] = useState<'auto' | 'bulk' | 'json' | 'setup'>('bulk');
     const [jsonInput, setJsonInput] = useState('');
     const [rawInput, setRawInput] = useState('');
-    const [bulkText, setBulkText] = useState(() => localStorage.getItem('lastBulkText') || '');
+    // bulkText is now a prop
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiModel, setAiModel] = useState<'free' | 'pro'>('free');
     const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        try { localStorage.setItem('lastBulkText', bulkText); } catch { /* quota */ }
-    }, [bulkText]);
-
-    // CRITICAL FIX: Compile any saved bulk text on first render so slides appear immediately
-    useEffect(() => {
-        if (bulkText.trim()) {
-            compileBulkText(bulkText);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    const [showGuide, setShowGuide] = useState(false);
 
     // Auto-clear errors after 5 seconds
     useEffect(() => {
@@ -144,146 +139,6 @@ const LeftPane: React.FC<Props> = (props) => {
             return () => clearTimeout(t);
         }
     }, [error]);
-
-    // ── BULLETPROOF REGEX PARSER ──────────────────────────────────────────────
-    // Handles combined options like /h, s:120, a:center/ or /sh, b_s:40/ cleanly.
-    const compileBulkText = (text: string) => {
-        const rawSlides = text.split(/\n\s*\n/).filter(s => s.trim());
-
-        const slides = rawSlides.map((rawSlide, index) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const slideObj: any = {
-                slide_number: index + 1,
-                type: index === 0 ? 'title' : 'content'
-            };
-
-            const lines = rawSlide.split('\n').filter(l => l.trim());
-            const bodyLines: string[] = [];
-
-            lines.forEach(line => {
-                // Matches lines starting with /something/ and captures the config and the content
-                const match = line.match(/^\/([^/]+)\/\s*(.*)$/);
-
-                if (match) {
-                    const configString = match[1].toLowerCase(); // e.g., "h", "h, s:120", "sh, a:center"
-                    const content = match[2];
-
-                    const parts = configString.split(',').map(p => p.trim());
-                    const type = parts[0]; // "h" or "sh"
-
-                    // Extract parameters
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const options: any = {};
-                    parts.slice(1).forEach(opt => {
-                        const [k, v] = opt.split(':').map(x => x?.trim());
-                        if (!k || !v) return;
-                        if (k === 's') options.heading_size = parseInt(v);
-                        if (k === 'sh_s') options.subheading_size = parseInt(v);
-                        if (k === 'b_s') options.body_size = parseInt(v);
-                        if (k === 'y') options.y_offset = parseInt(v);
-                        if (k === 'a') options.text_align = v;
-                    });
-
-                    // Assign to proper layer based ONLY on "h" or "sh"
-                    if (type === 'h') {
-                        slideObj.headline = content;
-                        Object.assign(slideObj, options);
-                    } else if (type === 'sh') {
-                        // Use subheadline for slide 1 (title), subheading for others
-                        if (slideObj.type === 'title') slideObj.subheadline = content;
-                        else slideObj.subheading = content;
-                        Object.assign(slideObj, options);
-                    } else if (type === 'config') {
-                        // Config-only tag — apply options to the slide without adding content
-                        Object.assign(slideObj, options);
-                    } else {
-                        // Unknown tag — strip the tag and treat content as body
-                        if (content) bodyLines.push(content);
-                    }
-                } else {
-                    // No /tags/, this is standard body text
-                    bodyLines.push(line);
-                }
-            });
-
-            if (bodyLines.length > 0) slideObj.body = bodyLines.join('\n');
-            return slideObj as Slide;
-        });
-
-        if (slides.length > 0) {
-            setCarouselData(prev => ({
-                theme: prev?.theme || { background: '#09090B', text: '#FAFAFA', accent: '#F59E0B' },
-                slides: slides
-            }));
-        } else {
-            setCarouselData(null);
-        }
-    };
-
-    // ── ROBUST CONFIG UPDATER ─────────────────────────────────────────────────
-    // Updates or injects a single key:value into the config tag of the active slide's
-    // heading line (/h/ or /sh/). Prevents key duplication on repeated calls.
-    const updateSlideConfig = (targetBlock: string, key: string, value: string | number): string => {
-        const lines = targetBlock.split(/\r?\n/);
-
-        // Find the first tagged line — heading takes priority, then subheading
-        const tagLineIndex = lines.findIndex(l => /^\/([^/]+)\//.test(l.trim()));
-
-        if (tagLineIndex !== -1) {
-            const line = lines[tagLineIndex].trim();
-            const match = line.match(/^\/([^/]+)\/\s*(.*)$/);
-            if (match) {
-                const configBody = match[1]; // everything inside the slashes
-                const content = match[2];
-                const parts = configBody.split(',').map(s => s.trim());
-                const tag = parts[0]; // "h" or "sh"
-
-                // Remove existing occurrence of this key to prevent duplication
-                const filteredOptions = parts.slice(1).filter(o => !o.startsWith(`${key}:`));
-                filteredOptions.push(`${key}:${value}`);
-
-                lines[tagLineIndex] = `/${[tag, ...filteredOptions].join(', ')}/ ${content}`;
-            }
-        } else {
-            // No tagged line found — insert a neutral config-only tag that won't alter content
-            const firstContentLine = lines.findIndex(l => l.trim().length > 0);
-            if (firstContentLine !== -1) {
-                // Insert a standalone config line BEFORE the first content line
-                lines.splice(firstContentLine, 0, `/config, ${key}:${value}/`);
-            } else {
-                lines.push(`/config, ${key}:${value}/`);
-            }
-        }
-
-        return lines.join('\n');
-    };
-
-    const injectOverride = (key: string, value: string | number) => {
-        const contentBlocks = bulkText.split(/\n\s*\n/).filter(b => b.trim().length > 0);
-        if (activePreviewSlideIndex >= contentBlocks.length) return;
-
-        const updatedBlock = updateSlideConfig(contentBlocks[activePreviewSlideIndex], key, value);
-        contentBlocks[activePreviewSlideIndex] = updatedBlock;
-
-        const newText = contentBlocks.join('\n\n');
-        setBulkText(newText);
-        compileBulkText(newText);
-    };
-
-    const getOverride = (key: string, def: number): number => {
-        const contentBlocks = bulkText.split(/\n\s*\n/).filter(b => b.trim().length > 0);
-        const block = contentBlocks[activePreviewSlideIndex];
-        if (!block) return def;
-        const match = block.match(/^\/([^/]+)\//m);
-        if (!match) return def;
-        const options = match[1].split(',').map(s => s.trim());
-        const found = options.find(o => o.startsWith(`${key}:`));
-        if (found) {
-            const v = parseInt(found.split(':')[1]);
-            return isNaN(v) ? def : v;
-        }
-        return def;
-    };
 
     const generateNarrative = async () => {
         if (!openRouterKey || !rawInput) return setError('Key and prompt required');
@@ -320,6 +175,24 @@ const LeftPane: React.FC<Props> = (props) => {
         finally { setIsGenerating(false); }
     };
 
+    const applyFormatting = (prefix: string, suffix: string) => {
+        const textarea = document.getElementById('bulk-textarea') as HTMLTextAreaElement;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = bulkText.substring(start, end);
+
+        const newText = bulkText.substring(0, start) + prefix + selectedText + suffix + bulkText.substring(end);
+
+        setBulkText(newText);
+        // refocus the textarea after state updates
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+        }, 0);
+    };
+
     const palettes = [
         { name: 'Night', bg: '#0A0A0B', text: '#FFFFFF', accent: '#3B82F6' },
         { name: 'Ghost', bg: '#FFFFFF', text: '#111111', accent: '#6366F1' },
@@ -335,34 +208,46 @@ const LeftPane: React.FC<Props> = (props) => {
         { name: 'Neon', bg: '#000000', text: '#00FF88', accent: '#00FF88' },
     ];
 
-    // Hardcoded sensible defaults for the per-slide tuner (mirrors CarouselPreview fallbacks)
-    const DEFAULT_HEADING_SIZE = 110;
-    const DEFAULT_SUBHEADING_SIZE = 45;
-    const DEFAULT_BODY_SIZE = 35;
-    const DEFAULT_Y_OFFSET = 0;
 
     return (
-        <div className="flex flex-col h-full gap-6 select-none">
-            {/* ── PREMIUM TABS ── */}
-            <div className="flex p-1.5 bg-zinc-950/80 rounded-2xl border border-white/5 shadow-inner">
-                {[
-                    { id: 'auto', icon: Sparkles, label: 'Auto' },
-                    { id: 'bulk', icon: ListTree, label: 'Bulk' },
-                    { id: 'json', icon: Code, label: 'JSON' },
-                    { id: 'setup', icon: Settings, label: 'Setup' }
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as 'auto' | 'bulk' | 'json' | 'setup')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${activeTab === tab.id ? 'bg-white text-black shadow-2xl scale-[1.02]' : 'text-zinc-500 hover:text-zinc-300'}`}
-                    >
-                        <tab.icon size={12} strokeWidth={3} />
-                        <span className="hidden lg:inline">{tab.label}</span>
-                    </button>
-                ))}
+        <div className="flex flex-col h-full lg:h-screen bg-zinc-950 border-r border-white/10 select-none overflow-hidden">
+            {/* Header Area — Fixed */}
+            <div className="p-6 pb-0 shrink-0">
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-white/5 p-1.5 flex items-center justify-center shadow-2xl">
+                            <img src="/Logo.png" className="w-full h-full object-contain" alt="Carousel Creator Logo" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-black tracking-tighter font-display bg-gradient-to-br from-white to-zinc-500 bg-clip-text text-transparent">
+                                CAROUSEL <span className="text-zinc-600 font-light italic">CREATOR</span>
+                            </h1>
+                            <p className="text-[9px] text-zinc-500 uppercase tracking-[0.3em] font-bold">Fast. Clean. Professional.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 flex flex-col gap-6">
+            {/* Scrollable Middle Section */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-6">
+                {/* ── PREMIUM TABS ── */}
+                <div className="flex p-1.5 bg-zinc-950/80 rounded-2xl border border-white/5 shadow-inner shrink-0">
+                    {[
+                        { id: 'auto', icon: Sparkles, label: 'Auto' },
+                        { id: 'bulk', icon: ListTree, label: 'Bulk' },
+                        { id: 'json', icon: Code, label: 'JSON' },
+                        { id: 'setup', icon: Settings, label: 'Setup' }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as 'auto' | 'bulk' | 'json' | 'setup')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${activeTab === tab.id ? 'bg-white text-black shadow-2xl scale-[1.02]' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            <tab.icon size={12} strokeWidth={3} />
+                            <span className="hidden lg:inline">{tab.label}</span>
+                        </button>
+                    ))}
+                </div>
 
                 {activeTab === 'auto' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
@@ -426,11 +311,31 @@ const LeftPane: React.FC<Props> = (props) => {
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center px-2">
                                     <label className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em]">Bulk Content Engine</label>
-                                    <button onClick={() => { setBulkText(''); setCarouselData(null); }} className="bg-zinc-800 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 border border-white/10 px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1">
-                                        <Trash2 size={10} /> Clear
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setBulkText("/h, s: 120, a: center/ **SaaS Builder** Guide\n/sh/ How to go from 0 to _10k MRR_ in 90 days\n\n/h/ The *Hard* Truth\nBuilding is the easy part. \nDistribution is where most founders fail.\nYou need a system, not just a product.\n\n/sh, sh_s: 60, a: right/ Why Carousels?\n/body, b_s: 40/ 1. High engagement\n2. Easy to digest\n3. Perfect for **educational** content.\n\n/h, s: 90, a: center/ Want the **Blueprint**?\n/sh/ I'm launching the full guide next week.\nFollow for the _early access_ link.")}
+                                            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-400 border border-white/5 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all"
+                                        >
+                                            Example
+                                        </button>
+                                        <button onClick={() => { setBulkText(''); setCarouselData(null); }} className="bg-zinc-800 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 border border-white/10 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1">
+                                            Clear
+                                        </button>
+                                    </div>
                                 </div>
+
+                                <div className="flex items-center justify-between mb-2">
+                                    {/* Markdown Formatting Toolbar */}
+                                    <div className="flex items-center gap-1 bg-zinc-900 border border-white/10 rounded-md p-1">
+                                        <button onClick={() => applyFormatting('**', '**')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded font-bold transition-colors" title="Bold (**)">&nbsp;B&nbsp;</button>
+                                        <button onClick={() => applyFormatting('_', '_')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded italic transition-colors" title="Italic (_)">I</button>
+                                        <button onClick={() => applyFormatting('__', '__')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded underline transition-colors" title="Underline (__)">U</button>
+                                        <button onClick={() => applyFormatting('*', '*')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors" title="Highlight (*)">🖍️</button>
+                                    </div>
+                                </div>
+
                                 <textarea
+                                    id="bulk-textarea"
                                     value={bulkText}
                                     onChange={(e) => { setBulkText(e.target.value); compileBulkText(e.target.value); }}
                                     placeholder={`/h/ My Headline\n/sh/ My Subheading\nBody text goes here\n\n/h/ Slide 2 Headline\nMore body text`}
@@ -439,49 +344,6 @@ const LeftPane: React.FC<Props> = (props) => {
                                 />
                             </div>
 
-                            {bulkText && (
-                                <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[28px] space-y-6 group">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                                            <span className="text-[10px] font-black uppercase text-blue-400 tracking-widest">SLIDE {activePreviewSlideIndex + 1} TUNER</span>
-                                        </div>
-                                        <div className="flex gap-1.5">
-                                            {['left', 'center', 'right'].map(a => {
-                                                const currentAlign = bulkText.split(/\n\s*\n/).filter(b => b.trim().length > 0)[activePreviewSlideIndex]?.match(/a:(\w+)/)?.[1];
-                                                return (
-                                                    <button key={a} onClick={() => injectOverride('a', a)} className={`p-1 transition-colors ${currentAlign === a ? 'text-blue-400' : 'text-zinc-600 hover:text-white'}`}>
-                                                        {a === 'left' && <AlignLeft size={14} />}
-                                                        {a === 'center' && <AlignCenter size={14} />}
-                                                        {a === 'right' && <AlignRight size={14} />}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                                        {[
-                                            { label: 'Headline', key: 's', def: DEFAULT_HEADING_SIZE },
-                                            { label: 'Subhead', key: 'sh_s', def: DEFAULT_SUBHEADING_SIZE },
-                                            { label: 'Body', key: 'b_s', def: DEFAULT_BODY_SIZE },
-                                            { label: 'Y-Offset', key: 'y', def: DEFAULT_Y_OFFSET }
-                                        ].map(s => (
-                                            <div key={s.key} className="space-y-1">
-                                                <div className="flex justify-between text-[8px] font-black tracking-widest text-zinc-600 uppercase">
-                                                    <span>{s.label}</span>
-                                                    <span>{getOverride(s.key, s.def)}px</span>
-                                                </div>
-                                                <input
-                                                    type="range" min={s.key === 'y' ? -500 : 12} max={s.key === 'y' ? 500 : 250}
-                                                    value={getOverride(s.key, s.def)}
-                                                    onChange={(e) => injectOverride(s.key, Number(e.target.value))}
-                                                    className="w-full h-1 bg-zinc-900 rounded-full appearance-none cursor-pointer accent-white"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 )}
@@ -529,219 +391,232 @@ const LeftPane: React.FC<Props> = (props) => {
                 )}
 
                 {activeTab === 'setup' && (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8 pb-24">
-                        <div className="rounded-[24px] p-6 space-y-6 bg-white/[0.02] border border-white/[0.04]">
-                            <h3 className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 tracking-[0.3em]">
-                                <User size={12} /> Creator Manuscript
-                            </h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[9px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Name</label>
-                                    <input className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-white focus:ring-1 focus:ring-white/20" value={authorName} onChange={(e) => setAuthorName(e.target.value)} />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[9px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Handle / ID</label>
-                                    <input className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-white focus:ring-1 focus:ring-white/20" value={authorHandle} onChange={(e) => setAuthorHandle(e.target.value)} />
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-6 p-5 bg-black/20 rounded-2xl border border-white/5">
-                                <div className="relative group shrink-0">
-                                    <div className="w-14 h-14 rounded-full border border-white/10 bg-zinc-900 overflow-hidden shadow-2xl">
-                                        {authorAvatar && <img src={authorAvatar} className="w-full h-full object-cover" alt="Profile" />}
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 pb-24">
+
+                        {/* 1. CREATOR PROFILE */}
+                        <details className="group border border-white/10 bg-zinc-900/50 rounded-xl overflow-hidden">
+                            <summary className="flex items-center justify-between p-4 cursor-pointer select-none bg-zinc-900 hover:bg-zinc-800 transition-colors">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><User size={12} /> Creator Manuscript</span>
+                                <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
+                            </summary>
+                            <div className="p-6 space-y-6 border-t border-white/5">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Name</label>
+                                        <input className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-white focus:ring-1 focus:ring-white/20" value={authorName} onChange={(e) => setAuthorName(e.target.value)} />
                                     </div>
-                                    <input type="file" accept="image/*" onChange={async (e) => {
-                                        const f = e.target.files?.[0];
-                                        if (f) {
-                                            const c = await compressImage(f);
-                                            setAuthorAvatar(c);
-                                            safeLocalStorageSet('creatorAvatar', c);
-                                        }
-                                    }} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                </div>
-                                <div className="flex-1 flex items-center justify-between">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-black uppercase text-white tracking-widest">Profile Visibility</p>
-                                        <p className="text-[8px] text-zinc-600 font-bold leading-tight">Toggle brand watermark.</p>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Handle / ID</label>
+                                        <input className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-white focus:ring-1 focus:ring-white/20" value={authorHandle} onChange={(e) => setAuthorHandle(e.target.value)} />
                                     </div>
-                                    <button
-                                        onClick={() => setShowProfile(!showProfile)}
-                                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${showProfile ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-zinc-900 text-zinc-600 border border-white/5'}`}
-                                    >
-                                        <CheckCircle2 size={18} />
-                                    </button>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div className="rounded-[24px] p-6 space-y-6 bg-white/[0.02] border border-white/[0.04]">
-                            <h3 className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 tracking-[0.3em]">
-                                <Type size={12} /> Typography Foundry
-                            </h3>
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Global Typeface</label>
-                                    <select
-                                        className="w-full bg-black/60 border border-white/5 rounded-xl p-4 text-xs font-bold text-zinc-300 outline-none focus:ring-1 focus:ring-white/20 appearance-none shadow-inner"
-                                        value={fontFamily} onChange={(e) => setFontFamily(e.target.value)}
-                                    >
-                                        {['Outfit', 'Inter', 'Montserrat', 'Playfair Display', 'Space Grotesk', 'Bebas Neue'].map(f => <option key={f} value={f}>{f}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="rounded-[24px] p-6 space-y-6 bg-white/[0.02] border border-white/[0.04]">
-                            <h3 className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 tracking-[0.3em]">
-                                <Palette size={12} /> Chromatic DNA
-                            </h3>
-
-                            <div className="flex flex-wrap gap-2 mb-6">
-                                {palettes.map(p => (
-                                    <button
-                                        key={p.name}
-                                        onClick={() => {
-                                            applyCustomTheme('background', p.bg);
-                                            applyCustomTheme('text', p.text);
-                                            applyCustomTheme('accent', p.accent);
-                                        }}
-                                        className="group/pal relative px-3 py-2 rounded-xl border border-white/5 bg-zinc-900/50 hover:bg-zinc-800 hover:border-white/15 text-[9px] font-black uppercase tracking-widest flex items-center gap-2.5 transition-all"
-                                    >
-                                        <div className="flex -space-x-0.5">
-                                            <div className="w-3 h-3 rounded-full border border-black/30" style={{ background: p.bg }} />
-                                            <div className="w-3 h-3 rounded-full border border-black/30" style={{ background: p.text }} />
-                                            <div className="w-3 h-3 rounded-full border border-black/30" style={{ background: p.accent }} />
+                                <div className="flex items-center gap-6 p-5 bg-black/20 rounded-2xl border border-white/5">
+                                    <div className="relative group shrink-0">
+                                        <div className="w-14 h-14 rounded-full border border-white/10 bg-zinc-900 overflow-hidden shadow-2xl">
+                                            {authorAvatar && <img src={authorAvatar} className="w-full h-full object-cover" alt="Profile" />}
                                         </div>
-                                        <span className="text-zinc-400 group-hover/pal:text-white transition-colors">{p.name}</span>
-                                        {/* Hex tooltip on hover */}
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/pal:flex flex-col items-start bg-zinc-950 border border-white/10 rounded-lg px-3 py-2 shadow-2xl z-50 whitespace-nowrap">
-                                            <span className="text-[8px] text-zinc-500 font-mono">BG: {p.bg}</span>
-                                            <span className="text-[8px] text-zinc-500 font-mono">TXT: {p.text}</span>
-                                            <span className="text-[8px] font-mono" style={{ color: p.accent }}>ACC: {p.accent}</span>
+                                        <input type="file" accept="image/*" onChange={async (e) => {
+                                            const f = e.target.files?.[0];
+                                            if (f) {
+                                                const c = await compressImage(f);
+                                                setAuthorAvatar(c);
+                                                safeLocalStorageSet('creatorAvatar', c);
+                                            }
+                                        }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                    </div>
+                                    <div className="flex-1 flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-black uppercase text-white tracking-widest">Profile Visibility</p>
+                                            <p className="text-[8px] text-zinc-600 font-bold leading-tight">Toggle brand watermark.</p>
                                         </div>
-                                    </button>
-                                ))}
+                                        <button
+                                            onClick={() => setShowProfile(!showProfile)}
+                                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${showProfile ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-zinc-900 text-zinc-600 border border-white/5'}`}
+                                        >
+                                            <CheckCircle2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
+                        </details>
 
-                            {/* ── CUSTOM COLOR PICKERS: Strictly bound to hex strings ── */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest pl-1 text-center">BG</p>
-                                    <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-xl p-2 w-full transition-colors focus-within:border-white/30">
-                                        <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.background }} />
-                                        <input
-                                            type="text"
-                                            value={customTheme.background}
-                                            onChange={(e) => applyCustomTheme('background', e.target.value)}
-                                            className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
-                                            placeholder="#HEX"
-                                            maxLength={7}
-                                        />
-                                    </div>
+                        {/* 2. BRAND PALETTE */}
+                        <details className="group border border-white/10 bg-zinc-900/50 rounded-xl overflow-hidden" open>
+                            <summary className="flex items-center justify-between p-4 cursor-pointer select-none bg-zinc-900 hover:bg-zinc-800 transition-colors">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Palette size={12} /> 🎨 Brand Palette</span>
+                                <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
+                            </summary>
+                            <div className="p-6 space-y-6 border-t border-white/5">
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    {palettes.map(p => (
+                                        <button
+                                            key={p.name}
+                                            onClick={() => {
+                                                applyCustomTheme('background', p.bg);
+                                                applyCustomTheme('text', p.text);
+                                                applyCustomTheme('accent', p.accent);
+                                            }}
+                                            className="group/pal relative px-3 py-2 rounded-xl border border-white/5 bg-zinc-900/50 hover:bg-zinc-800 hover:border-white/15 text-[9px] font-black uppercase tracking-widest flex items-center gap-2.5 transition-all"
+                                        >
+                                            <div className="flex -space-x-0.5">
+                                                <div className="w-3 h-3 rounded-full border border-black/30" style={{ background: p.bg }} />
+                                                <div className="w-3 h-3 rounded-full border border-black/30" style={{ background: p.text }} />
+                                                <div className="w-3 h-3 rounded-full border border-black/30" style={{ background: p.accent }} />
+                                            </div>
+                                            <span className="text-zinc-400 group-hover/pal:text-white transition-colors">{p.name}</span>
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/pal:flex flex-col items-start bg-zinc-950 border border-white/10 rounded-lg px-3 py-2 shadow-2xl z-50 whitespace-nowrap">
+                                                <span className="text-[8px] text-zinc-500 font-mono">BG: {p.bg}</span>
+                                                <span className="text-[8px] text-zinc-500 font-mono">TXT: {p.text}</span>
+                                                <span className="text-[8px] font-mono" style={{ color: p.accent }}>ACC: {p.accent}</span>
+                                            </div>
+                                        </button>
+                                    ))}
                                 </div>
-                                <div className="space-y-2">
-                                    <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest pl-1 text-center">TEXT</p>
-                                    <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-xl p-2 w-full transition-colors focus-within:border-white/30">
-                                        <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.text }} />
-                                        <input
-                                            type="text"
-                                            value={customTheme.text}
-                                            onChange={(e) => applyCustomTheme('text', e.target.value)}
-                                            className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
-                                            placeholder="#HEX"
-                                            maxLength={7}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest pl-1 text-center">ACCENT</p>
-                                    <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-xl p-2 w-full transition-colors focus-within:border-white/30">
-                                        <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.accent }} />
-                                        <input
-                                            type="text"
-                                            value={customTheme.accent}
-                                            onChange={(e) => applyCustomTheme('accent', e.target.value)}
-                                            className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
-                                            placeholder="#HEX"
-                                            maxLength={7}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4 p-5 bg-black/20 rounded-2xl border border-white/5 mt-4">
-                                <div className="relative group shrink-0">
-                                    <div className="w-10 h-10 rounded-xl border border-white/10 bg-zinc-900 flex items-center justify-center overflow-hidden shadow-inner">
-                                        {customBgImage ? <img src={customBgImage} className="w-full h-full object-cover" alt="Background" /> : <ImageIcon size={18} className="text-zinc-700" />}
-                                    </div>
-                                    <input type="file" accept="image/*" onChange={async (e) => {
-                                        const f = e.target.files?.[0];
-                                        if (f) {
-                                            const c = await compressImage(f, 1080);
-                                            setCustomBgImage(c);
-                                            safeLocalStorageSet('customBgImage', c);
-                                        }
-                                    }} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                </div>
-                                <div className="flex-1 space-y-1">
-                                    <p className="text-[10px] font-black uppercase text-white tracking-widest">Atmospheric Backdrop</p>
-                                    <p className="text-[8px] text-zinc-600 font-bold leading-tight">Apply a textured backdrop.</p>
-                                </div>
-                                {customBgImage && (
-                                    <button onClick={() => { setCustomBgImage(null); }} className="text-zinc-600 hover:text-red-400 transition-colors">
-                                        <Trash2 size={14} />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="rounded-[24px] p-6 space-y-6 bg-white/[0.02] border border-white/[0.04]">
-                            <h3 className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 tracking-[0.3em]">
-                                <Layout size={12} /> Visual Motifs
-                            </h3>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                                {['minimal', 'tweet', 'brutalist', 'highlight'].map(t => (
-                                    <button
-                                        key={t} onClick={() => setActiveTemplate(t)}
-                                        className={`py-3 text-[9px] font-black uppercase tracking-widest rounded-xl border transition-all ${activeTemplate === t ? 'bg-white text-black border-white shadow-2xl' : 'bg-transparent text-zinc-600 border-white/5 hover:border-white/20'}`}
-                                    >
-                                        {t}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="rounded-[24px] p-6 space-y-6 bg-white/[0.02] border border-white/[0.04]">
-                            <h3 className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 tracking-[0.3em]">
-                                <Layers size={12} /> Geometric Physics
-                            </h3>
-                            <div className="grid grid-cols-1 gap-6">
-                                {[
-                                    { label: 'Canvas Grain', val: noiseOpacity, set: setNoiseOpacity, min: 0, max: 25, unit: '%' },
-                                    { label: 'Viewport Zoom', val: Math.round(previewScale * 100), set: (v: number) => setPreviewScale(v / 100), min: 10, max: 100, unit: '%' }
-                                ].map(g => (
-                                    <div key={g.label} className="space-y-3">
-                                        <div className="flex justify-between items-center text-[9px] font-black text-zinc-600 uppercase tracking-widest px-1">
-                                            <span>{g.label}</span>
-                                            <span className="text-zinc-400 font-mono">{g.val}{g.unit}</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest pl-1 text-center">BG</p>
+                                        <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-xl p-2 w-full transition-colors focus-within:border-white/30">
+                                            <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.background }} />
+                                            <input
+                                                type="text"
+                                                value={customTheme.background}
+                                                onChange={(e) => applyCustomTheme('background', e.target.value)}
+                                                className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
+                                                placeholder="#HEX"
+                                                maxLength={7}
+                                            />
                                         </div>
-                                        <input type="range" min={g.min} max={g.max} value={g.val} onChange={(e) => g.set(Number(e.target.value))} className="w-full h-1 bg-zinc-900 rounded-full appearance-none accent-white cursor-pointer" />
                                     </div>
-                                ))}
+                                    <div className="space-y-2">
+                                        <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest pl-1 text-center">TEXT</p>
+                                        <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-xl p-2 w-full transition-colors focus-within:border-white/30">
+                                            <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.text }} />
+                                            <input
+                                                type="text"
+                                                value={customTheme.text}
+                                                onChange={(e) => applyCustomTheme('text', e.target.value)}
+                                                className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
+                                                placeholder="#HEX"
+                                                maxLength={7}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest pl-1 text-center">ACCENT</p>
+                                        <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-xl p-2 w-full transition-colors focus-within:border-white/30">
+                                            <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.accent }} />
+                                            <input
+                                                type="text"
+                                                value={customTheme.accent}
+                                                onChange={(e) => applyCustomTheme('accent', e.target.value)}
+                                                className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
+                                                placeholder="#HEX"
+                                                maxLength={7}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        </details>
 
-                        <div className="rounded-[24px] p-6 space-y-4 bg-white/[0.02] border border-white/[0.04]">
-                            <label className="text-[9px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Alignment / Footer</label>
-                            <div className="flex gap-1 bg-black/40 p-1 rounded-2xl border border-white/5">
-                                {['left', 'center', 'right'].map(a => (
-                                    <button
-                                        key={a} onClick={() => { setTextAlign(a); setFooterLayout(a); }}
-                                        className={`flex-1 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${textAlign === a && footerLayout === a ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-700 hover:text-zinc-400'}`}
-                                    >
-                                        {a}
-                                    </button>
-                                ))}
+                        {/* 3. TYPOGRAPHY & LAYOUT */}
+                        <details className="group border border-white/10 bg-zinc-900/50 rounded-xl overflow-hidden">
+                            <summary className="flex items-center justify-between p-4 cursor-pointer select-none bg-zinc-900 hover:bg-zinc-800 transition-colors">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Type size={12} /> Typography & Motifs</span>
+                                <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
+                            </summary>
+                            <div className="p-6 space-y-6 border-t border-white/5">
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Global Typeface</label>
+                                        <select
+                                            className="w-full bg-black/60 border border-white/5 rounded-xl p-4 text-xs font-bold text-zinc-300 outline-none focus:ring-1 focus:ring-white/20 appearance-none shadow-inner"
+                                            value={fontFamily} onChange={(e) => setFontFamily(e.target.value)}
+                                        >
+                                            {['Outfit', 'Inter', 'Montserrat', 'Playfair Display', 'Space Grotesk', 'Bebas Neue'].map(f => <option key={f} value={f}>{f}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-blue-400 tracking-[0.3em] flex items-center gap-2">
+                                            <Layout size={12} /> Visual Motifs
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {['minimal', 'tweet', 'brutalist', 'highlight'].map(t => (
+                                                <button
+                                                    key={t} onClick={() => setActiveTemplate(t)}
+                                                    className={`py-3 text-[9px] font-black uppercase tracking-widest rounded-xl border transition-all ${activeTemplate === t ? 'bg-white text-black border-white shadow-2xl' : 'bg-transparent text-zinc-600 border-white/5 hover:border-white/20'}`}
+                                                >
+                                                    {t}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] uppercase font-bold text-zinc-600 tracking-widest pl-1">Alignment / Footer</label>
+                                        <div className="flex gap-1 bg-black/40 p-1 rounded-2xl border border-white/5">
+                                            {['left', 'center', 'right'].map(a => (
+                                                <button
+                                                    key={a} onClick={() => { setTextAlign(a); setFooterLayout(a); }}
+                                                    className={`flex-1 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${textAlign === a && footerLayout === a ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-700 hover:text-zinc-400'}`}
+                                                >
+                                                    {a}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        </details>
+
+                        {/* 4. ADVANCED PHYSICS */}
+                        <details className="group border border-white/10 bg-zinc-900/50 rounded-xl overflow-hidden">
+                            <summary className="flex items-center justify-between p-4 cursor-pointer select-none bg-zinc-900 hover:bg-zinc-800 transition-colors">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Settings size={12} /> ⚙️ Advanced Settings</span>
+                                <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
+                            </summary>
+                            <div className="p-6 space-y-6 border-t border-white/5">
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-4 p-5 bg-black/20 rounded-2xl border border-white/5">
+                                        <div className="relative group shrink-0">
+                                            <div className="w-10 h-10 rounded-xl border border-white/10 bg-zinc-900 flex items-center justify-center overflow-hidden shadow-inner">
+                                                {customBgImage ? <img src={customBgImage} className="w-full h-full object-cover" alt="Background" /> : <ImageIcon size={18} className="text-zinc-700" />}
+                                            </div>
+                                            <input type="file" accept="image/*" onChange={async (e) => {
+                                                const f = e.target.files?.[0];
+                                                if (f) {
+                                                    const c = await compressImage(f, 1080);
+                                                    setCustomBgImage(c);
+                                                    safeLocalStorageSet('customBgImage', c);
+                                                }
+                                            }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                        </div>
+                                        <div className="flex-1 space-y-1">
+                                            <p className="text-[10px] font-black uppercase text-white tracking-widest">Atmospheric Backdrop</p>
+                                            <p className="text-[8px] text-zinc-600 font-bold leading-tight">Apply a textured backdrop.</p>
+                                        </div>
+                                        {customBgImage && (
+                                            <button onClick={() => { setCustomBgImage(null); }} className="text-zinc-600 hover:text-red-400 transition-colors">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {[
+                                            { label: 'Canvas Grain', val: noiseOpacity, set: setNoiseOpacity, min: 0, max: 25, unit: '%' },
+                                            { label: 'Viewport Zoom', val: Math.round(previewScale * 100), set: (v: number) => setPreviewScale(v / 100), min: 10, max: 100, unit: '%' }
+                                        ].map(g => (
+                                            <div key={g.label} className="space-y-3">
+                                                <div className="flex justify-between items-center text-[9px] font-black text-zinc-600 uppercase tracking-widest px-1">
+                                                    <span>{g.label}</span>
+                                                    <span className="text-zinc-400 font-mono">{g.val}{g.unit}</span>
+                                                </div>
+                                                <input type="range" min={g.min} max={g.max} value={g.val} onChange={(e) => g.set(Number(e.target.value))} className="w-full h-1 bg-zinc-900 rounded-full appearance-none accent-white cursor-pointer" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
 
                         <button
                             onClick={() => { setCarouselData(null); setBulkText(''); setRawInput(''); setJsonInput(''); }}
@@ -751,20 +626,59 @@ const LeftPane: React.FC<Props> = (props) => {
                         </button>
                     </div>
                 )}
-
             </div>
 
-            {
-                error && (
-                    <div
-                        onClick={() => setError(null)}
-                        className="bg-red-500/5 border border-red-500/20 text-red-500 p-4 rounded-3xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 cursor-pointer hover:bg-red-500/10 transition-all"
-                    >
-                        <Trash2 size={12} /> {error}
+            {/* Error Message Area */}
+            {error && (
+                <div
+                    onClick={() => setError(null)}
+                    className="mx-6 mb-4 bg-red-500/5 border border-red-500/20 text-red-500 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 cursor-pointer hover:bg-red-500/10 transition-all"
+                >
+                    <Trash2 size={12} /> {error}
+                </div>
+            )}
+
+            {/* SLEEK COMPACT FOOTER FOOTER */}
+            <div className="shrink-0 p-6 border-t border-white/10 flex flex-col gap-4">
+                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-zinc-400">SA</span>
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-bold text-zinc-200">Shezan Ahmed</p>
+                            <p className="text-[9px] text-zinc-500 uppercase tracking-widest">Lead Product Architect</p>
+                        </div>
                     </div>
-                )
-            }
-        </div >
+                    <a href="https://www.linkedin.com/in/shezanahmed29/" target="_blank" rel="noreferrer" className="text-[10px] py-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-all font-bold uppercase tracking-wider">FOLLOW</a>
+                </div>
+
+                <button onClick={() => setShowGuide(true)} className="w-full text-xs text-zinc-500 hover:text-white transition-colors text-center">
+                    📖 View Documentation & Guide
+                </button>
+            </div>
+
+            {/* MODALS (Render outside main flow but inside component) */}
+            {showGuide && (
+                <div className="fixed inset-0 z-[9999] bg-zinc-950/95 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto">
+                    <div className="max-w-2xl w-full bg-zinc-900 border border-white/10 rounded-2xl p-8 relative">
+                        <button onClick={() => setShowGuide(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-white">✕</button>
+                        <h2 className="text-2xl font-bold mb-6 text-white uppercase tracking-tighter">Architect's Guide</h2>
+                        <div className="space-y-4 text-sm text-zinc-300 leading-relaxed">
+                            <p><strong>Bulk Workflow:</strong> Use shorthand tags to architect your narrative at lightspeed.</p>
+                            <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2 font-mono text-[11px]">
+                                <p className="text-blue-400">/h, s:120/ Global Headline</p>
+                                <p className="text-blue-400">/sh, sh_s:60/ Subheading logic </p>
+                                <p className="text-zinc-500">Standard body text flows naturally.</p>
+                                <p className="text-zinc-600">Double Enter = New Slide</p>
+                            </div>
+                            <p><strong>Pro Tip:</strong> Click any slide in the preview to enter <strong>Focus Mode</strong> for precise micro-tuning of font sizes and alignment.</p>
+                            <p><strong>Nesting Support:</strong> You can now nest markdown: <code>**BOLD __AND UNDERLINED__**</code> works flawlessly.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 

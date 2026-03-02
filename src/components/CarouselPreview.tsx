@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { Loader2, ArrowRight, Heart, MessageCircle, Repeat2, Check, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import type { CarouselData } from '../types';
 import ExportControls from './ExportControls';
+import { renderHighlightedText } from '../utils';
 
 interface Props {
     data: CarouselData | null;
@@ -22,48 +23,18 @@ interface Props {
     customBgImage: string | null;
     setActivePreviewSlideIndex: (index: number) => void;
     activePreviewSlideIndex: number;
+    isUnlocked: boolean;
+    hasGivenFeedback: boolean;
+    setFocusedSlideIndex: (index: number | null) => void;
 }
 
-const renderHighlightedText = (text: string, templateType: string, accentColor: string) => {
-    if (!text) return null;
-
-    // SEC: Defense-in-depth — cap input length to prevent ReDoS or DOM explosion
-    const safeText = text.length > 10_000 ? text.slice(0, 10_000) : text;
-
-    // Regex matches **bold**, _italic_, and *highlight*
-    const parts = safeText.split(/(\*\*.*?\*\*|_.*?_|\*.*?\*)/g);
-
-    return parts.map((part, i) => {
-        // 1. Bold: **text**
-        if (part.startsWith('**') && part.endsWith('**')) {
-            return <strong key={i} style={{ fontWeight: '900' }}>{part.slice(2, -2)}</strong>;
-        }
-        // 2. Italic: _text_
-        if (part.startsWith('_') && part.endsWith('_')) {
-            return <em key={i} style={{ fontStyle: 'italic' }}>{part.slice(1, -1)}</em>;
-        }
-        // 3. The Highlight Engine: *text*
-        if (part.startsWith('*') && part.endsWith('*')) {
-            const cleanText = part.slice(1, -1);
-            if (templateType === 'brutalist') {
-                return <span key={i} style={{ backgroundColor: accentColor, color: '#000', padding: '0 16px', display: 'inline-block', transform: 'translateY(-4px)' }}>{cleanText}</span>;
-            }
-            if (templateType === 'tweet') {
-                return <span key={i} style={{ color: accentColor }}>{cleanText}</span>;
-            }
-            // Default Minimal
-            return <span key={i} style={{ color: accentColor, fontWeight: '900' }}>{cleanText}</span>;
-        }
-        // Standard text
-        return <span key={i}>{part}</span>;
-    });
-};
 
 const CarouselPreview: React.FC<Props> = ({
     data, authorName, authorHandle, authorAvatar, fontFamily,
     activeTemplate, setActiveTemplate, onDeleteSlide, onMoveSlide, previewScale, showProfile, footerLayout,
     textAlign, noiseOpacity, customBgImage,
-    activePreviewSlideIndex, setActivePreviewSlideIndex
+    activePreviewSlideIndex, setActivePreviewSlideIndex,
+    isUnlocked, hasGivenFeedback, setFocusedSlideIndex
 }) => {
     const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
 
@@ -115,8 +86,11 @@ const CarouselPreview: React.FC<Props> = ({
                         position: 'relative',
                         overflow: 'hidden'
                     }}
-                    className={`shrink-0 shadow-2xl shadow-black/50 rounded-2xl bg-zinc-900 group cursor-pointer transition-all duration-300 ${activePreviewSlideIndex === index ? 'ring-4 ring-blue-500 ring-offset-4 ring-offset-zinc-950 scale-[1.02]' : 'hover:scale-[1.01]'}`}
-                    onClick={() => setActivePreviewSlideIndex(index)}
+                    className={`shrink-0 shadow-2xl shadow-black/50 rounded-2xl bg-zinc-900 group cursor-pointer ring-0 hover:ring-4 hover:ring-blue-500 transition-all duration-300 ${activePreviewSlideIndex === index ? 'ring-4 ring-blue-500 ring-offset-4 ring-offset-zinc-950 scale-[1.02]' : 'hover:scale-[1.01]'}`}
+                    onClick={() => {
+                        setActivePreviewSlideIndex(index);
+                        setFocusedSlideIndex(index);
+                    }}
                 >
                     {/* SLIDE CONTROLS (Hover only) */}
                     <div className="absolute -left-12 top-0 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30">
@@ -640,7 +614,7 @@ const CarouselPreview: React.FC<Props> = ({
         fontFamily, effectiveScale,
         onDeleteSlide, onMoveSlide,
         textAlign, noiseOpacity, customBgImage,
-        activePreviewSlideIndex, setActivePreviewSlideIndex
+        activePreviewSlideIndex, setActivePreviewSlideIndex, setFocusedSlideIndex
     ]);
 
     if (!data) {
@@ -668,6 +642,8 @@ const CarouselPreview: React.FC<Props> = ({
                         data={data}
                         activeTemplate={activeTemplate}
                         setActiveTemplate={setActiveTemplate}
+                        isUnlocked={isUnlocked}
+                        hasGivenFeedback={hasGivenFeedback}
                     />
                 )}
             </div>
