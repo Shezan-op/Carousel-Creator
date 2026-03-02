@@ -418,45 +418,48 @@ function App() {
                     color: carouselData.theme.text,
                     display: 'flex',
                     flexDirection: 'column',
-                    padding: '80px',
                     justifyContent: 'center',
-                    textAlign: carouselData.slides[focusedSlideIndex].text_align || 'left',
-                    transform: `translateY(${carouselData.slides[focusedSlideIndex].y_offset || 0}px)`
+                    padding: '80px'
                   }}
                 >
-                  {carouselData.slides[focusedSlideIndex].headline && (
-                    <h1 style={{
-                      fontFamily: `"${headingFont}", sans-serif`,
-                      fontSize: `${carouselData.slides[focusedSlideIndex].heading_size || 120}px`,
-                      fontWeight: '900',
-                      lineHeight: '1.1',
-                      marginBottom: '40px'
-                    }}>
-                      {renderHighlightedText(carouselData.slides[focusedSlideIndex].headline || '', activeTemplate, carouselData.theme.accent)}
-                    </h1>
-                  )}
-                  {(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading) && (
-                    <h2 style={{
-                      fontFamily: `"${subheadingFont}", sans-serif`,
-                      fontSize: `${carouselData.slides[focusedSlideIndex].subheading_size || 60}px`,
-                      fontWeight: '500',
-                      opacity: 0.8,
-                      marginBottom: '40px'
-                    }}>
-                      {renderHighlightedText(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading || '', activeTemplate, carouselData.theme.accent)}
-                    </h2>
-                  )}
-                  {carouselData.slides[focusedSlideIndex].body && (
-                    <div style={{
-                      fontFamily: `"${bodyFont}", sans-serif`,
-                      fontSize: `${carouselData.slides[focusedSlideIndex].body_size || 40}px`,
-                      lineHeight: '1.4',
-                      opacity: 0.9,
-                      whiteSpace: 'pre-line'
-                    }}>
-                      {renderHighlightedText(carouselData.slides[focusedSlideIndex].body || '', activeTemplate, carouselData.theme.accent)}
-                    </div>
-                  )}
+                  <div style={{
+                    textAlign: carouselData.slides[focusedSlideIndex].text_align || 'left',
+                    transform: `translateY(${carouselData.slides[focusedSlideIndex].y_offset || 0}px)`
+                  }}>
+                    {carouselData.slides[focusedSlideIndex].headline && (
+                      <h1 style={{
+                        fontFamily: `"${headingFont}", sans-serif`,
+                        fontSize: `${carouselData.slides[focusedSlideIndex].heading_size || 120}px`,
+                        fontWeight: '900',
+                        lineHeight: '1.1',
+                        marginBottom: '40px'
+                      }}>
+                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].headline || '', activeTemplate, carouselData.theme.accent)}
+                      </h1>
+                    )}
+                    {(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading) && (
+                      <h2 style={{
+                        fontFamily: `"${subheadingFont}", sans-serif`,
+                        fontSize: `${carouselData.slides[focusedSlideIndex].subheading_size || 60}px`,
+                        fontWeight: '500',
+                        opacity: 0.8,
+                        marginBottom: '40px'
+                      }}>
+                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading || '', activeTemplate, carouselData.theme.accent)}
+                      </h2>
+                    )}
+                    {carouselData.slides[focusedSlideIndex].body && (
+                      <div style={{
+                        fontFamily: `"${bodyFont}", sans-serif`,
+                        fontSize: `${carouselData.slides[focusedSlideIndex].body_size || 40}px`,
+                        lineHeight: '1.4',
+                        opacity: 0.9,
+                        whiteSpace: 'pre-line'
+                      }}>
+                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].body || '', activeTemplate, carouselData.theme.accent)}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
               </div>
