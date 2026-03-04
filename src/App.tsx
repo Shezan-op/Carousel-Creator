@@ -31,6 +31,8 @@ function App() {
 
   const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('carousel_unlocked') === 'true');
   const [hasGivenFeedback, setHasGivenFeedback] = useState(() => localStorage.getItem('has_given_feedback') === 'true');
+  const [showSafeZones, setShowSafeZones] = useState(() => localStorage.getItem('showSafeZones') === 'true');
+  const [showSlideNumbers, setShowSlideNumbers] = useState(() => localStorage.getItem('showSlideNumbers') !== 'false');
 
   // Listen for Tally form submissions
   useEffect(() => {
@@ -236,6 +238,13 @@ function App() {
   }, [textAlign, noiseOpacity, customBgImage]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem('showSafeZones', showSafeZones.toString());
+      localStorage.setItem('showSlideNumbers', showSlideNumbers.toString());
+    } catch { /* quota */ }
+  }, [showSafeZones, showSlideNumbers]);
+
+  useEffect(() => {
     try { localStorage.setItem('openRouterKey', openRouterKey); } catch { /* quota */ }
   }, [openRouterKey]);
 
@@ -349,6 +358,10 @@ function App() {
           injectOverride={injectOverride}
           getOverride={getOverride}
           setFocusedSlideIndex={setFocusedSlideIndex}
+          showSafeZones={showSafeZones}
+          setShowSafeZones={setShowSafeZones}
+          showSlideNumbers={showSlideNumbers}
+          setShowSlideNumbers={setShowSlideNumbers}
         />
       </div>
 
@@ -381,6 +394,8 @@ function App() {
             isUnlocked={isUnlocked}
             hasGivenFeedback={hasGivenFeedback}
             setFocusedSlideIndex={setFocusedSlideIndex}
+            showSafeZones={showSafeZones}
+            showSlideNumbers={showSlideNumbers}
           />
         </div>
       </div>

@@ -115,6 +115,10 @@ interface Props {
     injectOverride: (index: number, tag: string, key: string, value: string | number) => void;
     getOverride: (index: number, key: string, def: number) => number;
     setFocusedSlideIndex: (index: number | null) => void;
+    showSafeZones: boolean;
+    setShowSafeZones: (val: boolean) => void;
+    showSlideNumbers: boolean;
+    setShowSlideNumbers: (val: boolean) => void;
 }
 
 const LeftPane: React.FC<Props> = (props) => {
@@ -125,7 +129,8 @@ const LeftPane: React.FC<Props> = (props) => {
         previewScale, setPreviewScale, customTheme, applyCustomTheme, showProfile, setShowProfile,
         footerLayout, setFooterLayout, textAlign, setTextAlign,
         noiseOpacity, setNoiseOpacity, customBgImage, setCustomBgImage,
-        bulkText, setBulkText, compileBulkText
+        bulkText, setBulkText, compileBulkText,
+        showSafeZones, setShowSafeZones, showSlideNumbers, setShowSlideNumbers
     } = props;
 
     const [activeTab, setActiveTab] = useState<'auto' | 'bulk' | 'json' | 'setup'>('bulk');
@@ -439,6 +444,22 @@ const LeftPane: React.FC<Props> = (props) => {
                                             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${showProfile ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-zinc-900 text-zinc-600 border border-white/5'}`}
                                         >
                                             <CheckCircle2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* UX OVERLAY TOGGLES */}
+                                <div className="flex flex-col gap-3 bg-zinc-900 border border-white/10 rounded-xl p-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-medium text-zinc-300">Show IG/LinkedIn Safe Zones</span>
+                                        <button onClick={() => setShowSafeZones(!showSafeZones)} className={`w-10 h-5 rounded-full transition-colors relative flex items-center px-1 ${showSafeZones ? 'bg-blue-600' : 'bg-zinc-700'}`}>
+                                            <div className={`w-3 h-3 rounded-full bg-white transition-transform ${showSafeZones ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-medium text-zinc-300">Show Slide Counters (1/8)</span>
+                                        <button onClick={() => setShowSlideNumbers(!showSlideNumbers)} className={`w-10 h-5 rounded-full transition-colors relative flex items-center px-1 ${showSlideNumbers ? 'bg-blue-600' : 'bg-zinc-700'}`}>
+                                            <div className={`w-3 h-3 rounded-full bg-white transition-transform ${showSlideNumbers ? 'translate-x-5' : 'translate-x-0'}`} />
                                         </button>
                                     </div>
                                 </div>

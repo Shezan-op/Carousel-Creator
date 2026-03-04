@@ -28,6 +28,8 @@ interface Props {
     isUnlocked: boolean;
     hasGivenFeedback: boolean;
     setFocusedSlideIndex: (index: number | null) => void;
+    showSafeZones: boolean;
+    showSlideNumbers: boolean;
 }
 
 
@@ -36,7 +38,8 @@ const CarouselPreview: React.FC<Props> = ({
     activeTemplate, setActiveTemplate, onDeleteSlide, onMoveSlide, previewScale, showProfile, footerLayout,
     textAlign, noiseOpacity, customBgImage,
     activePreviewSlideIndex, setActivePreviewSlideIndex,
-    isUnlocked, hasGivenFeedback, setFocusedSlideIndex
+    isUnlocked, hasGivenFeedback, setFocusedSlideIndex,
+    showSafeZones, showSlideNumbers
 }) => {
     const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
 
@@ -624,6 +627,40 @@ const CarouselPreview: React.FC<Props> = ({
                                 </div>
                             </>
                         )}
+
+                        {/* SLIDE COUNTERS & ARROWS */}
+                        {showSlideNumbers && (
+                            <>
+                                <div style={{ position: 'absolute', bottom: '40px', left: '108px', fontSize: '24px', fontWeight: '600', color: data.theme.text, opacity: 0.5, zIndex: 20 }}>
+                                    {index + 1} / {data.slides.length}
+                                </div>
+                                {index < data.slides.length - 1 && (
+                                    <div style={{ position: 'absolute', top: '50%', right: '40px', transform: 'translateY(-50%)', fontSize: '40px', color: data.theme.text, opacity: 0.3, zIndex: 20 }}>
+                                        →
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* SAFE ZONE OVERLAY (Ignored during export) */}
+                        {showSafeZones && (
+                            <div data-html2canvas-ignore="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, pointerEvents: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                {/* Top Header UI (Instagram/LinkedIn) */}
+                                <div style={{ height: '150px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderBottom: '2px dashed rgba(239, 68, 68, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold' }}>DANGER: APP HEADER UI</span>
+                                </div>
+
+                                {/* Right Side Engagement UI (Instagram Reels/Posts) */}
+                                <div style={{ position: 'absolute', right: 0, bottom: '250px', width: '120px', height: '400px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: '2px dashed rgba(239, 68, 68, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold', transform: 'rotate(-90deg)' }}>LIKES UI</span>
+                                </div>
+
+                                {/* Bottom Caption UI */}
+                                <div style={{ height: '250px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderTop: '2px dashed rgba(239, 68, 68, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold' }}>DANGER: CAPTION & COMMENTS UI</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
@@ -634,7 +671,8 @@ const CarouselPreview: React.FC<Props> = ({
         headingFont, subheadingFont, bodyFont, effectiveScale,
         onDeleteSlide, onMoveSlide,
         textAlign, noiseOpacity, customBgImage,
-        activePreviewSlideIndex, setActivePreviewSlideIndex, setFocusedSlideIndex
+        activePreviewSlideIndex, setActivePreviewSlideIndex, setFocusedSlideIndex,
+        showSafeZones, showSlideNumbers
     ]);
 
     if (!data) {
