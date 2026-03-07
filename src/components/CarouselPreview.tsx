@@ -910,7 +910,7 @@ const CarouselPreview: React.FC<Props> = ({
         textAlign, noiseOpacity, customBgImage,
         setActivePreviewSlideIndex, setFocusedSlideIndex,
         showSafeZones, showSlideNumbers, previewMode, inlineImages, overflowingSlides, handleShiftSlide,
-        progressBar, sandboxMode, aspectRatio
+        progressBar, sandboxMode, aspectRatio, brandWatermark
     ]);
 
     if (!data) {
