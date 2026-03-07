@@ -159,6 +159,101 @@ const LeftPane: React.FC<Props> = (props) => {
     const bulkTextRef = React.useRef(bulkText);
     useEffect(() => { bulkTextRef.current = bulkText; }, [bulkText]);
 
+    // Phase 2: Time-Travel Engine
+    const [history, setHistory] = useState<string[]>([]);
+    const [historyIndex, setHistoryIndex] = useState<number>(-1);
+    const [editorMode, setEditorMode] = useState<'raw' | 'visual'>('visual');
+
+    // Debounced History Saver
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (bulkText && (historyIndex === -1 || bulkText !== history[historyIndex])) {
+                const newHistory = history.slice(0, historyIndex + 1);
+                newHistory.push(bulkText);
+                if (newHistory.length > 50) newHistory.shift();
+                setHistory(newHistory);
+                setHistoryIndex(newHistory.length - 1);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [bulkText, history, historyIndex]);
+
+    const handleUndo = useCallback(() => {
+        if (historyIndex > 0) {
+            const prevText = history[historyIndex - 1];
+            setHistoryIndex(historyIndex - 1);
+            setBulkText(prevText);
+            compileBulkText(prevText);
+        }
+    }, [history, historyIndex, setBulkText, compileBulkText]);
+
+    const handleRedo = useCallback(() => {
+        if (historyIndex < history.length - 1) {
+            const nextText = history[historyIndex + 1];
+            setHistoryIndex(historyIndex + 1);
+            setBulkText(nextText);
+            compileBulkText(nextText);
+        }
+    }, [history, historyIndex, setBulkText, compileBulkText]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const isZ = e.key.toLowerCase() === 'z';
+            const isY = e.key.toLowerCase() === 'y';
+            const ctrlOrMeta = e.ctrlKey || e.metaKey;
+
+            if (ctrlOrMeta && isZ) {
+                if (e.shiftKey) {
+                    e.preventDefault();
+                    handleRedo();
+                } else {
+                    e.preventDefault();
+                    handleUndo();
+                }
+            }
+            if (ctrlOrMeta && isY) {
+                e.preventDefault();
+                handleRedo();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleUndo, handleRedo]);
+
+    // Reverse Compiler
+    const reverseCompileSlidesToText = (slides: Slide[]) => {
+        const newBulkText = slides.map(slide => {
+            let slideText = '';
+
+            const buildConfig = () => {
+                const config = [];
+                if (slide.heading_size) config.push(`s: ${slide.heading_size}`);
+                if (slide.subheading_size) config.push(`sh_s: ${slide.subheading_size}`);
+                if (slide.body_size) config.push(`b_s: ${slide.body_size}`);
+                if (slide.text_align) config.push(`a: ${slide.text_align}`);
+                if (slide.y_offset) config.push(`y: ${slide.y_offset}`);
+                if (slide.bg_image) config.push(`bg: ${slide.bg_image}`);
+                return config.length > 0 ? `, ${config.join(', ')}` : '';
+            };
+
+            const configStr = buildConfig();
+
+            if (slide.headline) {
+                slideText += `/h${configStr}/ ${slide.headline}\n`;
+            } else if (configStr) {
+                slideText += `/config${configStr}/\n`;
+            }
+
+            if (slide.subheadline) slideText += `/sh/ ${slide.subheadline}\n`;
+            if (slide.subheading) slideText += `/sh/ ${slide.subheading}\n`;
+            if (slide.body) slideText += `${slide.body}\n`;
+
+            return slideText.trim();
+        }).join('\n\n');
+
+        setBulkText(newBulkText);
+    };
+
     const handleThemeChange = (key: 'background' | 'text' | 'accent', value: string) => {
         setCarouselData(prev => {
             if (!prev) return prev;
@@ -444,7 +539,7 @@ const LeftPane: React.FC<Props> = (props) => {
                 } else {
                     alert("Invalid .carousel file.");
                 }
-            } catch (err) {
+            } catch {
                 alert("Failed to parse file.");
             }
         };
@@ -590,47 +685,157 @@ const LeftPane: React.FC<Props> = (props) => {
                                 </div>
 
                                 <div className="flex items-center justify-between mb-2">
-                                    {/* Markdown Formatting Toolbar */}
-                                    <div className="flex items-center gap-1 bg-zinc-900 border border-white/10 rounded-md p-1">
-                                        <button onClick={() => applyFormatting('**', '**')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded font-bold transition-colors" title="Bold (**)">&nbsp;B&nbsp;</button>
-                                        <button onClick={() => applyFormatting('_', '_')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded italic transition-colors" title="Italic (_)">I</button>
-                                        <button onClick={() => applyFormatting('__', '__')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded underline transition-colors" title="Underline (__)">U</button>
-                                        <button onClick={() => applyFormatting('*', '*')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors" title="Highlight (*)">🖍️</button>
-                                    </div>
-                                </div>
-
-                                <div className="relative group/textarea">
-                                    <textarea
-                                        ref={textareaRef}
-                                        id="bulk-textarea"
-                                        value={bulkText}
-                                        onChange={(e) => { setBulkText(e.target.value); compileBulkText(e.target.value); }}
-                                        placeholder={`/h/ My Headline\n/sh/ My Subheading\nBody text goes here\n\n/h/ Slide 2 Headline\nMore body text`}
-                                        rows={14}
-                                        className={`w-full bg-zinc-900 border ${isDragging ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-white/10'} rounded-xl p-4 text-sm text-zinc-300 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all resize-none relative z-10 box-border`}
-                                    />
-                                    {/* UPDATE PREVIEW BUTTON */}
-                                    <div className="mt-4 flex flex-col gap-2">
+                                    {/* View Toggle */}
+                                    <div className="flex items-center bg-zinc-900 border border-white/10 rounded-lg p-1 mb-2 w-full lg:w-48">
                                         <button
-                                            onClick={() => compileBulkText(bulkText)}
-                                            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all flex items-center justify-center gap-2"
+                                            onClick={() => setEditorMode('visual')}
+                                            className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${editorMode === 'visual' ? 'bg-zinc-700 text-white shadow-xl' : 'text-zinc-500 hover:text-white'}`}
                                         >
-                                            <Zap size={14} fill="currentColor" />
-                                            <span>⚡ Update Preview</span>
+                                            Visual
                                         </button>
-                                        <p className="text-[10px] text-zinc-500 text-center">
-                                            Tip: You can also use double line-breaks to instantly create new slides.
-                                        </p>
+                                        <button
+                                            onClick={() => setEditorMode('raw')}
+                                            className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${editorMode === 'raw' ? 'bg-zinc-700 text-white shadow-xl' : 'text-zinc-500 hover:text-white'}`}
+                                        >
+                                            Raw
+                                        </button>
                                     </div>
-                                    {isDragging && (
-                                        <div className="absolute inset-0 z-20 bg-blue-500/10 backdrop-blur-[2px] rounded-xl flex items-center justify-center pointer-events-none border-2 border-dashed border-blue-500/50">
-                                            <div className="bg-zinc-900 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-blue-500/30">
-                                                <ImageIcon size={14} className="text-blue-400" />
-                                                <span className="text-xs font-bold text-blue-400 tracking-widest uppercase">Injecting Image</span>
-                                            </div>
+
+                                    {/* Markdown Formatting Toolbar */}
+                                    {editorMode === 'raw' && (
+                                        <div className="flex items-center gap-1 bg-zinc-900 border border-white/10 rounded-md p-1 mb-2">
+                                            <button onClick={() => applyFormatting('**', '**')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded font-bold transition-colors" title="Bold (**)">&nbsp;B&nbsp;</button>
+                                            <button onClick={() => applyFormatting('_', '_')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded italic transition-colors" title="Italic (_)">I</button>
+                                            <button onClick={() => applyFormatting('__', '__')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded underline transition-colors" title="Underline (__)">U</button>
+                                            <button onClick={() => applyFormatting('*', '*')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors" title="Highlight (*)">🖍️</button>
+                                            <div className="w-px h-4 bg-white/10 mx-1" />
+                                            <button onClick={handleUndo} disabled={historyIndex <= 0} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded disabled:opacity-30" title="Undo (Ctrl+Z)"><RotateCcw size={12} /></button>
                                         </div>
                                     )}
                                 </div>
+
+                                {editorMode === 'raw' ? (
+                                    <div className="relative group/textarea">
+                                        <textarea
+                                            ref={textareaRef}
+                                            id="bulk-textarea"
+                                            value={bulkText}
+                                            onChange={(e) => { setBulkText(e.target.value); compileBulkText(e.target.value); }}
+                                            placeholder={`/h/ My Headline\n/sh/ My Subheading\nBody text goes here\n\n/h/ Slide 2 Headline\nMore body text`}
+                                            rows={14}
+                                            className={`w-full bg-zinc-900 border ${isDragging ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-white/10'} rounded-xl p-4 text-sm text-zinc-300 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all resize-none relative z-10 box-border`}
+                                        />
+                                        {/* UPDATE PREVIEW BUTTON */}
+                                        <div className="mt-4 flex flex-col gap-2">
+                                            <button
+                                                onClick={() => compileBulkText(bulkText)}
+                                                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Zap size={14} fill="currentColor" />
+                                                <span>⚡ Update Preview</span>
+                                            </button>
+                                            <p className="text-[10px] text-zinc-500 text-center">
+                                                Tip: You can also use double line-breaks to instantly create new slides.
+                                            </p>
+                                        </div>
+                                        {isDragging && (
+                                            <div className="absolute inset-0 z-20 bg-blue-500/10 backdrop-blur-[2px] rounded-xl flex items-center justify-center pointer-events-none border-2 border-dashed border-blue-500/50">
+                                                <div className="bg-zinc-900 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-blue-500/30">
+                                                    <ImageIcon size={14} className="text-blue-400" />
+                                                    <span className="text-xs font-bold text-blue-400 tracking-widest uppercase">Injecting Image</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                                        {carouselData && carouselData.slides.map((slide, index) => (
+                                            <div key={index} className="bg-zinc-900/50 border border-white/10 rounded-xl p-4 flex flex-col gap-3 group relative">
+                                                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Slide {index + 1}</span>
+                                                    <button
+                                                        onClick={() => {
+                                                            const newSlides = carouselData.slides.filter((_, i) => i !== index);
+                                                            const newData = { ...carouselData, slides: newSlides };
+                                                            setCarouselData(newData);
+                                                            reverseCompileSlidesToText(newSlides);
+                                                        }}
+                                                        className="text-red-500/50 hover:text-red-400 text-[10px] font-bold uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+
+                                                {/* Headline Input */}
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">Headline</label>
+                                                    <input
+                                                        type="text"
+                                                        value={slide.headline || ''}
+                                                        onChange={(e) => {
+                                                            const newSlides = [...carouselData.slides];
+                                                            newSlides[index] = { ...newSlides[index], headline: e.target.value };
+                                                            setCarouselData({ ...carouselData, slides: newSlides });
+                                                            reverseCompileSlidesToText(newSlides);
+                                                        }}
+                                                        className="w-full bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                                                        placeholder="e.g. The Ultimate Hook"
+                                                    />
+                                                </div>
+
+                                                {/* Subheadline/Subheading Input */}
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">{index === 0 ? 'Subheadline' : 'Subheading'}</label>
+                                                    <input
+                                                        type="text"
+                                                        value={index === 0 ? (slide.subheadline || '') : (slide.subheading || '')}
+                                                        onChange={(e) => {
+                                                            const newSlides = [...carouselData.slides];
+                                                            if (index === 0) newSlides[index] = { ...newSlides[index], subheadline: e.target.value };
+                                                            else newSlides[index] = { ...newSlides[index], subheading: e.target.value };
+                                                            setCarouselData({ ...carouselData, slides: newSlides });
+                                                            reverseCompileSlidesToText(newSlides);
+                                                        }}
+                                                        className="w-full bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                                                    />
+                                                </div>
+
+                                                {/* Body Textarea */}
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">Body Content (Max 500 chars)</label>
+                                                    <textarea
+                                                        maxLength={500}
+                                                        rows={3}
+                                                        value={slide.body || ''}
+                                                        onChange={(e) => {
+                                                            const newSlides = [...carouselData.slides];
+                                                            newSlides[index] = { ...newSlides[index], body: e.target.value };
+                                                            setCarouselData({ ...carouselData, slides: newSlides });
+                                                            reverseCompileSlidesToText(newSlides);
+                                                        }}
+                                                        className="w-full bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-zinc-300 focus:ring-1 focus:ring-blue-500 outline-none resize-none custom-scrollbar transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        <button
+                                            onClick={() => {
+                                                const baseSlides = carouselData?.slides || [];
+                                                const newSlides = [...baseSlides, { slide_number: baseSlides.length + 1, type: 'content' as const }];
+                                                if (carouselData) {
+                                                    setCarouselData({ ...carouselData, slides: newSlides });
+                                                } else {
+                                                    setCarouselData({ theme: customTheme, slides: newSlides });
+                                                }
+                                                reverseCompileSlidesToText(newSlides);
+                                            }}
+                                            className="w-full py-4 border-2 border-dashed border-white/5 bg-white/[0.01] rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:border-white/20 hover:text-white hover:bg-white/[0.03] transition-all"
+                                        >
+                                            + Add New Slide
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                         </div>

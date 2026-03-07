@@ -4,6 +4,16 @@ All notable changes to Carousel Creator are documented here.
 
 ---
 
+## [2.4.0] — 2026-03-08
+
+### ✨ Added
+
+- **Visual Slide Builder**: A new card-based interface for managing slides without touching code.
+- **Time-Travel Engine**: Full Undo/Redo support for the content engine (Ctrl+Z / Ctrl+Y).
+- **Reverse Compiler**: Synchronizes changes from the visual UI back into the proprietary bulk format.
+- **View Toggles**: Fluid switching between Raw Editor and Visual Builder modes.
+- **Dynamic Slide Management**: 1-click Slide deletion and creation from within the visual card stack.
+
 ## [2.3.0] — 2026-03-08
 
 ### ✨ Added
