@@ -36,6 +36,8 @@ interface Props {
     setPreviewMode: (mode: 'stack' | 'carousel' | 'grid') => void;
     bulkText: string;
     setBulkText: (text: string) => void;
+    progressBar: 'none' | 'top' | 'bottom';
+    sandboxMode: 'none' | 'linkedin' | 'instagram';
 }
 
 interface SortableSlideProps {
@@ -91,7 +93,8 @@ const CarouselPreview: React.FC<Props> = ({
     isUnlocked, hasGivenFeedback, setFocusedSlideIndex,
     showSafeZones, showSlideNumbers,
     inlineImages, previewMode, setPreviewMode,
-    bulkText, setBulkText
+    bulkText, setBulkText,
+    progressBar, sandboxMode
 }) => {
     const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
     const [overflowingSlides, setOverflowingSlides] = useState<number[]>([]);
@@ -203,186 +206,407 @@ const CarouselPreview: React.FC<Props> = ({
                     effectiveScale={renderScale}
                     previewMode={previewMode}
                 >
-                    /* THE RIGID CANVAS: Always 1080x1350, absolutely positioned to prevent DOM flow warp */
-                    <div
-                        className="slide-export-node"
-                        onClick={() => {
-                            setActivePreviewSlideIndex(index);
-                            setFocusedSlideIndex(index);
-                        }}
-                        style={{
-                            width: '1080px',
-                            height: '1350px',
-                            transform: `scale(${renderScale})`,
-                            transformOrigin: 'top left',
-                            backgroundColor: data.theme.background,
-                            color: data.theme.text,
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                            /* THE SAFE ZONE MATH: 1080 - 864 = 216 / 2 = 108px padding */
-                            padding: '108px',
-                            boxSizing: 'border-box',
-                            overflow: 'hidden',
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {/* LAYER 0: CUSTOM BACKGROUND TEMPLATE */}
-                        {slide.bg_image && inlineImages[slide.bg_image] ? (
-                            <div style={{
-                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
-                                backgroundImage: `url(${inlineImages[slide.bg_image]})`, backgroundSize: 'cover', backgroundPosition: 'center'
-                            }} />
-                        ) : customBgImage && (
-                            <div style={{
-                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
-                                backgroundImage: `url(${customBgImage})`, backgroundSize: 'cover', backgroundPosition: 'center'
-                            }} />
+                    {/* WRAPPER FOR SANDBOX (Not exported) */}
+                    <div style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        {/* SANDBOX SHELL: LINKEDIN */}
+                        {sandboxMode === 'linkedin' && (
+                            <div data-html2canvas-ignore="true" style={{
+                                position: 'absolute',
+                                top: -100 * renderScale,
+                                bottom: -150 * renderScale,
+                                left: -40 * renderScale,
+                                right: -40 * renderScale,
+                                backgroundColor: '#FFFFFF',
+                                borderRadius: 16 * renderScale,
+                                boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                                zIndex: -1,
+                                padding: 20 * renderScale,
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 * renderScale, marginBottom: 12 * renderScale }}>
+                                    <div style={{ width: 48 * renderScale, height: 48 * renderScale, borderRadius: '50%', backgroundColor: '#E5E7EB' }}>
+                                        {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontSize: 14 * renderScale, fontWeight: 700, color: '#000' }}>{authorName || 'Creator Name'}</span>
+                                        <span style={{ fontSize: 12 * renderScale, color: '#666' }}>{authorHandle || '@handle'} • 2nd</span>
+                                        <span style={{ fontSize: 11 * renderScale, color: '#666' }}>1w • 🌐</span>
+                                    </div>
+                                </div>
+                                <div style={{ height: 10 * renderScale, width: '100%', backgroundColor: '#F3F4F6', borderRadius: 4 * renderScale, marginBottom: 8 * renderScale }} />
+                                <div style={{ height: 10 * renderScale, width: '80%', backgroundColor: '#F3F4F6', borderRadius: 4 * renderScale, marginBottom: 20 * renderScale }} />
+
+                                {/* Slide goes here (centered via parent) */}
+
+                                <div style={{ marginTop: 'auto', paddingTop: 10 * renderScale, borderTop: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-around' }}>
+                                    {['Like', 'Comment', 'Republish', 'Send'].map(action => (
+                                        <div key={action} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 * renderScale }}>
+                                            <div style={{ width: 24 * renderScale, height: 24 * renderScale, backgroundColor: '#666', opacity: 0.2, borderRadius: 4 * renderScale }} />
+                                            <span style={{ fontSize: 10 * renderScale, color: '#666', fontWeight: 600 }}>{action}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         )}
-                        {/* THE MINIMALIST PROGRESS BAR */}
-                        <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            height: '8px',
-                            backgroundColor: accentColor,
-                            width: `${(slide.slide_number / data.slides.length) * 100}%`,
-                            zIndex: 10
-                        }} />
 
-
-
-                        {/* LAYER 1: THE NOISE OVERLAY */}
-                        <div style={{
-                            position: 'absolute',
-                            inset: 0,
-                            opacity: noiseOpacity / 100,
-                            mixBlendMode: 'overlay',
-                            pointerEvents: 'none',
-                            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")',
-                            zIndex: 1
-                        }} />
-
-                        {/* ═══════════════════════════════════════════════ */}
-                        {/* TEMPLATE: MINIMAL (Default)                    */}
-                        {/* ═══════════════════════════════════════════════ */}
-                        {activeTemplate === 'minimal' && (
-                            <>
-                                {/* LAYER 2: TEXT CONTENT WRAPPER */}
-                                <div className="content-measurement-node" style={{
-                                    position: 'relative',
-                                    zIndex: 10,
-                                    width: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    transform: `translateY(${slide.y_offset || 0}px)`,
-                                    textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign'],
-                                    alignItems: (slide.text_align || textAlign) === 'center' ? 'center' : (slide.text_align || textAlign) === 'right' ? 'flex-end' : 'flex-start',
-                                    marginBottom: '160px'
-                                }}>
-                                    {/* 1. THE HEADLINE LAYER */}
-                                    {slide.headline && (
-                                        <h1 style={{
-                                            fontFamily: `"${headingFont}", sans-serif`,
-                                            fontSize: `${slide.heading_size || 110}px`,
-                                            fontWeight: '900',
-                                            lineHeight: '1.1',
-                                            marginBottom: '20px',
-                                            color: 'inherit'
-                                        }}>
-                                            {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent, inlineImages)}
-                                        </h1>
-                                    )}
-
-                                    {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
-                                    {slide.subheadline && (
-                                        <h2 style={{
-                                            fontFamily: `"${subheadingFont}", sans-serif`,
-                                            fontSize: `${slide.subheading_size || 45}px`,
-                                            fontWeight: '600',
-                                            opacity: 0.8,
-                                            marginTop: '16px',
-                                            lineHeight: '1.2'
-                                        }}>
-                                            {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent, inlineImages)}
-                                        </h2>
-                                    )}
-
-                                    {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
-                                    {slide.subheading && (
-                                        <h3 style={{
-                                            fontFamily: `"${subheadingFont}", sans-serif`,
-                                            fontSize: `${slide.subheading_size || 45}px`,
-                                            fontWeight: '700',
-                                            marginTop: '24px',
-                                            marginBottom: '12px',
-                                            color: data.theme.accent
-                                        }}>
-                                            {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent, inlineImages)}
-                                        </h3>
-                                    )}
-
-                                    {/* 4. THE BODY LAYER */}
-                                    {slide.body && (
-                                        <p style={{
-                                            fontFamily: `"${bodyFont}", sans-serif`,
-                                            fontSize: `${slide.body_size || 35}px`,
-                                            fontWeight: '500',
-                                            lineHeight: '1.4',
-                                            whiteSpace: 'pre-wrap'
-                                        }}>
-                                            {renderHighlightedText(slide.body, activeTemplate, data.theme.accent, inlineImages)}
-                                        </p>
-                                    )}
+                        {/* SANDBOX SHELL: INSTAGRAM */}
+                        {sandboxMode === 'instagram' && (
+                            <div data-html2canvas-ignore="true" style={{
+                                position: 'absolute',
+                                top: -60 * renderScale,
+                                bottom: -120 * renderScale,
+                                left: -10 * renderScale,
+                                right: -10 * renderScale,
+                                backgroundColor: '#000000',
+                                borderRadius: 12 * renderScale,
+                                boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                                zIndex: -1,
+                                padding: 10 * renderScale,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                color: '#FFF'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 * renderScale, marginBottom: 10 * renderScale, padding: `0 ${10 * renderScale}px` }}>
+                                    <div style={{ width: 32 * renderScale, height: 32 * renderScale, borderRadius: '50%', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', padding: 2 * renderScale }}>
+                                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#000', padding: 2 * renderScale }}>
+                                            {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#333' }} />}
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontSize: 13 * renderScale, fontWeight: 600 }}>{authorHandle?.replace('@', '') || 'creator'}</span>
+                                        <span style={{ fontSize: 11 * renderScale }}>Original Audio</span>
+                                    </div>
+                                    <div style={{ marginLeft: 'auto', fontSize: 20 * renderScale }}>⋮</div>
                                 </div>
 
-                                {/* ABSOLUTE FOOTER */}
+                                {/* Slide goes here (centered via parent) */}
+
+                                <div style={{ marginTop: 'auto', padding: `${10 * renderScale}px ${10 * renderScale}px` }}>
+                                    <div style={{ display: 'flex', gap: 15 * renderScale, marginBottom: 10 * renderScale }}>
+                                        <Heart size={24 * renderScale} />
+                                        <MessageCircle size={24 * renderScale} />
+                                        <Repeat2 size={24 * renderScale} />
+                                        <div style={{ marginLeft: 'auto' }}>🔖</div>
+                                    </div>
+                                    <div style={{ fontSize: 13 * renderScale, fontWeight: 700, marginBottom: 4 * renderScale }}>{likes} likes</div>
+                                    <div style={{ fontSize: 13 * renderScale }}>
+                                        <span style={{ fontWeight: 700 }}>{authorHandle?.replace('@', '') || 'creator'}</span> Lorem ipsum dolor sit amet...
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div
+                            className="slide-export-node"
+                            onClick={() => {
+                                setActivePreviewSlideIndex(index);
+                                setFocusedSlideIndex(index);
+                            }}
+                            style={{
+                                width: '1080px',
+                                height: '1350px',
+                                transform: `scale(${renderScale})`,
+                                transformOrigin: 'center center',
+                                backgroundColor: data.theme.background,
+                                color: data.theme.text,
+                                position: 'relative',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                /* THE SAFE ZONE MATH: 1080 - 864 = 216 / 2 = 108px padding */
+                                padding: '108px',
+                                boxSizing: 'border-box',
+                                overflow: 'hidden',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                cursor: 'pointer',
+                                boxShadow: sandboxMode !== 'none' ? 'none' : '0 20px 50px rgba(0,0,0,0.3)',
+                                borderRadius: 16 * renderScale
+                            }}
+                        >
+                            {/* LAYER 0: CUSTOM BACKGROUND TEMPLATE */}
+                            {slide.bg_image && inlineImages[slide.bg_image] ? (
+                                <div style={{
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
+                                    backgroundImage: `url(${inlineImages[slide.bg_image]})`, backgroundSize: 'cover', backgroundPosition: 'center'
+                                }} />
+                            ) : customBgImage && (
+                                <div style={{
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
+                                    backgroundImage: `url(${customBgImage})`, backgroundSize: 'cover', backgroundPosition: 'center'
+                                }} />
+                            )}
+                            {/* DYNAMIC PROGRESS BAR */}
+                            {progressBar !== 'none' && (
                                 <div style={{
                                     position: 'absolute',
-                                    bottom: '80px',
-                                    left: '108px',
-                                    right: '108px',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    zIndex: 10
-                                }}>
-                                    {/* Left spacer for centering balance */}
-                                    {footerLayout === 'center' && <div style={{ width: '80px' }}></div>}
+                                    top: progressBar === 'top' ? 0 : 'auto',
+                                    bottom: progressBar === 'bottom' ? 0 : 'auto',
+                                    left: 0,
+                                    height: '12px',
+                                    backgroundColor: accentColor,
+                                    width: `${(slide.slide_number / data.slides.length) * 100}%`,
+                                    zIndex: 50,
+                                    transition: 'width 0.3s ease-out'
+                                }} />
+                            )}
 
-                                    {/* Creator Profile */}
-                                    <div style={{
+
+
+                            {/* LAYER 1: THE NOISE OVERLAY */}
+                            <div style={{
+                                position: 'absolute',
+                                inset: 0,
+                                opacity: noiseOpacity / 100,
+                                mixBlendMode: 'overlay',
+                                pointerEvents: 'none',
+                                backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")',
+                                zIndex: 1
+                            }} />
+
+                            {/* ═══════════════════════════════════════════════ */}
+                            {/* TEMPLATE: MINIMAL (Default)                    */}
+                            {/* ═══════════════════════════════════════════════ */}
+                            {activeTemplate === 'minimal' && (
+                                <>
+                                    {/* LAYER 2: TEXT CONTENT WRAPPER */}
+                                    <div className="content-measurement-node" style={{
+                                        position: 'relative',
+                                        zIndex: 10,
+                                        width: '100%',
                                         display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '24px',
-                                        flex: footerLayout === 'center' ? 'none' : '1',
-                                        justifyContent: footerLayout === 'right' ? 'flex-end' : footerLayout === 'center' ? 'center' : 'flex-start',
-                                        marginRight: footerLayout === 'right' ? '40px' : '0'
+                                        flexDirection: 'column',
+                                        transform: `translateY(${slide.y_offset || 0}px)`,
+                                        textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign'],
+                                        alignItems: (slide.text_align || textAlign) === 'center' ? 'center' : (slide.text_align || textAlign) === 'right' ? 'flex-end' : 'flex-start',
+                                        marginBottom: '160px'
                                     }}>
-                                        {showProfile && (
-                                            <>
-                                                {authorAvatar ? (
-                                                    <img src={authorAvatar} style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-                                                )}
-                                                <span style={{ fontFamily: `"${bodyFont}", sans-serif`, fontSize: '40px', fontWeight: '600', opacity: 0.9 }}>{authorHandle || '@creator'}</span>
-                                            </>
+                                        {/* 1. THE HEADLINE LAYER */}
+                                        {slide.headline && (
+                                            <h1 style={{
+                                                fontFamily: `"${headingFont}", sans-serif`,
+                                                fontSize: `${slide.heading_size || 110}px`,
+                                                fontWeight: '900',
+                                                lineHeight: '1.1',
+                                                marginBottom: '20px',
+                                                color: 'inherit'
+                                            }}>
+                                                {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent, inlineImages)}
+                                            </h1>
+                                        )}
+
+                                        {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
+                                        {slide.subheadline && (
+                                            <h2 style={{
+                                                fontFamily: `"${subheadingFont}", sans-serif`,
+                                                fontSize: `${slide.subheading_size || 45}px`,
+                                                fontWeight: '600',
+                                                opacity: 0.8,
+                                                marginTop: '16px',
+                                                lineHeight: '1.2'
+                                            }}>
+                                                {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent, inlineImages)}
+                                            </h2>
+                                        )}
+
+                                        {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
+                                        {slide.subheading && (
+                                            <h3 style={{
+                                                fontFamily: `"${subheadingFont}", sans-serif`,
+                                                fontSize: `${slide.subheading_size || 45}px`,
+                                                fontWeight: '700',
+                                                marginTop: '24px',
+                                                marginBottom: '12px',
+                                                color: data.theme.accent
+                                            }}>
+                                                {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent, inlineImages)}
+                                            </h3>
+                                        )}
+
+                                        {/* 4. THE BODY LAYER */}
+                                        {slide.body && (
+                                            <p style={{
+                                                fontFamily: `"${bodyFont}", sans-serif`,
+                                                fontSize: `${slide.body_size || 35}px`,
+                                                fontWeight: '500',
+                                                lineHeight: '1.4',
+                                                whiteSpace: 'pre-wrap'
+                                            }}>
+                                                {renderHighlightedText(slide.body, activeTemplate, data.theme.accent, inlineImages)}
+                                            </p>
                                         )}
                                     </div>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '30px', order: footerLayout === 'right' ? -1 : 1 }}>
-                                        {slide.slide_number === 1 && footerLayout !== 'right' && (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', opacity: 0.6, fontWeight: 'bold' }}>
-                                                <span style={{ fontSize: '35px' }}>SWIPE</span>
-                                                <ArrowRight size={40} strokeWidth={3} />
+                                    {/* ABSOLUTE FOOTER */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '80px',
+                                        left: '108px',
+                                        right: '108px',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        zIndex: 10
+                                    }}>
+                                        {/* Left spacer for centering balance */}
+                                        {footerLayout === 'center' && <div style={{ width: '80px' }}></div>}
+
+                                        {/* Creator Profile */}
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '24px',
+                                            flex: footerLayout === 'center' ? 'none' : '1',
+                                            justifyContent: footerLayout === 'right' ? 'flex-end' : footerLayout === 'center' ? 'center' : 'flex-start',
+                                            marginRight: footerLayout === 'right' ? '40px' : '0'
+                                        }}>
+                                            {showProfile && (
+                                                <>
+                                                    {authorAvatar ? (
+                                                        <img src={authorAvatar} style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
+                                                    ) : (
+                                                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+                                                    )}
+                                                    <span style={{ fontFamily: `"${bodyFont}", sans-serif`, fontSize: '40px', fontWeight: '600', opacity: 0.9 }}>{authorHandle || '@creator'}</span>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '30px', order: footerLayout === 'right' ? -1 : 1 }}>
+                                            {slide.slide_number === 1 && footerLayout !== 'right' && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', opacity: 0.6, fontWeight: 'bold' }}>
+                                                    <span style={{ fontSize: '35px' }}>SWIPE</span>
+                                                    <ArrowRight size={40} strokeWidth={3} />
+                                                </div>
+                                            )}
+                                            <div style={{
+                                                width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)',
+                                                display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '35px', fontWeight: 'bold',
+                                                border: '1px solid rgba(255,255,255,0.1)'
+                                            }}>
+                                                {slide.slide_number}
                                             </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* ═══════════════════════════════════════════════ */}
+                            {/* TEMPLATE: HIGHLIGHT (Marker-style underline)   */}
+                            {/* ═══════════════════════════════════════════════ */}
+                            {activeTemplate === 'highlight' && (
+                                <>
+                                    {/* LAYER 2: TEXT CONTENT WRAPPER */}
+                                    <div className="content-measurement-node" style={{
+                                        position: 'relative',
+                                        zIndex: 10,
+                                        width: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        transform: `translateY(${slide.y_offset || 0}px)`,
+                                        textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign'],
+                                        alignItems: (slide.text_align || textAlign) === 'center' ? 'center' : (slide.text_align || textAlign) === 'right' ? 'flex-end' : 'flex-start',
+                                        marginBottom: '160px'
+                                    }}>
+                                        {/* 1. THE HEADLINE LAYER */}
+                                        {slide.headline && (
+                                            <h1 style={{
+                                                fontFamily: `"${headingFont}", sans-serif`,
+                                                fontSize: `${slide.heading_size || 110}px`,
+                                                fontWeight: '900',
+                                                lineHeight: '1.15',
+                                                marginBottom: '20px',
+                                                letterSpacing: '-1px',
+                                                color: 'inherit'
+                                            }}>
+                                                {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent, inlineImages)}
+                                            </h1>
                                         )}
+
+                                        {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
+                                        {slide.subheadline && (
+                                            <h2 style={{
+                                                fontFamily: `"${subheadingFont}", sans-serif`,
+                                                fontSize: `${slide.subheading_size || 45}px`,
+                                                fontWeight: '600',
+                                                opacity: 0.8,
+                                                marginTop: '16px',
+                                                lineHeight: '1.2'
+                                            }}>
+                                                {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent, inlineImages)}
+                                            </h2>
+                                        )}
+
+                                        {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
+                                        {slide.subheading && (
+                                            <h3 style={{
+                                                fontSize: `${slide.subheading_size || 45}px`,
+                                                fontWeight: '700',
+                                                marginTop: '24px',
+                                                marginBottom: '12px',
+                                                color: data.theme.accent
+                                            }}>
+                                                {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent, inlineImages)}
+                                            </h3>
+                                        )}
+
+                                        {/* 4. THE BODY LAYER */}
+                                        {slide.body && (
+                                            <p style={{
+                                                fontFamily: `"${bodyFont}", sans-serif`,
+                                                fontSize: `${slide.body_size || 35}px`,
+                                                fontWeight: '500',
+                                                lineHeight: '1.35',
+                                                whiteSpace: 'pre-wrap'
+                                            }}>
+                                                {renderHighlightedText(slide.body, activeTemplate, data.theme.accent, inlineImages)}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* ABSOLUTE FOOTER */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '80px',
+                                        left: '108px',
+                                        right: '108px',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        zIndex: 10
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                            {showProfile && (
+                                                <>
+                                                    <div style={{
+                                                        width: '80px',
+                                                        height: '80px',
+                                                        borderRadius: '50%',
+                                                        backgroundColor: 'rgba(255,255,255,0.1)',
+                                                        overflow: 'hidden',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        border: '1px solid rgba(255,255,255,0.1)'
+                                                    }}>
+                                                        {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', fontFamily: `"${bodyFont}", sans-serif` }}>
+                                                        <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
+                                                        <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+
                                         <div style={{
                                             width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)',
                                             display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '35px', fontWeight: 'bold',
@@ -391,387 +615,268 @@ const CarouselPreview: React.FC<Props> = ({
                                             {slide.slide_number}
                                         </div>
                                     </div>
-                                </div>
-                            </>
-                        )}
+                                </>
+                            )}
 
-                        {/* ═══════════════════════════════════════════════ */}
-                        {/* TEMPLATE: HIGHLIGHT (Marker-style underline)   */}
-                        {/* ═══════════════════════════════════════════════ */}
-                        {activeTemplate === 'highlight' && (
-                            <>
-                                {/* LAYER 2: TEXT CONTENT WRAPPER */}
+                            {/* ═══════════════════════════════════════════════ */}
+                            {/* TEMPLATE: FAUX TWEET (Justin Welsh Style)      */}
+                            {/* ═══════════════════════════════════════════════ */}
+                            {activeTemplate === 'tweet' && (
                                 <div className="content-measurement-node" style={{
-                                    position: 'relative',
+                                    border: '2px solid rgba(255,255,255,0.1)',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    borderRadius: '30px',
+                                    padding: '60px',
+                                    width: '90%',
+                                    alignSelf: 'center',
                                     zIndex: 10,
-                                    width: '100%',
                                     display: 'flex',
                                     flexDirection: 'column',
+                                    gap: '40px',
                                     transform: `translateY(${slide.y_offset || 0}px)`,
-                                    textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign'],
-                                    alignItems: (slide.text_align || textAlign) === 'center' ? 'center' : (slide.text_align || textAlign) === 'right' ? 'flex-end' : 'flex-start',
-                                    marginBottom: '160px'
+                                    textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign']
                                 }}>
-                                    {/* 1. THE HEADLINE LAYER */}
-                                    {slide.headline && (
-                                        <h1 style={{
-                                            fontFamily: `"${headingFont}", sans-serif`,
-                                            fontSize: `${slide.heading_size || 110}px`,
-                                            fontWeight: '900',
-                                            lineHeight: '1.15',
-                                            marginBottom: '20px',
-                                            letterSpacing: '-1px',
-                                            color: 'inherit'
-                                        }}>
-                                            {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent, inlineImages)}
-                                        </h1>
-                                    )}
-
-                                    {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
-                                    {slide.subheadline && (
-                                        <h2 style={{
-                                            fontFamily: `"${subheadingFont}", sans-serif`,
-                                            fontSize: `${slide.subheading_size || 45}px`,
-                                            fontWeight: '600',
-                                            opacity: 0.8,
-                                            marginTop: '16px',
-                                            lineHeight: '1.2'
-                                        }}>
-                                            {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent, inlineImages)}
-                                        </h2>
-                                    )}
-
-                                    {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
-                                    {slide.subheading && (
-                                        <h3 style={{
-                                            fontSize: `${slide.subheading_size || 45}px`,
-                                            fontWeight: '700',
-                                            marginTop: '24px',
-                                            marginBottom: '12px',
-                                            color: data.theme.accent
-                                        }}>
-                                            {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent, inlineImages)}
-                                        </h3>
-                                    )}
-
-                                    {/* 4. THE BODY LAYER */}
-                                    {slide.body && (
-                                        <p style={{
-                                            fontFamily: `"${bodyFont}", sans-serif`,
-                                            fontSize: `${slide.body_size || 35}px`,
-                                            fontWeight: '500',
-                                            lineHeight: '1.35',
-                                            whiteSpace: 'pre-wrap'
-                                        }}>
-                                            {renderHighlightedText(slide.body, activeTemplate, data.theme.accent, inlineImages)}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* ABSOLUTE FOOTER */}
-                                <div style={{
-                                    position: 'absolute',
-                                    bottom: '80px',
-                                    left: '108px',
-                                    right: '108px',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    zIndex: 10
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                        {showProfile && (
-                                            <>
-                                                <div style={{
-                                                    width: '80px',
-                                                    height: '80px',
-                                                    borderRadius: '50%',
-                                                    backgroundColor: 'rgba(255,255,255,0.1)',
-                                                    overflow: 'hidden',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: '1px solid rgba(255,255,255,0.1)'
-                                                }}>
-                                                    {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+                                    {/* Tweet Header */}
+                                    {showProfile && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                            <div style={{
+                                                width: '100px',
+                                                height: '100px',
+                                                borderRadius: '50%',
+                                                overflow: 'hidden',
+                                                border: '2px solid rgba(255,255,255,0.1)',
+                                                flexShrink: 0,
+                                                backgroundColor: 'rgba(255,255,255,0.1)'
+                                            }}>
+                                                {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                                            </div>
+                                            <div style={{ flex: 1, fontFamily: `"${bodyFont}", sans-serif` }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <span style={{ fontSize: '50px', fontWeight: '800' }}>{authorName}</span>
+                                                    <div style={{
+                                                        backgroundColor: '#1D9BF0',
+                                                        borderRadius: '50%',
+                                                        width: '36px',
+                                                        height: '36px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        flexShrink: 0
+                                                    }}>
+                                                        <Check size={22} color="#fff" strokeWidth={4} />
+                                                    </div>
                                                 </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', fontFamily: `"${bodyFont}", sans-serif` }}>
-                                                    <span style={{ fontSize: '32px', fontWeight: '800' }}>{authorName}</span>
-                                                    <span style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6 }}>{authorHandle}</span>
-                                                </div>
-                                            </>
+                                                <span style={{ fontSize: '40px', opacity: 0.6 }}>{authorHandle}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Tweet Body */}
+                                    <div style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '12px',
+                                        textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign']
+                                    }}>
+                                        {slide.headline && (
+                                            <div style={{ fontFamily: `"${headingFont}", sans-serif`, fontSize: `${slide.heading_size || 110}px`, fontWeight: '800', lineHeight: '1.2' }}>
+                                                {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent, inlineImages)}
+                                            </div>
+                                        )}
+                                        {slide.subheadline && (
+                                            <div style={{ fontFamily: `"${subheadingFont}", sans-serif`, fontSize: `${slide.subheading_size || 45}px`, fontWeight: '600', opacity: 0.8 }}>
+                                                {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent, inlineImages)}
+                                            </div>
+                                        )}
+                                        {slide.subheading && (
+                                            <div style={{ fontFamily: `"${subheadingFont}", sans-serif`, fontSize: `${slide.subheading_size || 45}px`, fontWeight: '700', color: data.theme.accent, marginBottom: '4px' }}>
+                                                {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent, inlineImages)}
+                                            </div>
+                                        )}
+                                        {slide.body && (
+                                            <div style={{ fontFamily: `"${bodyFont}", sans-serif`, fontSize: `${slide.body_size || 35}px`, fontWeight: '400', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
+                                                {renderHighlightedText(slide.body, activeTemplate, data.theme.accent, inlineImages)}
+                                            </div>
                                         )}
                                     </div>
 
-                                    <div style={{
-                                        width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)',
-                                        display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '35px', fontWeight: 'bold',
-                                        border: '1px solid rgba(255,255,255,0.1)'
+                                    {/* Tweet Metrics Footer */}
+                                    <div style={{ display: 'flex', gap: '80px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '40px', opacity: 0.6 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                            <MessageCircle size={40} />
+                                            <span style={{ fontSize: '30px' }}>{comments}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                            <Repeat2 size={40} />
+                                            <span style={{ fontSize: '30px' }}>{retweets}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                            <Heart size={40} />
+                                            <span style={{ fontSize: '30px' }}>{likes >= 1000 ? `${(likes / 1000).toFixed(1)}k` : likes}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ═══════════════════════════════════════════════ */}
+                            {/* TEMPLATE: BRUTALIST (Magazine Style)            */}
+                            {/* ═══════════════════════════════════════════════ */}
+                            {activeTemplate === 'brutalist' && (
+                                <>
+                                    {/* LAYER 2: TEXT CONTENT WRAPPER */}
+                                    <div className="content-measurement-node" style={{
+                                        position: 'relative',
+                                        zIndex: 10,
+                                        width: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        transform: `translateY(${slide.y_offset || 0}px)`,
+                                        textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign'],
+                                        alignItems: (slide.text_align || textAlign) === 'center' ? 'center' : (slide.text_align || textAlign) === 'right' ? 'flex-end' : 'flex-start'
                                     }}>
-                                        {slide.slide_number}
+                                        {/* 1. THE HEADLINE LAYER */}
+                                        {slide.headline && (
+                                            <h1 style={{
+                                                fontFamily: `"${headingFont}", sans-serif`,
+                                                fontSize: `${slide.heading_size || 110}px`,
+                                                fontWeight: '900',
+                                                lineHeight: '0.95',
+                                                textTransform: 'uppercase',
+                                                marginBottom: '20px',
+                                                color: 'inherit'
+                                            }}>
+                                                {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent, inlineImages)}
+                                            </h1>
+                                        )}
+
+                                        {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
+                                        {slide.subheadline && (
+                                            <h2 style={{
+                                                fontFamily: `"${subheadingFont}", sans-serif`,
+                                                fontSize: `${slide.subheading_size || 45}px`,
+                                                fontWeight: '600',
+                                                opacity: 0.8,
+                                                marginTop: '16px',
+                                                lineHeight: '1.2'
+                                            }}>
+                                                {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent, inlineImages)}
+                                            </h2>
+                                        )}
+
+                                        {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
+                                        {slide.subheading && (
+                                            <h3 style={{
+                                                fontFamily: `"${subheadingFont}", sans-serif`,
+                                                fontSize: `${slide.subheading_size || 45}px`,
+                                                fontWeight: '900',
+                                                marginBottom: '15px',
+                                                lineHeight: '1',
+                                                textTransform: 'uppercase',
+                                                color: data.theme.accent
+                                            }}>
+                                                {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent, inlineImages)}
+                                            </h3>
+                                        )}
+
+                                        {/* 4. THE BODY LAYER */}
+                                        {slide.body && (
+                                            <p style={{
+                                                fontFamily: `"${bodyFont}", sans-serif`,
+                                                fontSize: `${slide.body_size || 35}px`,
+                                                fontWeight: '900',
+                                                lineHeight: '0.95',
+                                                textTransform: 'uppercase',
+                                                whiteSpace: 'pre-wrap'
+                                            }}>
+                                                {renderHighlightedText(slide.body, activeTemplate, data.theme.accent, inlineImages)}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* BRUTALIST FOOTER */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '80px',
+                                        left: '108px',
+                                        right: '108px',
+                                        borderTop: `8px solid ${accentColor}`,
+                                        paddingTop: '20px',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        zIndex: 10,
+                                        fontWeight: '900',
+                                        fontSize: '35px',
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        <span>{showProfile ? authorHandle : ''}</span>
+                                        <span>SLIDE {slide.slide_number} / {data.slides.length}</span>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* SLIDE COUNTERS & ARROWS (Ignored during export) */}
+                            {showSlideNumbers && (
+                                <div data-html2canvas-ignore="true">
+                                    <div style={{ position: 'absolute', bottom: '40px', left: '108px', fontSize: '24px', fontWeight: '600', color: data.theme.text, opacity: 0.5, zIndex: 20 }}>
+                                        {index + 1} / {data.slides.length}
+                                    </div>
+                                    {index < data.slides.length - 1 && (
+                                        <div style={{ position: 'absolute', top: '50%', right: '40px', transform: 'translateY(-50%)', fontSize: '40px', color: data.theme.text, opacity: 0.3, zIndex: 20 }}>
+                                            →
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* SAFE ZONE OVERLAY (Ignored during export) */}
+                            {showSafeZones && (
+                                <div data-html2canvas-ignore="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, pointerEvents: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                    {/* Top Header UI (Instagram/LinkedIn) */}
+                                    <div style={{ height: '150px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderBottom: '2px dashed rgba(239, 68, 68, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold' }}>DANGER: APP HEADER UI</span>
+                                    </div>
+
+                                    {/* Right Side Engagement UI (Instagram Reels/Posts) */}
+                                    <div style={{ position: 'absolute', right: 0, bottom: '250px', width: '120px', height: '400px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: '2px dashed rgba(239, 68, 68, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold', transform: 'rotate(-90deg)' }}>LIKES UI</span>
+                                    </div>
+
+                                    {/* Bottom Caption UI */}
+                                    <div style={{ height: '250px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderTop: '2px dashed rgba(239, 68, 68, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold' }}>DANGER: CAPTION & COMMENTS UI</span>
                                     </div>
                                 </div>
-                            </>
-                        )}
-
-                        {/* ═══════════════════════════════════════════════ */}
-                        {/* TEMPLATE: FAUX TWEET (Justin Welsh Style)      */}
-                        {/* ═══════════════════════════════════════════════ */}
-                        {activeTemplate === 'tweet' && (
-                            <div className="content-measurement-node" style={{
-                                border: '2px solid rgba(255,255,255,0.1)',
-                                background: 'rgba(255,255,255,0.05)',
-                                borderRadius: '30px',
-                                padding: '60px',
-                                width: '90%',
-                                alignSelf: 'center',
-                                zIndex: 10,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '40px',
-                                transform: `translateY(${slide.y_offset || 0}px)`,
-                                textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign']
-                            }}>
-                                {/* Tweet Header */}
-                                {showProfile && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                                        <div style={{
-                                            width: '100px',
-                                            height: '100px',
-                                            borderRadius: '50%',
-                                            overflow: 'hidden',
-                                            border: '2px solid rgba(255,255,255,0.1)',
-                                            flexShrink: 0,
-                                            backgroundColor: 'rgba(255,255,255,0.1)'
-                                        }}>
-                                            {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                                        </div>
-                                        <div style={{ flex: 1, fontFamily: `"${bodyFont}", sans-serif` }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <span style={{ fontSize: '50px', fontWeight: '800' }}>{authorName}</span>
-                                                <div style={{
-                                                    backgroundColor: '#1D9BF0',
-                                                    borderRadius: '50%',
-                                                    width: '36px',
-                                                    height: '36px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    flexShrink: 0
-                                                }}>
-                                                    <Check size={22} color="#fff" strokeWidth={4} />
-                                                </div>
-                                            </div>
-                                            <span style={{ fontSize: '40px', opacity: 0.6 }}>{authorHandle}</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Tweet Body */}
-                                <div style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '12px',
-                                    textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign']
-                                }}>
-                                    {slide.headline && (
-                                        <div style={{ fontFamily: `"${headingFont}", sans-serif`, fontSize: `${slide.heading_size || 110}px`, fontWeight: '800', lineHeight: '1.2' }}>
-                                            {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent, inlineImages)}
-                                        </div>
-                                    )}
-                                    {slide.subheadline && (
-                                        <div style={{ fontFamily: `"${subheadingFont}", sans-serif`, fontSize: `${slide.subheading_size || 45}px`, fontWeight: '600', opacity: 0.8 }}>
-                                            {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent, inlineImages)}
-                                        </div>
-                                    )}
-                                    {slide.subheading && (
-                                        <div style={{ fontFamily: `"${subheadingFont}", sans-serif`, fontSize: `${slide.subheading_size || 45}px`, fontWeight: '700', color: data.theme.accent, marginBottom: '4px' }}>
-                                            {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent, inlineImages)}
-                                        </div>
-                                    )}
-                                    {slide.body && (
-                                        <div style={{ fontFamily: `"${bodyFont}", sans-serif`, fontSize: `${slide.body_size || 35}px`, fontWeight: '400', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
-                                            {renderHighlightedText(slide.body, activeTemplate, data.theme.accent, inlineImages)}
-                                        </div>
-                                    )}
+                            )}
+                            {overflowingSlides.includes(index) && (
+                                <div
+                                    className="absolute top-4 right-4 z-50 bg-red-600/90 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1 animate-pulse"
+                                    data-html2canvas-ignore="true"
+                                >
+                                    <span>⚠️</span> TEXT OVERFLOW
                                 </div>
+                            )}
 
-                                {/* Tweet Metrics Footer */}
-                                <div style={{ display: 'flex', gap: '80px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '40px', opacity: 0.6 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                        <MessageCircle size={40} />
-                                        <span style={{ fontSize: '30px' }}>{comments}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                        <Repeat2 size={40} />
-                                        <span style={{ fontSize: '30px' }}>{retweets}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                        <Heart size={40} />
-                                        <span style={{ fontSize: '30px' }}>{likes >= 1000 ? `${(likes / 1000).toFixed(1)}k` : likes}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ═══════════════════════════════════════════════ */}
-                        {/* TEMPLATE: BRUTALIST (Magazine Style)            */}
-                        {/* ═══════════════════════════════════════════════ */}
-                        {activeTemplate === 'brutalist' && (
-                            <>
-                                {/* LAYER 2: TEXT CONTENT WRAPPER */}
-                                <div className="content-measurement-node" style={{
-                                    position: 'relative',
-                                    zIndex: 10,
-                                    width: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    transform: `translateY(${slide.y_offset || 0}px)`,
-                                    textAlign: (slide.text_align || textAlign) as React.CSSProperties['textAlign'],
-                                    alignItems: (slide.text_align || textAlign) === 'center' ? 'center' : (slide.text_align || textAlign) === 'right' ? 'flex-end' : 'flex-start'
-                                }}>
-                                    {/* 1. THE HEADLINE LAYER */}
-                                    {slide.headline && (
-                                        <h1 style={{
-                                            fontFamily: `"${headingFont}", sans-serif`,
-                                            fontSize: `${slide.heading_size || 110}px`,
-                                            fontWeight: '900',
-                                            lineHeight: '0.95',
-                                            textTransform: 'uppercase',
-                                            marginBottom: '20px',
-                                            color: 'inherit'
-                                        }}>
-                                            {renderHighlightedText(slide.headline, activeTemplate, data.theme.accent, inlineImages)}
-                                        </h1>
-                                    )}
-
-                                    {/* SUBHEADLINE (Slide 1 Subtitle - maps to H2) */}
-                                    {slide.subheadline && (
-                                        <h2 style={{
-                                            fontFamily: `"${subheadingFont}", sans-serif`,
-                                            fontSize: `${slide.subheading_size || 45}px`,
-                                            fontWeight: '600',
-                                            opacity: 0.8,
-                                            marginTop: '16px',
-                                            lineHeight: '1.2'
-                                        }}>
-                                            {renderHighlightedText(slide.subheadline, activeTemplate, data.theme.accent, inlineImages)}
-                                        </h2>
-                                    )}
-
-                                    {/* SUBHEADING (Body Slide Section Title - maps to H3) */}
-                                    {slide.subheading && (
-                                        <h3 style={{
-                                            fontFamily: `"${subheadingFont}", sans-serif`,
-                                            fontSize: `${slide.subheading_size || 45}px`,
-                                            fontWeight: '900',
-                                            marginBottom: '15px',
-                                            lineHeight: '1',
-                                            textTransform: 'uppercase',
-                                            color: data.theme.accent
-                                        }}>
-                                            {renderHighlightedText(slide.subheading, activeTemplate, data.theme.accent, inlineImages)}
-                                        </h3>
-                                    )}
-
-                                    {/* 4. THE BODY LAYER */}
-                                    {slide.body && (
-                                        <p style={{
-                                            fontFamily: `"${bodyFont}", sans-serif`,
-                                            fontSize: `${slide.body_size || 35}px`,
-                                            fontWeight: '900',
-                                            lineHeight: '0.95',
-                                            textTransform: 'uppercase',
-                                            whiteSpace: 'pre-wrap'
-                                        }}>
-                                            {renderHighlightedText(slide.body, activeTemplate, data.theme.accent, inlineImages)}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* BRUTALIST FOOTER */}
-                                <div style={{
-                                    position: 'absolute',
-                                    bottom: '80px',
-                                    left: '108px',
-                                    right: '108px',
-                                    borderTop: `8px solid ${accentColor}`,
-                                    paddingTop: '20px',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    zIndex: 10,
-                                    fontWeight: '900',
-                                    fontSize: '35px',
-                                    textTransform: 'uppercase'
-                                }}>
-                                    <span>{showProfile ? authorHandle : ''}</span>
-                                    <span>SLIDE {slide.slide_number} / {data.slides.length}</span>
-                                </div>
-                            </>
-                        )}
-
-                        {/* SLIDE COUNTERS & ARROWS (Ignored during export) */}
-                        {showSlideNumbers && (
-                            <div data-html2canvas-ignore="true">
-                                <div style={{ position: 'absolute', bottom: '40px', left: '108px', fontSize: '24px', fontWeight: '600', color: data.theme.text, opacity: 0.5, zIndex: 20 }}>
-                                    {index + 1} / {data.slides.length}
-                                </div>
-                                {index < data.slides.length - 1 && (
-                                    <div style={{ position: 'absolute', top: '50%', right: '40px', transform: 'translateY(-50%)', fontSize: '40px', color: data.theme.text, opacity: 0.3, zIndex: 20 }}>
+                            {/* MOBILE GRID SHIFT BUTTONS */}
+                            {previewMode === 'grid' && (
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-4 bg-zinc-950/80 backdrop-blur-md p-2 rounded-full border border-white/20" data-html2canvas-ignore="true">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleShiftSlide(index, 'left'); }}
+                                        disabled={index === 0}
+                                        className="w-10 h-10 flex items-center justify-center bg-zinc-800 rounded-full text-white hover:bg-zinc-700 disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors"
+                                    >
+                                        ←
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleShiftSlide(index, 'right'); }}
+                                        disabled={index === data.slides.length - 1}
+                                        className="w-10 h-10 flex items-center justify-center bg-zinc-800 rounded-full text-white hover:bg-zinc-700 disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors"
+                                    >
                                         →
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* SAFE ZONE OVERLAY (Ignored during export) */}
-                        {showSafeZones && (
-                            <div data-html2canvas-ignore="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, pointerEvents: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                {/* Top Header UI (Instagram/LinkedIn) */}
-                                <div style={{ height: '150px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderBottom: '2px dashed rgba(239, 68, 68, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <span style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold' }}>DANGER: APP HEADER UI</span>
+                                    </button>
                                 </div>
-
-                                {/* Right Side Engagement UI (Instagram Reels/Posts) */}
-                                <div style={{ position: 'absolute', right: 0, bottom: '250px', width: '120px', height: '400px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: '2px dashed rgba(239, 68, 68, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <span style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold', transform: 'rotate(-90deg)' }}>LIKES UI</span>
-                                </div>
-
-                                {/* Bottom Caption UI */}
-                                <div style={{ height: '250px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderTop: '2px dashed rgba(239, 68, 68, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <span style={{ color: '#ef4444', fontSize: '24px', fontWeight: 'bold' }}>DANGER: CAPTION & COMMENTS UI</span>
-                                </div>
-                            </div>
-                        )}
-                        {overflowingSlides.includes(index) && (
-                            <div
-                                className="absolute top-4 right-4 z-50 bg-red-600/90 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1 animate-pulse"
-                                data-html2canvas-ignore="true"
-                            >
-                                <span>⚠️</span> TEXT OVERFLOW
-                            </div>
-                        )}
-
-                        {/* MOBILE GRID SHIFT BUTTONS */}
-                        {previewMode === 'grid' && (
-                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-4 bg-zinc-950/80 backdrop-blur-md p-2 rounded-full border border-white/20" data-html2canvas-ignore="true">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleShiftSlide(index, 'left'); }}
-                                    disabled={index === 0}
-                                    className="w-10 h-10 flex items-center justify-center bg-zinc-800 rounded-full text-white hover:bg-zinc-700 disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors"
-                                >
-                                    ←
-                                </button>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleShiftSlide(index, 'right'); }}
-                                    disabled={index === data.slides.length - 1}
-                                    className="w-10 h-10 flex items-center justify-center bg-zinc-800 rounded-full text-white hover:bg-zinc-700 disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors"
-                                >
-                                    →
-                                </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </SortableSlide>
             );
@@ -782,7 +887,8 @@ const CarouselPreview: React.FC<Props> = ({
         headingFont, subheadingFont, bodyFont, effectiveScale,
         textAlign, noiseOpacity, customBgImage,
         setActivePreviewSlideIndex, setFocusedSlideIndex,
-        showSafeZones, showSlideNumbers, previewMode, inlineImages, overflowingSlides, handleShiftSlide
+        showSafeZones, showSlideNumbers, previewMode, inlineImages, overflowingSlides, handleShiftSlide,
+        progressBar, sandboxMode
     ]);
 
     if (!data) {

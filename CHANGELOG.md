@@ -4,6 +4,15 @@ All notable changes to Carousel Creator are documented here.
 
 ---
 
+## [2.5.0] — 2026-03-08
+
+### ✨ Added
+
+- **Dynamic Progress Bar**: New rendering engine for top/bottom progress indicator bars (exported with carousel).
+- **Social Feed Sandbox**: Immersive LinkedIn and Instagram frame shells for realistic previewing.
+- **Enhanced Advance Controls**: Integrated toggles for progress bars and sandbox modes in the Advanced Settings pane.
+- **Improved Rendering Logic**: Optimized SVG noise overlays and coordinate systems for per-slide background images.
+
 ## [2.4.0] — 2026-03-08
 
 ### ✨ Added

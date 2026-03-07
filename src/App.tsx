@@ -17,6 +17,8 @@ function App() {
   const [carouselData, setCarouselData] = useState<CarouselData | null>(null);
   const [inlineImages, setInlineImages] = useState<Record<string, string>>({});
   const [isDbLoaded, setIsDbLoaded] = useState(false);
+  const [progressBar, setProgressBar] = useState<'none' | 'top' | 'bottom'>('none');
+  const [sandboxMode, setSandboxMode] = useState<'none' | 'linkedin' | 'instagram'>('none');
 
 
   useEffect(() => {
@@ -475,6 +477,10 @@ function App() {
           inlineImages={inlineImages}
           creatorAvatar={authorAvatar}
           setCreatorAvatar={setAuthorAvatar}
+          progressBar={progressBar}
+          setProgressBar={setProgressBar}
+          sandboxMode={sandboxMode}
+          setSandboxMode={setSandboxMode}
         />
       </div>
 
@@ -511,6 +517,8 @@ function App() {
             setPreviewMode={setPreviewMode}
             bulkText={bulkText}
             setBulkText={setBulkText}
+            progressBar={progressBar}
+            sandboxMode={sandboxMode}
           />
         </div>
       </div>

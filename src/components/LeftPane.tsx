@@ -128,6 +128,10 @@ interface Props {
     inlineImages: Record<string, string>;
     creatorAvatar: string | null;
     setCreatorAvatar: (val: string | null) => void;
+    progressBar: 'none' | 'top' | 'bottom';
+    setProgressBar: (val: 'none' | 'top' | 'bottom') => void;
+    sandboxMode: 'none' | 'linkedin' | 'instagram';
+    setSandboxMode: (val: 'none' | 'linkedin' | 'instagram') => void;
 }
 
 const LeftPane: React.FC<Props> = (props) => {
@@ -142,7 +146,8 @@ const LeftPane: React.FC<Props> = (props) => {
         showSafeZones, setShowSafeZones, showSlideNumbers, setShowSlideNumbers,
         setInlineImages, carouselData,
         brandPresets, setBrandPresets, savedProjects, setSavedProjects,
-        inlineImages, creatorAvatar, setCreatorAvatar
+        inlineImages, creatorAvatar, setCreatorAvatar,
+        progressBar, setProgressBar, sandboxMode, setSandboxMode
     } = props;
 
     const [isDragging, setIsDragging] = useState(false);
@@ -1213,6 +1218,38 @@ const LeftPane: React.FC<Props> = (props) => {
                                                 <input type="range" min={g.min} max={g.max} value={g.val} onChange={(e) => g.set(Number(e.target.value))} className="w-full h-1 bg-zinc-900 rounded-full appearance-none accent-white cursor-pointer" />
                                             </div>
                                         ))}
+                                    </div>
+
+                                    {/* PROGRESS BAR CONTROL */}
+                                    <div className="flex flex-col gap-2 pt-4 border-t border-white/5">
+                                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Progress Bar</span>
+                                        <div className="flex bg-zinc-950 border border-white/10 rounded-lg p-1">
+                                            {['none', 'top', 'bottom'].map((mode) => (
+                                                <button
+                                                    key={mode}
+                                                    onClick={() => setProgressBar(mode as 'none' | 'top' | 'bottom')}
+                                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md capitalize transition-colors ${progressBar === mode ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-white'}`}
+                                                >
+                                                    {mode}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* SOCIAL SANDBOX CONTROL */}
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Social Sandbox Preview</span>
+                                        <div className="flex bg-zinc-950 border border-white/10 rounded-lg p-1">
+                                            {['none', 'linkedin', 'instagram'].map((mode) => (
+                                                <button
+                                                    key={mode}
+                                                    onClick={() => setSandboxMode(mode as 'none' | 'linkedin' | 'instagram')}
+                                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md capitalize transition-colors ${sandboxMode === mode ? 'bg-blue-600 text-white shadow' : 'text-zinc-500 hover:text-white'}`}
+                                                >
+                                                    {mode === 'none' ? 'Off' : mode}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
