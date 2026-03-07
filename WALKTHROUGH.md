@@ -39,7 +39,8 @@ Slides appear instantly in the preview panel →
 
 In Setup, pick a **Template** (Minimal, Tweet, or Brutalist) and a **Color Palette** (Midnight, Cyberpunk, Nord, etc.).
 
-Use the **Visual Tuner** sliders below the text area to adjust font sizes for the active slide.
+Use the **Visual Tuner** sliders below the text area to adjust font sizes for the active slide.  
+**Pro Tip:** Switch to the **Bg** tab in the tuner to upload a unique background image for that specific slide!
 
 ---
 

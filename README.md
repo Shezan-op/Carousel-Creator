@@ -64,6 +64,13 @@ A Figma-inspired mobile workspace that allows for per-slide precision tuning:
 - **Segmented Alignment**: Toggle Horizontal alignment (Left/Center/Right) instantly.
 - **Vertical Drafting**: Micro-tune the Y-axis position with 10px increments.
 - **Live Font Preview**: Type the name of any Google Font and see it render instantly in the focus preview.
+- **Per-Slide Backgrounds**: Upload unique high-res background images for specific slides via the "Bg" tab.
+
+### 🖼 Professional Media Support
+
+- **Per-Slide BG**: Individual slides can override the global background with unique images.
+- **Export Ghosting Fix**: UI elements like slide numbers and arrows are automatically stripped from exports for a clean, pixel-perfect finish.
+- **Grid View Reordering**: Mobile-optimized "Shift Left/Right" buttons allow for easy slide reordering without complex drag-and-drop on small screens.
 
 ### 🔒 Privacy-First & BYOK Architecture
 
@@ -176,8 +183,9 @@ public/
 | Plain text | Body paragraph | `AI is transforming every industry.` |
 | `/h, s:120/` | Headline with custom size | `/h, s:120/ BIG TITLE` |
 | `/sh, sh_s:60/` | Subhead with custom size | `/sh, sh_s:60/ Sized Subtitle` |
-| `, a:center` | Text alignment override | `/h, a:center/ Centered` |
-| `, y:50` | Y-offset (vertical shift) | `/h, y:50/ Shifted Down` |
+| `/h, a:center/` | Text alignment override | `/h, a:center/ Centered` |
+| `/h, y:50/` | Y-offset (vertical shift) | `/h, y:50/ Shifted Down` |
+| `/h, bg:ID/` | Per-slide background image | `/h, bg:bg_7f2x1/ Custom BG` |
 | `*text*` | Highlight accent | `This is *important*` |
 | `**text**` | Bold | `This is **critical**` |
 | `_text_` | Italic | `This is _emphasized_` |

@@ -47,6 +47,8 @@ src/
 - **The Rigid Canvas**: DOM nodes inside `.slide-export-node` must always be exactly 1080×1350px. Never use responsive units inside export nodes.
 - **Safe Zone**: 108px padding on all sides. Text must not exceed the 864×1134px safe area.
 - **Template Parity**: Any rendering change must be applied to **all 3 templates** (Minimal, Highlight/default, Tweet, Brutalist).
+- **Background Integrity**: Any new background effects (like Noise or Per-Slide images) must be rendered as absolute layers *behind* the text content but *inside* the scale-wrapper.
+- **Export Safety**: Any UI element (buttons, arrows, numbers) that should not appear in the final JPEG must have the `data-html2canvas-ignore="true"` attribute.
 - **Backwards Compatibility**: Never remove a field from `types.ts` without adding a deprecated alias and migration path in the sanitizer.
 
 ## 🐛 Reporting Issues

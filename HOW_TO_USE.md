@@ -68,6 +68,7 @@ Add tuning parameters directly inside the tags:
 | `b_s:40` | Body font size (px) | `/h, b_s:40/ Title` |
 | `a:center` | Text alignment | `/h, a:center/ Centered` |
 | `y:50` | Vertical offset (px) | `/h, y:50/ Shifted` |
+| `bg:ID` | Per-slide background image | `/h, bg:bg_123/ Sky` |
 
 ---
 
@@ -77,6 +78,7 @@ Below the text area (on desktop) or by tapping a slide (on mobile), you'll acces
 - **Character Foundry** — Type Google font names to see them live on the current slide.
 - **Horizontal Alignment** — Toggle Left, Center, or Right text alignment.
 - **Y-Offset (Vertical position)** — Shift the entire text block up or down in 10px increments.
+- **Slide Background (New)** — Upload a unique image for the current slide. This overrides the global "Chromatic DNA" background for this slide only.
 
 > **How it works:** Moving these controls automatically handles the complex tag-based syntax (e.g., `/h, s:120, a:center, y:-20/`) in your bulk text. No manual typing needed.
 
@@ -170,8 +172,8 @@ Paste valid JSON and click **Apply** to render slides instantly.
 | **Preview Scale** | Use the zoom slider in Setup to fit the canvas to your screen |
 | **Slide Navigation** | Click any slide in the preview to select it for tuning |
 | **Delete Slides** | Hover over a slide and click the trash icon |
-| **Reorder Slides** | Hover and use the up/down arrows |
-| **Background Image** | Upload via Setup → Background. It renders as an absolute layer behind all text |
+| **Reorder Slides** | Hover and use the up/down arrows (Desktop) or **← / → Shift Buttons** in Grid Mode (Mobile) |
+| **Background Image** | Upload via Setup → Background (Global) or Focus Modal → Bg (Per-slide) |
 | **Noise Texture** | Adjust the noise opacity slider for cinematic grain (0-100%) |
 
 ---

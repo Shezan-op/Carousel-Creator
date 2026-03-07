@@ -6,11 +6,18 @@ All notable changes to Carousel Creator are documented here.
 
 ## [2.2.0] — 2026-03-07
 
+### ✨ Added
+
+- **Per-Slide Background Images**: Users can now set unique background images for individual slides via the "Bg" tab in the Focus Modal. These overrides the global background.
+- **Mobile Grid Shift Buttons**: Added "Move Left" and "Move Right" buttons to slides in Grid View for easier reordering on mobile devices.
+
 ### 🔧 Fixed
 
+- **Export Ghosting**: Slide counters, swipe arrows, and safe-zone overlays are now correctly ignored during export using `data-html2canvas-ignore`, ensuring a clean JPEG/PDF.
 - **Tally Export Gate persistence**: Resolved an issue where the export unlock (form submission) was not persisting between exports. Implemented a robust `postMessage` event listener and added a `localStorage` fallback check on window focus/visibility change.
+- **Tally UI Polish**: Set `transparentBackground: true` for all Tally popups to match the app's dark theme.
 - **Vercel Build Warnings**: Fixed TypeScript typing errors and ESLint warnings in `CarouselPreview.tsx` and `App.tsx` related to unused props and incorrect event types.
-- **Drag-and-Drop Optimization**: Cleaned up `useMemo` dependencies to prevent unnecessary slide list re-renders during drag operations.
+- **Drag-and-Drop Optimization**: Cleaned up `useMemo` dependencies and wrapped reordering logic in `useCallback` to prevent unnecessary slide list re-renders.
 
 ---
 
