@@ -25,3 +25,20 @@ export interface CarouselData {
     theme: Theme;
     slides: Slide[];
 }
+
+export interface BrandPreset {
+    id: string;
+    name: string;
+    theme: Theme;
+    fonts: { heading: string; subheading: string; body: string };
+    author: { name: string; handle: string; avatar: string };
+}
+
+export interface SavedProject {
+    id: string;
+    name: string;
+    date: string;
+    bulkText: string;
+    theme: Theme;
+    inlineImages: Record<string, string>;
+}

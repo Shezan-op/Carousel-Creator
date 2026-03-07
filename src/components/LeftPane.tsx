@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import type { CarouselData, Slide } from '../types';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { CarouselData, Slide, BrandPreset, SavedProject } from '../types';
 import {
     Sparkles, Code, Settings, ListTree, RotateCcw,
     Trash2, Loader2, Heart, Palette, Type, Layout, User,
@@ -119,6 +119,15 @@ interface Props {
     setShowSafeZones: (val: boolean) => void;
     showSlideNumbers: boolean;
     setShowSlideNumbers: (val: boolean) => void;
+    setInlineImages: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+    carouselData: CarouselData | null;
+    brandPresets: BrandPreset[];
+    setBrandPresets: React.Dispatch<React.SetStateAction<BrandPreset[]>>;
+    savedProjects: SavedProject[];
+    setSavedProjects: React.Dispatch<React.SetStateAction<SavedProject[]>>;
+    inlineImages: Record<string, string>;
+    creatorAvatar: string | null;
+    setCreatorAvatar: (val: string | null) => void;
 }
 
 const LeftPane: React.FC<Props> = (props) => {
@@ -130,9 +139,13 @@ const LeftPane: React.FC<Props> = (props) => {
         footerLayout, setFooterLayout, textAlign, setTextAlign,
         noiseOpacity, setNoiseOpacity, customBgImage, setCustomBgImage,
         bulkText, setBulkText, compileBulkText,
-        showSafeZones, setShowSafeZones, showSlideNumbers, setShowSlideNumbers
+        showSafeZones, setShowSafeZones, showSlideNumbers, setShowSlideNumbers,
+        setInlineImages, carouselData,
+        brandPresets, setBrandPresets, savedProjects, setSavedProjects,
+        inlineImages, creatorAvatar, setCreatorAvatar
     } = props;
 
+    const [isDragging, setIsDragging] = useState(false);
     const [activeTab, setActiveTab] = useState<'auto' | 'bulk' | 'json' | 'setup'>('bulk');
     const [jsonInput, setJsonInput] = useState('');
     const [rawInput, setRawInput] = useState('');
@@ -141,6 +154,94 @@ const LeftPane: React.FC<Props> = (props) => {
     const [aiModel, setAiModel] = useState<'free' | 'pro'>('free');
     const [error, setError] = useState<string | null>(null);
     const [showGuide, setShowGuide] = useState(false);
+
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const bulkTextRef = React.useRef(bulkText);
+    useEffect(() => { bulkTextRef.current = bulkText; }, [bulkText]);
+
+    const handleThemeChange = (key: 'background' | 'text' | 'accent', value: string) => {
+        setCarouselData(prev => {
+            if (!prev) return prev;
+            const newTheme = { ...prev.theme, [key]: value };
+            // Persist to localStorage so it survives reloads
+            localStorage.setItem(`custom_${key}`, value);
+            return { ...prev, theme: newTheme };
+        });
+        // Keep customTheme synchronized in parent
+        applyCustomTheme(key, value);
+    };
+
+    const handleImageDrop = useCallback(async (e: React.DragEvent<HTMLTextAreaElement>) => {
+        const files = Array.from(e.dataTransfer.files);
+        const imageFiles = files.filter(f => f.type.startsWith('image/'));
+
+        if (imageFiles.length === 0) return;
+
+        // Use the ref to get the absolute latest text without triggering re-renders of the effect
+        let currentText = bulkTextRef.current;
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        let insertionOffset = 0;
+
+        for (const file of imageFiles) {
+            try {
+                const id = Math.random().toString(36).substring(2, 9);
+                const compressed = await compressImage(file, 1080);
+
+                setInlineImages(prev => ({ ...prev, [id]: compressed }));
+
+                const tag = `\n[img:${id}]\n`;
+                currentText = currentText.substring(0, start + insertionOffset) + tag + currentText.substring(end + insertionOffset);
+                insertionOffset += tag.length;
+            } catch {
+                setError('Failed to process image');
+            }
+        }
+
+        setBulkText(currentText);
+        // Small delay to ensure state is flushed before compile
+        setTimeout(() => compileBulkText(currentText), 10);
+    }, [setInlineImages, setBulkText, compileBulkText]);
+
+    // native drag and drop listeners
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const handleDragOver = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(true);
+        };
+
+        const handleDragLeave = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
+        };
+
+        const handleDropLocal = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
+
+            // Re-use the existing async logic, but pass the event
+            handleImageDrop(e as unknown as React.DragEvent<HTMLTextAreaElement>);
+        };
+
+        textarea.addEventListener('dragover', handleDragOver);
+        textarea.addEventListener('dragleave', handleDragLeave);
+        textarea.addEventListener('drop', handleDropLocal);
+
+        return () => {
+            textarea.removeEventListener('dragover', handleDragOver);
+            textarea.removeEventListener('dragleave', handleDragLeave);
+            textarea.removeEventListener('drop', handleDropLocal);
+        };
+    }, [activeTab, handleImageDrop]);
 
     // Auto-clear errors after 5 seconds
     useEffect(() => {
@@ -201,6 +302,114 @@ const LeftPane: React.FC<Props> = (props) => {
             textarea.focus();
             textarea.setSelectionRange(start + prefix.length, end + prefix.length);
         }, 0);
+    };
+
+    const handleAutoFormat = () => {
+        if (!bulkText.trim()) return;
+
+        // 1. Clean the text (remove existing double breaks to reset formatting)
+        const cleanText = bulkText.replace(/\n\s*\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+        // 2. Split into sentences (basic regex for punctuation)
+        const sentences = cleanText.match(/[^.!?]+[.!?]*/g) || [cleanText];
+
+        const maxWordsPerSlide = 25;
+        const newSlides: string[] = [];
+        let currentSlide = "";
+        let currentWordCount = 0;
+
+        sentences.forEach((sentence) => {
+            const sentenceWordCount = sentence.trim().split(/\s+/).length;
+
+            // If adding this sentence pushes us over the limit, save the current slide and start a new one
+            if (currentWordCount + sentenceWordCount > maxWordsPerSlide && currentWordCount > 0) {
+                newSlides.push(currentSlide.trim());
+                currentSlide = sentence + " ";
+                currentWordCount = sentenceWordCount;
+            } else {
+                currentSlide += sentence + " ";
+                currentWordCount += sentenceWordCount;
+            }
+        });
+
+        // Push the last remaining slide
+        if (currentSlide.trim()) {
+            newSlides.push(currentSlide.trim());
+        }
+
+        // 3. Format the slides with our Bulk Syntax
+        const formattedText = newSlides.map((slideText, index) => {
+            if (index === 0) {
+                return `/h/ ${slideText}`; // Force the first chunk to be a headline
+            }
+            return slideText; // The rest is standard body text
+        }).join('\n\n');
+
+        // 4. Update the state and trigger the compiler
+        setBulkText(formattedText);
+        compileBulkText(formattedText);
+    };
+
+    const handleSaveBrandPreset = () => {
+        if (!carouselData) return;
+        const name = prompt("Enter a name for this Brand Preset (e.g., 'Client A'):");
+        if (!name) return;
+
+        const newPreset: BrandPreset = {
+            id: Date.now().toString(),
+            name,
+            theme: carouselData.theme,
+            fonts: { heading: headingFont, subheading: subheadingFont, body: bodyFont },
+            author: { name: authorName, handle: authorHandle, avatar: creatorAvatar || '' }
+        };
+        setBrandPresets(prev => [newPreset, ...prev]);
+    };
+
+    const handleLoadBrandPreset = (preset: BrandPreset) => {
+        setCarouselData(prev => prev ? { ...prev, theme: preset.theme } : null);
+        setHeadingFont(preset.fonts.heading);
+        setSubheadingFont(preset.fonts.subheading);
+        setBodyFont(preset.fonts.body);
+        setAuthorName(preset.author.name);
+        setAuthorHandle(preset.author.handle);
+        setCreatorAvatar(preset.author.avatar);
+
+        // Ensure localStorage is updated for the individual items so they persist on refresh
+        localStorage.setItem('custom_background', preset.theme.background);
+        localStorage.setItem('custom_text', preset.theme.text);
+        localStorage.setItem('custom_accent', preset.theme.accent);
+        localStorage.setItem('heading_font', preset.fonts.heading);
+        localStorage.setItem('subheading_font', preset.fonts.subheading);
+        localStorage.setItem('body_font', preset.fonts.body);
+        localStorage.setItem('authorName', preset.author.name);
+        localStorage.setItem('authorHandle', preset.author.handle);
+        if (preset.author.avatar) localStorage.setItem('creatorAvatar', preset.author.avatar);
+    };
+
+    const handleSaveProject = () => {
+        if (!carouselData) return;
+        const name = prompt("Enter a name for this Project:");
+        if (!name) return;
+
+        const newProject: SavedProject = {
+            id: Date.now().toString(),
+            name,
+            date: new Date().toLocaleDateString(),
+            bulkText: bulkText,
+            theme: carouselData.theme,
+            inlineImages: inlineImages
+        };
+        setSavedProjects(prev => [newProject, ...prev]);
+    };
+
+    const handleLoadProject = (project: SavedProject) => {
+        if (confirm(`Load project "${project.name}"? Unsaved changes in your current editor will be lost.`)) {
+            setBulkText(project.bulkText);
+            setCarouselData(prev => prev ? { ...prev, theme: project.theme } : { theme: project.theme, slides: [] });
+            setInlineImages(project.inlineImages);
+            // Force the compiler to run on the loaded text
+            compileBulkText(project.bulkText);
+        }
     };
 
     const palettes = [
@@ -328,6 +537,13 @@ const LeftPane: React.FC<Props> = (props) => {
                                         >
                                             Example
                                         </button>
+                                        <button
+                                            onClick={handleAutoFormat}
+                                            className="bg-purple-600/20 hover:bg-purple-600/40 text-purple-400 border border-purple-500/30 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1"
+                                            title="Automatically split long text into slides"
+                                        >
+                                            <span>✨ Auto-Split</span>
+                                        </button>
                                         <button onClick={() => { setBulkText(''); setCarouselData(null); }} className="bg-zinc-800 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 border border-white/10 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1">
                                             Clear
                                         </button>
@@ -344,14 +560,38 @@ const LeftPane: React.FC<Props> = (props) => {
                                     </div>
                                 </div>
 
-                                <textarea
-                                    id="bulk-textarea"
-                                    value={bulkText}
-                                    onChange={(e) => { setBulkText(e.target.value); compileBulkText(e.target.value); }}
-                                    placeholder={`/h/ My Headline\n/sh/ My Subheading\nBody text goes here\n\n/h/ Slide 2 Headline\nMore body text`}
-                                    rows={14}
-                                    className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-sm text-zinc-300 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all resize-none relative z-10 box-border"
-                                />
+                                <div className="relative group/textarea">
+                                    <textarea
+                                        ref={textareaRef}
+                                        id="bulk-textarea"
+                                        value={bulkText}
+                                        onChange={(e) => { setBulkText(e.target.value); compileBulkText(e.target.value); }}
+                                        placeholder={`/h/ My Headline\n/sh/ My Subheading\nBody text goes here\n\n/h/ Slide 2 Headline\nMore body text`}
+                                        rows={14}
+                                        className={`w-full bg-zinc-900 border ${isDragging ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-white/10'} rounded-xl p-4 text-sm text-zinc-300 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all resize-none relative z-10 box-border`}
+                                    />
+                                    {/* UPDATE PREVIEW BUTTON */}
+                                    <div className="mt-4 flex flex-col gap-2">
+                                        <button
+                                            onClick={() => compileBulkText(bulkText)}
+                                            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Zap size={14} fill="currentColor" />
+                                            <span>⚡ Update Preview</span>
+                                        </button>
+                                        <p className="text-[10px] text-zinc-500 text-center">
+                                            Tip: You can also use double line-breaks to instantly create new slides.
+                                        </p>
+                                    </div>
+                                    {isDragging && (
+                                        <div className="absolute inset-0 z-20 bg-blue-500/10 backdrop-blur-[2px] rounded-xl flex items-center justify-center pointer-events-none border-2 border-dashed border-blue-500/50">
+                                            <div className="bg-zinc-900 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-blue-500/30">
+                                                <ImageIcon size={14} className="text-blue-400" />
+                                                <span className="text-xs font-bold text-blue-400 tracking-widest uppercase">Injecting Image</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                         </div>
@@ -505,8 +745,8 @@ const LeftPane: React.FC<Props> = (props) => {
                                             <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.background }} />
                                             <input
                                                 type="text"
-                                                value={customTheme.background}
-                                                onChange={(e) => applyCustomTheme('background', e.target.value)}
+                                                value={carouselData?.theme.background || customTheme.background}
+                                                onChange={(e) => handleThemeChange('background', e.target.value)}
                                                 className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
                                                 placeholder="#HEX"
                                                 maxLength={7}
@@ -519,8 +759,8 @@ const LeftPane: React.FC<Props> = (props) => {
                                             <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.text }} />
                                             <input
                                                 type="text"
-                                                value={customTheme.text}
-                                                onChange={(e) => applyCustomTheme('text', e.target.value)}
+                                                value={carouselData?.theme.text || customTheme.text}
+                                                onChange={(e) => handleThemeChange('text', e.target.value)}
                                                 className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
                                                 placeholder="#HEX"
                                                 maxLength={7}
@@ -533,14 +773,39 @@ const LeftPane: React.FC<Props> = (props) => {
                                             <div className="w-6 h-6 rounded-full border border-black/50 shrink-0 shadow-inner" style={{ background: customTheme.accent }} />
                                             <input
                                                 type="text"
-                                                value={customTheme.accent}
-                                                onChange={(e) => applyCustomTheme('accent', e.target.value)}
+                                                value={carouselData?.theme.accent || customTheme.accent}
+                                                onChange={(e) => handleThemeChange('accent', e.target.value)}
                                                 className="bg-transparent text-[10px] font-mono text-zinc-300 w-full outline-none uppercase"
                                                 placeholder="#HEX"
                                                 maxLength={7}
                                             />
                                         </div>
                                     </div>
+                                </div>
+
+                                <div className="mt-6 pt-6 border-t border-white/10">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">🏢 Brand Presets</span>
+                                        <button onClick={handleSaveBrandPreset} className="text-[10px] bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors text-white">
+                                            + Save Current
+                                        </button>
+                                    </div>
+                                    {brandPresets.length === 0 ? (
+                                        <p className="text-[10px] text-zinc-500">No presets saved yet.</p>
+                                    ) : (
+                                        <div className="flex flex-col gap-2">
+                                            {brandPresets.map(preset => (
+                                                <div key={preset.id} className="flex items-center justify-between bg-zinc-950 border border-white/5 p-2 rounded">
+                                                    <button onClick={() => handleLoadBrandPreset(preset)} className="text-xs text-zinc-300 hover:text-white transition-colors flex-1 text-left">
+                                                        {preset.name}
+                                                    </button>
+                                                    <button onClick={() => setBrandPresets(prev => prev.filter(p => p.id !== preset.id))} className="text-zinc-600 hover:text-red-400">
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </details>
@@ -617,7 +882,39 @@ const LeftPane: React.FC<Props> = (props) => {
                             </div>
                         </details>
 
-                        {/* 4. ADVANCED PHYSICS */}
+                        {/* 4. SAVED PROJECTS */}
+                        <details className="group border border-white/10 bg-zinc-900/50 rounded-xl overflow-hidden mb-4">
+                            <summary className="flex items-center justify-between p-4 cursor-pointer select-none bg-zinc-900 hover:bg-zinc-800 transition-colors">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">📁 Saved Projects</span>
+                                <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
+                            </summary>
+                            <div className="p-4 border-t border-white/5">
+                                <button onClick={handleSaveProject} className="w-full mb-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded border border-white/10 transition-colors">
+                                    + Save Current Project
+                                </button>
+
+                                {savedProjects.length === 0 ? (
+                                    <p className="text-xs text-zinc-500 text-center">No projects saved yet.</p>
+                                ) : (
+                                    <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                        {savedProjects.map(project => (
+                                            <div key={project.id} className="flex flex-col bg-zinc-950 border border-white/5 p-3 rounded group/item">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-sm font-bold text-white">{project.name}</span>
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                        <button onClick={() => handleLoadProject(project)} className="text-[10px] bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 px-2 py-1 rounded">Load</button>
+                                                        <button onClick={() => setSavedProjects(prev => prev.filter(p => p.id !== project.id))} className="text-[10px] bg-red-600/20 text-red-400 hover:bg-red-600/40 px-2 py-1 rounded">Delete</button>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] text-zinc-500">Saved: {project.date}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </details>
+
+                        {/* 5. ADVANCED PHYSICS */}
                         <details className="group border border-white/10 bg-zinc-900/50 rounded-xl overflow-hidden">
                             <summary className="flex items-center justify-between p-4 cursor-pointer select-none bg-zinc-900 hover:bg-zinc-800 transition-colors">
                                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Settings size={12} /> ⚙️ Advanced Settings</span>
@@ -674,18 +971,21 @@ const LeftPane: React.FC<Props> = (props) => {
                             <RotateCcw size={12} /> Purge Everything
                         </button>
                     </div>
-                )}
-            </div>
+                )
+                }
+            </div >
 
             {/* Error Message Area */}
-            {error && (
-                <div
-                    onClick={() => setError(null)}
-                    className="mx-6 mb-4 bg-red-500/5 border border-red-500/20 text-red-500 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 cursor-pointer hover:bg-red-500/10 transition-all"
-                >
-                    <Trash2 size={12} /> {error}
-                </div>
-            )}
+            {
+                error && (
+                    <div
+                        onClick={() => setError(null)}
+                        className="mx-6 mb-4 bg-red-500/5 border border-red-500/20 text-red-500 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 cursor-pointer hover:bg-red-500/10 transition-all"
+                    >
+                        <Trash2 size={12} /> {error}
+                    </div>
+                )
+            }
 
             {/* SLEEK COMPACT FOOTER FOOTER */}
             <div className="shrink-0 p-6 border-t border-white/10 flex flex-col gap-4">
@@ -708,26 +1008,28 @@ const LeftPane: React.FC<Props> = (props) => {
             </div>
 
             {/* MODALS (Render outside main flow but inside component) */}
-            {showGuide && (
-                <div className="fixed inset-0 z-[9999] bg-zinc-950/95 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto">
-                    <div className="max-w-2xl w-full bg-zinc-900 border border-white/10 rounded-2xl p-8 relative">
-                        <button onClick={() => setShowGuide(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-white">✕</button>
-                        <h2 className="text-2xl font-bold mb-6 text-white uppercase tracking-tighter">Architect's Guide</h2>
-                        <div className="space-y-4 text-sm text-zinc-300 leading-relaxed">
-                            <p><strong>Bulk Workflow:</strong> Use shorthand tags to architect your narrative at lightspeed.</p>
-                            <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2 font-mono text-[11px]">
-                                <p className="text-blue-400">/h, s:120/ Global Headline</p>
-                                <p className="text-blue-400">/sh, sh_s:60/ Subheading logic </p>
-                                <p className="text-zinc-500">Standard body text flows naturally.</p>
-                                <p className="text-zinc-600">Double Enter = New Slide</p>
+            {
+                showGuide && (
+                    <div className="fixed inset-0 z-[9999] bg-zinc-950/95 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto">
+                        <div className="max-w-2xl w-full bg-zinc-900 border border-white/10 rounded-2xl p-8 relative">
+                            <button onClick={() => setShowGuide(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-white">✕</button>
+                            <h2 className="text-2xl font-bold mb-6 text-white uppercase tracking-tighter">Architect's Guide</h2>
+                            <div className="space-y-4 text-sm text-zinc-300 leading-relaxed">
+                                <p><strong>Bulk Workflow:</strong> Use shorthand tags to architect your narrative at lightspeed.</p>
+                                <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2 font-mono text-[11px]">
+                                    <p className="text-blue-400">/h, s:120/ Global Headline</p>
+                                    <p className="text-blue-400">/sh, sh_s:60/ Subheading logic </p>
+                                    <p className="text-zinc-500">Standard body text flows naturally.</p>
+                                    <p className="text-zinc-600">Double Enter = New Slide</p>
+                                </div>
+                                <p><strong>Pro Tip:</strong> Click any slide in the preview to enter <strong>Focus Mode</strong> for precise micro-tuning of font sizes and alignment.</p>
+                                <p><strong>Nesting Support:</strong> You can now nest markdown: <code>**BOLD __AND UNDERLINED__**</code> works flawlessly.</p>
                             </div>
-                            <p><strong>Pro Tip:</strong> Click any slide in the preview to enter <strong>Focus Mode</strong> for precise micro-tuning of font sizes and alignment.</p>
-                            <p><strong>Nesting Support:</strong> You can now nest markdown: <code>**BOLD __AND UNDERLINED__**</code> works flawlessly.</p>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

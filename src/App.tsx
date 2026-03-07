@@ -4,11 +4,23 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import LeftPane from './components/LeftPane';
 import CarouselPreview from './components/CarouselPreview';
 import NetflixIntro from './components/NetflixIntro';
-import type { CarouselData, Slide } from './types';
+import type { CarouselData, Slide, BrandPreset, SavedProject } from './types';
 import { renderHighlightedText } from './utils';
 
 function App() {
   const [carouselData, setCarouselData] = useState<CarouselData | null>(null);
+  const [inlineImages, setInlineImages] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem('inlineImages');
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem('inlineImages', JSON.stringify(inlineImages)); } catch { /* quota */ }
+  }, [inlineImages]);
+
+  const [previewMode, setPreviewMode] = useState<'stack' | 'carousel' | 'grid'>('stack');
   const [openRouterKey, setOpenRouterKey] = useState(() => localStorage.getItem('openRouterKey') || '');
 
   // Persistent Branding State
@@ -67,6 +79,26 @@ function App() {
   const [focusedSlideIndex, setFocusedSlideIndex] = useState<number | null>(null);
   const [tunerTab, setTunerTab] = useState<'size' | 'font' | 'align'>('size');
 
+  const [brandPresets, setBrandPresets] = useState<BrandPreset[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('carousel_brand_presets') || '[]');
+    } catch { return []; }
+  });
+
+  const [savedProjects, setSavedProjects] = useState<SavedProject[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('carousel_saved_projects') || '[]');
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('carousel_brand_presets', JSON.stringify(brandPresets));
+  }, [brandPresets]);
+
+  useEffect(() => {
+    localStorage.setItem('carousel_saved_projects', JSON.stringify(savedProjects));
+  }, [savedProjects]);
+
   useEffect(() => {
     try { localStorage.setItem('lastBulkText', bulkText); } catch { /* quota */ }
   }, [bulkText]);
@@ -123,10 +155,10 @@ function App() {
     });
 
     if (slides.length > 0) {
-      setCarouselData({
-        theme: customTheme,
+      setCarouselData(prev => ({
+        theme: prev?.theme || customTheme || { background: '#09090B', text: '#FAFAFA', accent: '#F59E0B' },
         slides: slides
-      });
+      }));
     } else {
       setCarouselData(null);
     }
@@ -238,6 +270,29 @@ function App() {
   }, [textAlign, noiseOpacity, customBgImage]);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. Export Shortcut: Cmd/Ctrl + Enter
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btn-export-zip')?.click();
+      }
+
+      // 2. Modal Navigation: Left/Right Arrows
+      if (focusedSlideIndex !== null && carouselData?.slides) {
+        if (e.key === 'ArrowRight') {
+          setFocusedSlideIndex(prev => Math.min((prev || 0) + 1, carouselData.slides.length - 1));
+        }
+        if (e.key === 'ArrowLeft') {
+          setFocusedSlideIndex(prev => Math.max((prev || 0) - 1, 0));
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [focusedSlideIndex, carouselData]);
+
+  useEffect(() => {
     try {
       localStorage.setItem('showSafeZones', showSafeZones.toString());
       localStorage.setItem('showSlideNumbers', showSlideNumbers.toString());
@@ -320,6 +375,7 @@ function App() {
       {/* THE LEFT PANE (Control Center) */}
       <div className="w-full lg:w-[480px] h-full relative z-10 glass rounded-[32px] overflow-hidden shadow-2xl premium-shadow">
         <LeftPane
+          carouselData={carouselData}
           setCarouselData={setCarouselData}
           openRouterKey={openRouterKey}
           setOpenRouterKey={setOpenRouterKey}
@@ -358,10 +414,18 @@ function App() {
           injectOverride={injectOverride}
           getOverride={getOverride}
           setFocusedSlideIndex={setFocusedSlideIndex}
+          setInlineImages={setInlineImages}
           showSafeZones={showSafeZones}
           setShowSafeZones={setShowSafeZones}
           showSlideNumbers={showSlideNumbers}
           setShowSlideNumbers={setShowSlideNumbers}
+          brandPresets={brandPresets}
+          setBrandPresets={setBrandPresets}
+          savedProjects={savedProjects}
+          setSavedProjects={setSavedProjects}
+          inlineImages={inlineImages}
+          creatorAvatar={authorAvatar}
+          setCreatorAvatar={setAuthorAvatar}
         />
       </div>
 
@@ -396,6 +460,11 @@ function App() {
             setFocusedSlideIndex={setFocusedSlideIndex}
             showSafeZones={showSafeZones}
             showSlideNumbers={showSlideNumbers}
+            inlineImages={inlineImages}
+            previewMode={previewMode}
+            setPreviewMode={setPreviewMode}
+            bulkText={bulkText}
+            setBulkText={setBulkText}
           />
         </div>
       </div>
@@ -449,7 +518,7 @@ function App() {
                         lineHeight: '1.1',
                         marginBottom: '40px'
                       }}>
-                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].headline || '', activeTemplate, carouselData.theme.accent)}
+                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].headline || '', activeTemplate, carouselData.theme.accent, inlineImages)}
                       </h1>
                     )}
                     {(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading) && (
@@ -460,7 +529,7 @@ function App() {
                         opacity: 0.8,
                         marginBottom: '40px'
                       }}>
-                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading || '', activeTemplate, carouselData.theme.accent)}
+                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading || '', activeTemplate, carouselData.theme.accent, inlineImages)}
                       </h2>
                     )}
                     {carouselData.slides[focusedSlideIndex].body && (
@@ -471,7 +540,7 @@ function App() {
                         opacity: 0.9,
                         whiteSpace: 'pre-line'
                       }}>
-                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].body || '', activeTemplate, carouselData.theme.accent)}
+                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].body || '', activeTemplate, carouselData.theme.accent, inlineImages)}
                       </div>
                     )}
                   </div>

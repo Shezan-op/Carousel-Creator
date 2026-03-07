@@ -164,6 +164,7 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
                     <span>Download PDF (LinkedIn)</span>
                 </button>
                 <button
+                    id="btn-export-zip"
                     onClick={exportToZip}
                     disabled={isExporting}
                     className="flex-1 bg-transparent border border-white/10 hover:bg-white/5 disabled:bg-zinc-800/20 disabled:text-zinc-500 text-zinc-100 font-bold rounded-xl px-4 py-3 transition-all active:scale-[0.98] flex justify-center items-center"
