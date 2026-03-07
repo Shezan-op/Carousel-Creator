@@ -23,7 +23,12 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
         const effectivelyUnlocked = isUnlocked || localStorage.getItem('carousel_unlocked') === 'true';
         if (currentCount >= 3 && !effectivelyUnlocked) {
             // @ts-expect-error - Tally from global script
-            if (window.Tally) window.Tally.openPopup('MeA7bM', { layout: 'modal', autoClose: 3000, formEventsForwarding: true });
+            if (window.Tally) window.Tally.openPopup('MeA7bM', {
+                layout: 'modal',
+                hideTitle: true,
+                transparentBackground: true,
+                formEventsForwarding: true
+            });
             return; // Block the export
         }
 
@@ -70,7 +75,12 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             // 2. The Feedback Loop (Ask on 1st export if not given)
             if (updatedCount === 1 && !hasGivenFeedback) {
                 // @ts-expect-error - Tally from global script
-                if (window.Tally) window.Tally.openPopup('zxK1DR', { layout: 'modal', autoClose: 0, formEventsForwarding: true });
+                if (window.Tally) window.Tally.openPopup('zxK1DR', {
+                    layout: 'modal',
+                    hideTitle: true,
+                    transparentBackground: true,
+                    formEventsForwarding: true
+                });
             }
         } catch {
             console.error('Export Error: PDF generation failed.');
@@ -86,7 +96,12 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
         const effectivelyUnlocked = isUnlocked || localStorage.getItem('carousel_unlocked') === 'true';
         if (currentCount >= 3 && !effectivelyUnlocked) {
             // @ts-expect-error - Tally from global script
-            if (window.Tally) window.Tally.openPopup('MeA7bM', { layout: 'modal', autoClose: 3000, formEventsForwarding: true });
+            if (window.Tally) window.Tally.openPopup('MeA7bM', {
+                layout: 'modal',
+                hideTitle: true,
+                transparentBackground: true,
+                formEventsForwarding: true
+            });
             return; // Block the export
         }
 

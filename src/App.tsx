@@ -111,7 +111,7 @@ function App() {
 
   const [bulkText, setBulkText] = useState(() => localStorage.getItem('lastBulkText') || '');
   const [focusedSlideIndex, setFocusedSlideIndex] = useState<number | null>(null);
-  const [tunerTab, setTunerTab] = useState<'size' | 'font' | 'align'>('size');
+  const [tunerTab, setTunerTab] = useState<'size' | 'font' | 'align' | 'bg'>('size');
 
   const [brandPresets, setBrandPresets] = useState<BrandPreset[]>(() => {
     try {
@@ -166,6 +166,7 @@ function App() {
             if (k === 'b_s') options.body_size = parseInt(v);
             if (k === 'y') options.y_offset = parseInt(v);
             if (k === 'a') options.text_align = v;
+            if (k === 'bg') options.bg_image = v;
           });
 
           if (type === 'h') {
@@ -573,6 +574,7 @@ function App() {
                 <button onClick={() => setTunerTab('size')} className={`text-xs font-bold uppercase tracking-widest transition-colors ${tunerTab === 'size' ? 'text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Size</button>
                 <button onClick={() => setTunerTab('font')} className={`text-xs font-bold uppercase tracking-widest transition-colors ${tunerTab === 'font' ? 'text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Fonts</button>
                 <button onClick={() => setTunerTab('align')} className={`text-xs font-bold uppercase tracking-widest transition-colors ${tunerTab === 'align' ? 'text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Align</button>
+                <button onClick={() => setTunerTab('bg')} className={`text-xs font-bold uppercase tracking-widest transition-colors ${tunerTab === 'bg' ? 'text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}>Bg</button>
               </div>
 
               {/* TAB CONTENTS */}
@@ -645,6 +647,36 @@ function App() {
                               <button onClick={() => injectOverride(focusedSlideIndex, 'config', 'b_s', currentBodySize + 1)} className="w-8 h-8 flex items-center justify-center bg-zinc-700 hover:bg-zinc-600 rounded-full text-white font-bold transition-colors">+</button>
                             </div>
                           </div>
+                        </div>
+                      )}
+
+                      {tunerTab === 'bg' && (
+                        <div className="flex flex-col gap-3">
+                          <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Slide Background</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                const base64 = event.target?.result as string;
+                                const imgId = 'bg_' + Math.random().toString(36).substring(2, 9);
+                                setInlineImages(prev => ({ ...prev, [imgId]: base64 }));
+                                // Inject the bg: tag into the active slide
+                                updateSlideConfig('h', 'bg', imgId);
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                            className="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-600/20 file:text-blue-400 hover:file:bg-blue-600/30"
+                          />
+                          <button
+                            onClick={() => updateSlideConfig('h', 'bg', '')} // Remove the bg tag
+                            className="text-xs text-red-400 hover:text-red-300 mt-2 text-left"
+                          >
+                            Remove Custom Background
+                          </button>
                         </div>
                       )}
 

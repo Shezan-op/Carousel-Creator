@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Loader2, ArrowRight, Heart, MessageCircle, Repeat2, Check } from 'lucide-react';
 import type { CarouselData } from '../types';
 import ExportControls from './ExportControls';
@@ -100,6 +100,19 @@ const CarouselPreview: React.FC<Props> = ({
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
+
+    const handleShiftSlide = useCallback((currentIndex: number, direction: 'left' | 'right') => {
+        const rawSlides = bulkText.split(/\n\s*\n/).filter((s: string) => s.trim());
+        const targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+
+        if (targetIndex >= 0 && targetIndex < rawSlides.length) {
+            const reorderedSlides = [...rawSlides];
+            const temp = reorderedSlides[currentIndex];
+            reorderedSlides[currentIndex] = reorderedSlides[targetIndex];
+            reorderedSlides[targetIndex] = temp;
+            setBulkText(reorderedSlides.join('\n\n'));
+        }
+    }, [bulkText, setBulkText]);
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
@@ -220,7 +233,12 @@ const CarouselPreview: React.FC<Props> = ({
                         }}
                     >
                         {/* LAYER 0: CUSTOM BACKGROUND TEMPLATE */}
-                        {customBgImage && (
+                        {slide.bg_image && inlineImages[slide.bg_image] ? (
+                            <div style={{
+                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
+                                backgroundImage: `url(${inlineImages[slide.bg_image]})`, backgroundSize: 'cover', backgroundPosition: 'center'
+                            }} />
+                        ) : customBgImage && (
                             <div style={{
                                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
                                 backgroundImage: `url(${customBgImage})`, backgroundSize: 'cover', backgroundPosition: 'center'
@@ -693,9 +711,9 @@ const CarouselPreview: React.FC<Props> = ({
                             </>
                         )}
 
-                        {/* SLIDE COUNTERS & ARROWS */}
+                        {/* SLIDE COUNTERS & ARROWS (Ignored during export) */}
                         {showSlideNumbers && (
-                            <>
+                            <div data-html2canvas-ignore="true">
                                 <div style={{ position: 'absolute', bottom: '40px', left: '108px', fontSize: '24px', fontWeight: '600', color: data.theme.text, opacity: 0.5, zIndex: 20 }}>
                                     {index + 1} / {data.slides.length}
                                 </div>
@@ -704,7 +722,7 @@ const CarouselPreview: React.FC<Props> = ({
                                         →
                                     </div>
                                 )}
-                            </>
+                            </div>
                         )}
 
                         {/* SAFE ZONE OVERLAY (Ignored during export) */}
@@ -734,6 +752,26 @@ const CarouselPreview: React.FC<Props> = ({
                                 <span>⚠️</span> TEXT OVERFLOW
                             </div>
                         )}
+
+                        {/* MOBILE GRID SHIFT BUTTONS */}
+                        {previewMode === 'grid' && (
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-4 bg-zinc-950/80 backdrop-blur-md p-2 rounded-full border border-white/20" data-html2canvas-ignore="true">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleShiftSlide(index, 'left'); }}
+                                    disabled={index === 0}
+                                    className="w-10 h-10 flex items-center justify-center bg-zinc-800 rounded-full text-white hover:bg-zinc-700 disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors"
+                                >
+                                    ←
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleShiftSlide(index, 'right'); }}
+                                    disabled={index === data.slides.length - 1}
+                                    className="w-10 h-10 flex items-center justify-center bg-zinc-800 rounded-full text-white hover:bg-zinc-700 disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors"
+                                >
+                                    →
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </SortableSlide>
             );
@@ -744,7 +782,7 @@ const CarouselPreview: React.FC<Props> = ({
         headingFont, subheadingFont, bodyFont, effectiveScale,
         textAlign, noiseOpacity, customBgImage,
         setActivePreviewSlideIndex, setFocusedSlideIndex,
-        showSafeZones, showSlideNumbers, previewMode, inlineImages, overflowingSlides
+        showSafeZones, showSlideNumbers, previewMode, inlineImages, overflowingSlides, handleShiftSlide
     ]);
 
     if (!data) {

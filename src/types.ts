@@ -19,6 +19,7 @@ export interface Slide {
     body_size?: number;         // body
     text_align?: 'left' | 'center' | 'right';
     y_offset?: number;
+    bg_image?: string;
 }
 
 export interface CarouselData {
