@@ -19,9 +19,11 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
 
     const exportToPDF = async () => {
         const currentCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
-        if (currentCount >= 3 && !isUnlocked) {
+        // Double-check: React state might lag behind localStorage if Tally just fired
+        const effectivelyUnlocked = isUnlocked || localStorage.getItem('carousel_unlocked') === 'true';
+        if (currentCount >= 3 && !effectivelyUnlocked) {
             // @ts-expect-error - Tally from global script
-            if (window.Tally) window.Tally.openPopup('MeA7bM', { layout: 'modal', autoClose: 3000, formEventsForwarding: 1 });
+            if (window.Tally) window.Tally.openPopup('MeA7bM', { layout: 'modal', autoClose: 3000, formEventsForwarding: true });
             return; // Block the export
         }
 
@@ -68,7 +70,7 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             // 2. The Feedback Loop (Ask on 1st export if not given)
             if (updatedCount === 1 && !hasGivenFeedback) {
                 // @ts-expect-error - Tally from global script
-                if (window.Tally) window.Tally.openPopup('zxK1DR', { layout: 'modal', autoClose: 0, formEventsForwarding: 1 });
+                if (window.Tally) window.Tally.openPopup('zxK1DR', { layout: 'modal', autoClose: 0, formEventsForwarding: true });
             }
         } catch {
             console.error('Export Error: PDF generation failed.');
@@ -80,9 +82,11 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
 
     const exportToZip = async () => {
         const currentCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
-        if (currentCount >= 3 && !isUnlocked) {
+        // Double-check: React state might lag behind localStorage if Tally just fired
+        const effectivelyUnlocked = isUnlocked || localStorage.getItem('carousel_unlocked') === 'true';
+        if (currentCount >= 3 && !effectivelyUnlocked) {
             // @ts-expect-error - Tally from global script
-            if (window.Tally) window.Tally.openPopup('MeA7bM', { layout: 'modal', autoClose: 3000, formEventsForwarding: 1 });
+            if (window.Tally) window.Tally.openPopup('MeA7bM', { layout: 'modal', autoClose: 3000, formEventsForwarding: true });
             return; // Block the export
         }
 
@@ -133,7 +137,7 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             // 2. The Feedback Loop (Ask on 1st export if not given)
             if (updatedCount === 1 && !hasGivenFeedback) {
                 // @ts-expect-error - Tally from global script
-                if (window.Tally) window.Tally.openPopup('zxK1DR', { layout: 'modal', autoClose: 0, formEventsForwarding: 1 });
+                if (window.Tally) window.Tally.openPopup('zxK1DR', { layout: 'modal', autoClose: 0, formEventsForwarding: true });
             }
 
         } catch (error) {

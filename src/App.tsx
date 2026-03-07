@@ -46,28 +46,62 @@ function App() {
   const [showSafeZones, setShowSafeZones] = useState(() => localStorage.getItem('showSafeZones') === 'true');
   const [showSlideNumbers, setShowSlideNumbers] = useState(() => localStorage.getItem('showSlideNumbers') !== 'false');
 
-  // Listen for Tally form submissions
+  // Listen for Tally form submissions — robust handler
   useEffect(() => {
     const handleTallyMessage = (e: MessageEvent) => {
-      if (typeof e.data === 'string' && e.data.includes('Tally.FormSubmitted')) {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.eventId === 'Tally.FormSubmitted') {
-            if (data.payload.formId === 'MeA7bM') { // Lead Capture Form
-              localStorage.setItem('carousel_unlocked', 'true');
-              setIsUnlocked(true);
-              // Note: Tally auto-closes this after 3000ms based on our config
-            } else if (data.payload.formId === 'zxK1DR') { // Feedback Form
-              localStorage.setItem('has_given_feedback', 'true');
-              setHasGivenFeedback(true);
-            }
-          }
-        } catch (err) { console.error("Tally parse error", err); }
+      // Tally can send data as a string OR a plain object
+      let parsed: Record<string, unknown> | null = null;
+
+      if (typeof e.data === 'string') {
+        // Quick-exit: if the string doesn't mention Tally at all, ignore
+        if (!e.data.includes('Tally')) return;
+        try { parsed = JSON.parse(e.data); } catch { return; }
+      } else if (typeof e.data === 'object' && e.data !== null) {
+        parsed = e.data as Record<string, unknown>;
+      }
+
+      if (!parsed) return;
+
+      // Tally uses "event" or "eventId" depending on widget version
+      const eventName = (parsed.event || parsed.eventId || '') as string;
+      if (!eventName.includes('FormSubmitted')) return;
+
+      // formId can live at parsed.payload.formId OR parsed.formId
+      const payload = (parsed.payload || parsed) as Record<string, unknown>;
+      const formId = (payload.formId || '') as string;
+
+      if (formId === 'MeA7bM') {
+        // Lead Capture Form — unlock exports forever
+        localStorage.setItem('carousel_unlocked', 'true');
+        setIsUnlocked(true);
+      } else if (formId === 'zxK1DR') {
+        // Feedback Form
+        localStorage.setItem('has_given_feedback', 'true');
+        setHasGivenFeedback(true);
       }
     };
+
     window.addEventListener('message', handleTallyMessage);
     return () => window.removeEventListener('message', handleTallyMessage);
   }, []);
+
+  // Fallback: If Tally's postMessage was missed (adblocker, iframe sandbox, etc.),
+  // re-check localStorage whenever the window regains focus (e.g., after popup closes)
+  useEffect(() => {
+    const recheckUnlock = () => {
+      if (!isUnlocked && localStorage.getItem('carousel_unlocked') === 'true') {
+        setIsUnlocked(true);
+      }
+      if (!hasGivenFeedback && localStorage.getItem('has_given_feedback') === 'true') {
+        setHasGivenFeedback(true);
+      }
+    };
+    window.addEventListener('focus', recheckUnlock);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) recheckUnlock(); });
+    return () => {
+      window.removeEventListener('focus', recheckUnlock);
+    };
+  }, [isUnlocked, hasGivenFeedback]);
 
   const [customTheme, setCustomTheme] = useState({
     background: localStorage.getItem('custom_background') || '#09090B',
