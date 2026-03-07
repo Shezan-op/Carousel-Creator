@@ -33,9 +33,12 @@ It was built from the ground up as a **React 19 + TypeScript** single-page appli
 |---------|-----------|-----------|
 | Clean, modern typography with accent highlights | Simulates a viral X/Twitter post with engagement metrics | Heavy uppercase type with high-contrast block accents |
 
-### ⚡ The Bulk Compiler
+### ⚡ The Bulk Compiler & Image Injector
 
 Write naturally, get structured slides. The compiler uses a tag-based syntax:
+
+- **Native Image Support**: Drop any image onto the Bulk Editor to inject it into your carousel instantly at the cursor position.
+- **Tag-based Syntax**:
 
 ```
 /h/ Your Headline Here
@@ -56,6 +59,12 @@ Double-enter creates a new slide. Per-slide overrides are inline: `/h, s:120, a:
 - `__underline__` → Clean CSS-based underline
 - **Character Foundry**: Independently select any Google Font for **Headlines**, **Subheadings**, and **Body text**. Optimized deduped injection ensures fast loading.
 
+### 📁 Agency Workflow & Portability
+
+- **Saved Project Slots**: Save multiple drafts locally and switch between them instantly.
+- **Brand Presets**: Store unique combinations of fonts, colors, and author data for different clients.
+- **Project Backup (.carousel)**: Export your entire workspace into a single portable file to keep backups or move your work between browsers.
+
 ### 📱 Focus Modal (Mobile Editor)
 
 A Figma-inspired mobile workspace that allows for per-slide precision tuning:
@@ -72,16 +81,11 @@ A Figma-inspired mobile workspace that allows for per-slide precision tuning:
 - **Export Ghosting Fix**: UI elements like slide numbers and arrows are automatically stripped from exports for a clean, pixel-perfect finish.
 - **Grid View Reordering**: Mobile-optimized "Shift Left/Right" buttons allow for easy slide reordering without complex drag-and-drop on small screens.
 
-### 🔒 Privacy-First & BYOK Architecture
+### 🔒 Enterprise Infrastructure
 
-- **Zero backend** — all processing happens in your browser
-- **Bring Your Own Key (BYOK)** — your OpenRouter API key is stored locally, never transmitted to us
-- **Local persistence** — creator identity, preferences, and content saved to `localStorage`
-
-### 📱 Responsive Design
-
-- **Desktop**: Professional split-pane workspace with zoom controls
-- **Mobile**: Natural document flow with dynamic `transform: scale()` canvas fitting
+- **Async Persistence**: Uses **IndexedDB (via localforage)** for heavy data (images, projects, presets), bypassing the 5MB `localStorage` limit and preventing UI lock-ups.
+- **BYOK Architecture**: Your OpenRouter API key is stored locally, never transmitted to us.
+- **Stable Export Engine**: Processes slides sequentially with memory clearing to handle large 10+ slide carousels on low-end devices.
 
 ---
 
@@ -90,23 +94,21 @@ A Figma-inspired mobile workspace that allows for per-slide precision tuning:
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | **Framework** | React 19 + TypeScript | Type-safe component architecture |
+| **Storage** | IndexedDB + localforage | High-capacity async local persistence |
 | **Build** | Vite 7 | Sub-second HMR, optimized production bundles |
 | **Styling** | Tailwind CSS 4.0 | Utility-first responsive design |
-| **Export: PDF** | `html-to-image` + `jsPDF` | DOM-to-JPEG capture → multi-page PDF |
-| **Export: ZIP** | `html-to-image` + `JSZip` + `file-saver` | Multi-template batch render → ZIP archive |
+| **Export: PDF** | `html-to-image` + `jsPDF` | Sequential capture loop → multi-page PDF |
+| **Export: ZIP** | `html-to-image` + `JSZip` | Multi-template batch render → ZIP archive |
 | **AI** | OpenRouter API | Optional text-to-carousel generation (BYOK) |
-| **Analytics** | Vercel Analytics + Speed Insights | Production performance monitoring |
-| **Icons** | Lucide React | Consistent, tree-shakeable icon system |
-| **Hosting** | Vercel | Edge deployment with automatic CI/CD |
+| **Analytics** | Vercel Analytics | Production performance monitoring |
 
 ### Key Engineering Decisions
 
 - **Rigid Canvas (1080×1350)**: All slides render at a fixed 4:5 aspect ratio inside a `transform: scale()` wrapper. The DOM node is always 1080×1350px — scaling is purely visual. This guarantees pixel-perfect exports regardless of viewport size.
 - **Safe Zone Padding**: 108px padding on all sides constrains text to an 864×1134px safe zone, preventing content from being cropped on any platform.
-- **Unified Typography Model**: A single `subheading_size` property controls both H2 (subheadline) and H3 (section header) elements across all templates, with backwards-compatible support for the deprecated `subheadline_size` field.
-- **Multi-Font Orchestrator**: Uses a custom logic to merge multiple font requests into a single Google Fonts API call with full weight support (400-900 + italics), minimizing layout shift.
+- **Sequential Capture**: The export engine captures one slide at a time with a 500ms delay between pages. This ensures React reconciliation is complete and prevents browser crashes due to memory spikes during heavy DOM-to-Image conversions.
+- **Multi-Font Orchestrator**: Uses custom logic to merge multiple font requests into a single Google Fonts API call with full weight support (400-900 + italics), minimizing layout shift.
 - **Nested Markdown Parser**: A sequential HTML injector that allows for complex formatting combinations (e.g., ****bold + italic + underline****).
-- **Defensive Storage**: All `localStorage` operations are wrapped in try/catch to handle quota limits gracefully. Counter parsers guard against `NaN` pollution.
 
 ---
 

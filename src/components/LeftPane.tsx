@@ -412,6 +412,45 @@ const LeftPane: React.FC<Props> = (props) => {
         }
     };
 
+    const exportProjectFile = () => {
+        const projectData = {
+            version: "1.0",
+            bulkText,
+            theme: carouselData?.theme,
+            inlineImages
+        };
+        const blob = new Blob([JSON.stringify(projectData)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `project-${new Date().toISOString().split('T')[0]}.carousel`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const importProjectFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target?.result as string);
+                if (data.bulkText && data.theme) {
+                    setBulkText(data.bulkText);
+                    setCarouselData(prev => ({ ...prev!, slides: prev?.slides || [], theme: data.theme }));
+                    if (data.inlineImages) setInlineImages(data.inlineImages);
+                    alert("Project loaded successfully!");
+                } else {
+                    alert("Invalid .carousel file.");
+                }
+            } catch (err) {
+                alert("Failed to parse file.");
+            }
+        };
+        reader.readAsText(file);
+    };
+
     const palettes = [
         { name: 'Night', bg: '#0A0A0B', text: '#FFFFFF', accent: '#3B82F6' },
         { name: 'Ghost', bg: '#FFFFFF', text: '#111111', accent: '#6366F1' },
@@ -911,6 +950,16 @@ const LeftPane: React.FC<Props> = (props) => {
                                         ))}
                                     </div>
                                 )}
+
+                                <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
+                                    <button onClick={exportProjectFile} className="flex-1 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded border border-white/10 transition-colors">
+                                        ↓ Backup (.carousel)
+                                    </button>
+                                    <label className="flex-1 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded border border-white/10 transition-colors text-center cursor-pointer">
+                                        ↑ Load File
+                                        <input type="file" accept=".carousel,.json" className="hidden" onChange={importProjectFile} />
+                                    </label>
+                                </div>
                             </div>
                         </details>
 

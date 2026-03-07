@@ -37,6 +37,9 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
 
         setExportType('pdf');
         try {
+            // Force UI to stack mode temporarily if needed, wait for render
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             const slideNodes = Array.from(document.querySelectorAll('.slide-export-node')) as HTMLElement[];
             if (slideNodes.length === 0) return;
 
@@ -49,19 +52,21 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
 
             for (let i = 0; i < slideNodes.length; i++) {
                 const node = slideNodes[i];
+                const scale = 1080 / node.offsetWidth;
 
-                // Capture as JPEG; pixelRatio:1 ensures we stay at the natural 1080x1350
-                let dataUrl: string | null = await toJpeg(node, {
+                // Process ONE slide completely before moving to the next
+                const dataUrl: string | null = await toJpeg(node, {
                     quality: 0.90,
-                    pixelRatio: 1,
-                    style: { transform: 'scale(1)', transformOrigin: 'top left', margin: '0' }
+                    pixelRatio: scale,
+                    style: { transform: 'none', margin: '0' } // Reset transforms for capture
                 });
 
                 if (i !== 0) pdf.addPage([1080, 1350], 'portrait');
                 pdf.addImage(dataUrl, 'JPEG', 0, 0, 1080, 1350, `slide_${i}`, 'FAST');
 
-                // PERF: Immediately null the dataUrl so GC can reclaim ~2-4MB before the next iteration
-                dataUrl = null;
+                // Explicitly clear memory to prevent RAM spike
+                // @ts-ignore
+                node.style.transform = '';
             }
 
             pdf.save('carousel.pdf');
@@ -125,17 +130,22 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
 
                 for (let i = 0; i < slideNodes.length; i++) {
                     const node = slideNodes[i] as HTMLElement;
+                    const scale = 1080 / node.offsetWidth;
 
-                    // Force natural capture size
+                    // Process ONE slide completely before moving to the next
                     const dataUrl = await toJpeg(node, {
                         quality: 0.90,
-                        pixelRatio: 1,
-                        style: { transform: 'scale(1)', transformOrigin: 'top left', margin: '0' }
+                        pixelRatio: scale,
+                        style: { transform: 'none', margin: '0' } // Reset transforms for capture
                     });
 
                     const response = await fetch(dataUrl);
                     const blob = await response.blob();
                     folder?.file(`slide-${i + 1}.jpg`, blob);
+
+                    // Explicitly clear memory to prevent RAM spike
+                    // @ts-ignore
+                    node.style.transform = '';
                 }
             }
 

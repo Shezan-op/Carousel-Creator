@@ -11,6 +11,13 @@ Pick a font. Done — it's saved forever.
 
 ---
 
+### Step 1.5: Save Your Project *(5 seconds)*
+
+Click **Saved Projects** in the sidebar → **+ Save Current Project**.  
+Give it a name. You can now safely refresh or switch to another client’s work!
+
+---
+
 ### Step 2: Write Your Content *(20 seconds)*
 
 Switch to the **Bulk** tab and type:

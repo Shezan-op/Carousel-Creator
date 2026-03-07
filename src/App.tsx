@@ -1,24 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import localforage from 'localforage';
 import LeftPane from './components/LeftPane';
 import CarouselPreview from './components/CarouselPreview';
 import NetflixIntro from './components/NetflixIntro';
 import type { CarouselData, Slide, BrandPreset, SavedProject } from './types';
 import { renderHighlightedText } from './utils';
 
+localforage.config({
+  name: 'CarouselCreator',
+  storeName: 'carousel_db'
+});
+
 function App() {
   const [carouselData, setCarouselData] = useState<CarouselData | null>(null);
-  const [inlineImages, setInlineImages] = useState<Record<string, string>>(() => {
-    try {
-      const saved = localStorage.getItem('inlineImages');
-      return saved ? JSON.parse(saved) : {};
-    } catch { return {}; }
-  });
+  const [inlineImages, setInlineImages] = useState<Record<string, string>>({});
+  const [isDbLoaded, setIsDbLoaded] = useState(false);
+
 
   useEffect(() => {
-    try { localStorage.setItem('inlineImages', JSON.stringify(inlineImages)); } catch { /* quota */ }
-  }, [inlineImages]);
+    if (isDbLoaded) localforage.setItem('carousel_inline_images', inlineImages);
+  }, [inlineImages, isDbLoaded]);
 
   const [previewMode, setPreviewMode] = useState<'stack' | 'carousel' | 'grid'>('stack');
   const [openRouterKey, setOpenRouterKey] = useState(() => localStorage.getItem('openRouterKey') || '');
@@ -109,36 +112,27 @@ function App() {
     accent: localStorage.getItem('custom_accent') || '#F59E0B'
   });
 
-  const [bulkText, setBulkText] = useState(() => localStorage.getItem('lastBulkText') || '');
+  const [bulkText, setBulkText] = useState('');
   const [focusedSlideIndex, setFocusedSlideIndex] = useState<number | null>(null);
   const [tunerTab, setTunerTab] = useState<'size' | 'font' | 'align' | 'bg'>('size');
 
-  const [brandPresets, setBrandPresets] = useState<BrandPreset[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('carousel_brand_presets') || '[]');
-    } catch { return []; }
-  });
-
-  const [savedProjects, setSavedProjects] = useState<SavedProject[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('carousel_saved_projects') || '[]');
-    } catch { return []; }
-  });
+  const [brandPresets, setBrandPresets] = useState<BrandPreset[]>([]);
+  const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
 
   useEffect(() => {
-    localStorage.setItem('carousel_brand_presets', JSON.stringify(brandPresets));
-  }, [brandPresets]);
+    if (isDbLoaded) localforage.setItem('carousel_brand_presets', brandPresets);
+  }, [brandPresets, isDbLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('carousel_saved_projects', JSON.stringify(savedProjects));
-  }, [savedProjects]);
+    if (isDbLoaded) localforage.setItem('carousel_saved_projects', savedProjects);
+  }, [savedProjects, isDbLoaded]);
 
   useEffect(() => {
-    try { localStorage.setItem('lastBulkText', bulkText); } catch { /* quota */ }
-  }, [bulkText]);
+    if (isDbLoaded) localforage.setItem('lastBulkText', bulkText);
+  }, [bulkText, isDbLoaded]);
 
   // Compiler logic moved from LeftPane
-  const compileBulkText = (text: string) => {
+  const compileBulkText = useCallback((text: string) => {
     const rawSlides = text.split(/\n\s*\n/).filter(s => s.trim());
     const slides = rawSlides.map((rawSlide, index) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -197,7 +191,33 @@ function App() {
     } else {
       setCarouselData(null);
     }
-  };
+  }, [customTheme]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const savedImages = await localforage.getItem<Record<string, string>>('carousel_inline_images');
+        if (savedImages) setInlineImages(savedImages);
+
+        const savedProj = await localforage.getItem<SavedProject[]>('carousel_saved_projects');
+        if (savedProj) setSavedProjects(savedProj);
+
+        const savedPresets = await localforage.getItem<BrandPreset[]>('carousel_brand_presets');
+        if (savedPresets) setBrandPresets(savedPresets);
+
+        const lastText = await localforage.getItem<string>('lastBulkText');
+        if (lastText) {
+          setBulkText(lastText);
+          compileBulkText(lastText);
+        }
+      } catch (error) {
+        console.error("IndexedDB Load Failed", error);
+      } finally {
+        setIsDbLoaded(true);
+      }
+    };
+    loadData();
+  }, [compileBulkText]);
 
   const updateSlideConfig = (targetBlock: string, tag: string, key: string, value: string | number): string => {
     const lines = targetBlock.split(/\r?\n/);
@@ -386,7 +406,16 @@ function App() {
       localStorage.setItem('body_font', bodyFont);
     } catch { /* quota */ }
   }, [headingFont, subheadingFont, bodyFont]);
-
+  if (!isDbLoaded) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-zinc-950 text-white font-sans">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+          <div className="text-xs font-bold tracking-widest uppercase opacity-50">Loading Engine...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen lg:h-screen bg-[#000000] text-[#F3F4F6] selection:bg-blue-500/30 font-sans antialiased flex flex-col lg:flex-row p-4 lg:p-6 gap-6 lg:overflow-hidden">

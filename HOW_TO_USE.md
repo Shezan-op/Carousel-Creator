@@ -15,15 +15,44 @@ Navigate to the **Setup** tab (gear icon).
 | **Character Foundry** | Independently select Google Fonts for **Headlines**, **Subheads**, and **Body**. Type any valid font name from [fonts.google.com](https://fonts.google.com). |
 | **Template** | Switch between Minimal, Tweet, and Brutalist visual styles |
 | **Footer Layout** | Position your branding badge: Left, Center, or Right |
-| **Profile Toggle** | Show or hide the avatar/handle on slides |
 
-> **💡 Tip:** All settings persist in `localStorage`. Close the browser, come back tomorrow — everything is exactly as you left it.
+### 🏢 Agency Workflow: Brand Presets
+
+Located at the bottom of the **Setup** tab:
+
+1. **Save Current** — Capture your active fonts, colors, and author identity into a preset.
+2. **One-Click Switch** — Switch between multiple clients or brand personas instantly.
 
 ---
 
-## 2. Write Content with the Bulk Compiler
+## 3. Manage Your Projects
 
-Navigate to the **Bulk** tab (the default tab).
+Carousel Creator now supports multi-project management and portable backups via the **Saved Projects** section in the sidebar.
+
+### Local Save Slots
+
+- Save up to 50 individual carousel drafts in your browser.
+- Switch between projects instantly without losing state.
+- **Auto-Sync**: Your last active project is always restored on refresh using IndexedDB.
+
+### Portable Backups (.carousel)
+
+- **↓ Backup**: Export your entire project (Bulk text, Theme, and all Uploaded Images) into a single `.carousel` file.
+- **↑ Load File**: Drag or select a `.carousel` file to restore a project from a backup or another device.
+
+---
+
+## 4. Write Content with the Bulk Compiler
+
+Navigate to the **Bulk** tab.
+
+### Image Injection (New)
+
+Simply **drag and drop** any image file directly onto the Bulk Editor.
+
+- The image is automatically compressed for performance.
+- A unique tag like `[img:bg_7f2x1]` is injected at your cursor.
+- The image is stored in your project's local database.
 
 ### Basic Syntax
 

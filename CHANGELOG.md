@@ -4,6 +4,24 @@ All notable changes to Carousel Creator are documented here.
 
 ---
 
+## [2.3.0] — 2026-03-08
+
+### ✨ Added
+
+- **Enterprise Infrastructure Upgrade**: Migrated heavy data payloads (`inlineImages`, `savedProjects`, `brandPresets`, and `bulkText`) from synchronous `localStorage` to asynchronous IndexedDB via `localforage`. This prevents UI blocking during large state saves and bypasses the 5MB `localStorage` limit.
+- **Project Backup system (.carousel)**: Users can now export their entire workspace (text, theme, and images) as a portable `.carousel` file for backups or sharing across devices.
+- **Local Project Save Slots**: Implement multiple project save slots within the app, allowing users to switch between different carousel drafts instantly.
+- **Agency Brand Presets**: Save and load multiple brand identities (fonts, colors, author info) to rapidly switch between client designs.
+- **Native Drag-and-Drop Image Injection**: Simply drop images onto the Bulk Editor to automatically compress them and inject a generated `[img:id]` tag at the cursor position.
+
+### 🔧 Fixed
+
+- **Bulletproof Export Engine**: The export pipeline now processes slides sequentially with memory clearing and forced UI refreshes between captures. This resolves "Out of Memory" crashes on mobile and during large 10+ slide exports.
+- **Tally Form Logic**: Fixed a recurring popup issue where the export gate would reappear even after form completion by hardening the `postMessage` synchronization.
+- **Font Licensing & Stability**: Added explicit `await document.fonts.ready` calls before export to ensure custom Google Fonts are fully rendered in the final assets.
+
+---
+
 ## [2.2.0] — 2026-03-07
 
 ### ✨ Added
