@@ -4,6 +4,16 @@ All notable changes to Carousel Creator are documented here.
 
 ---
 
+## [2.2.0] — 2026-03-07
+
+### 🔧 Fixed
+
+- **Tally Export Gate persistence**: Resolved an issue where the export unlock (form submission) was not persisting between exports. Implemented a robust `postMessage` event listener and added a `localStorage` fallback check on window focus/visibility change.
+- **Vercel Build Warnings**: Fixed TypeScript typing errors and ESLint warnings in `CarouselPreview.tsx` and `App.tsx` related to unused props and incorrect event types.
+- **Drag-and-Drop Optimization**: Cleaned up `useMemo` dependencies to prevent unnecessary slide list re-renders during drag operations.
+
+---
+
 ## [2.1.0] — 2026-03-01
 
 ### 🔧 Fixed
