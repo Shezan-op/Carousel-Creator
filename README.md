@@ -12,14 +12,17 @@
 <p align="center">
   <a href="https://carousel-creator-kohl.vercel.app/" target="_blank">🚀 Live Demo</a> &nbsp;·&nbsp;
   <a href="./HOW_TO_USE.md">📖 How to Use</a> &nbsp;·&nbsp;
-  <a href="./WALKTHROUGH.md">🎯 60-Second Walkthrough</a>
+  <a href="./WALKTHROUGH.md">🎯 60-Second Walkthrough</a> &nbsp;·&nbsp;
+  <a href="./CONTRIBUTING.md">🤝 Contributing</a>
 </p>
 
 ---
 
 ## What is Carousel Creator?
 
-Carousel Creator is a **high-performance, browser-based design tool** that converts raw text into pixel-perfect LinkedIn and Instagram carousels — no Canva, no Figma, no design skills required.
+Carousel Creator is a **high-performance, browser-based design tool** that converts raw text into pixel-perfect LinkedIn, Instagram, and Twitter/X carousels — no Canva, no Figma, no design skills required.
+
+Everything runs **entirely in your browser**. Your data never leaves your device. There are no servers, no accounts, no cloud uploads. You type text, pick your style, and download beautiful carousels in seconds.
 
 It was built from the ground up as a **React 19 + TypeScript** single-page application with a custom **Bulk Compiler**, a **Triple-Layer Markdown Engine**, and a **Multi-Template Export Pipeline** that generates print-ready assets in one click.
 
@@ -27,17 +30,19 @@ It was built from the ground up as a **React 19 + TypeScript** single-page appli
 
 ## ✨ Feature Highlights
 
-### 🎨 Three Professional Templates
+### 🎨 Four Professional Visual Motifs
 
-| Minimal | Faux Tweet | Brutalist |
-|---------|-----------|-----------|
-| Clean, modern typography with accent highlights | Simulates a viral X/Twitter post with engagement metrics | Heavy uppercase type with high-contrast block accents |
+| Minimal | Faux Tweet | Brutalist | Highlight |
+|---------|-----------|-----------|-----------|
+| Clean, modern typography with subtle accent colors | Simulates a viral X/Twitter post with engagement metrics | Heavy uppercase type with high-contrast block accents | Bold accent highlights with dynamic color emphasis |
 
-### ⚡ The Bulk Compiler & Image Injector
+Switch between templates in one click. Your content stays the same — only the visual presentation changes.
 
-Write naturally, get structured slides. The compiler uses a tag-based syntax:
+### ⚡ The Bulk Compiler & Drag-and-Drop Image Injector
 
-- **Native Image Support**: Drop any image onto the Bulk Editor to inject it into your carousel instantly at the cursor position.
+Write naturally, get structured slides. The compiler uses a simple tag-based syntax:
+
+- **Native Drag-and-Drop**: Drop any image file directly onto the text editor to inject it into your carousel instantly at the cursor position.
 - **Tag-based Syntax**:
 
 ```
@@ -49,43 +54,100 @@ Body text flows naturally without any tags.
 More body content for slide 2.
 ```
 
-Double-enter creates a new slide. Per-slide overrides are inline: `/h, s:120, a:center/ Big Title`.
+A blank line (double Enter) creates a new slide. Per-slide overrides are inline: `/h, s:120, a:center/ Big Title`.
 
-### 🖋 Multi-Font Markdown Engine
+### 🖋 Multi-Font Nested Markdown Engine
 
-- `*highlight*` → Template-aware accent (color in Minimal, block in Brutalist, link-blue in Tweet)
+Format your text with familiar syntax that works across all templates:
+
+- `*highlight*` → Template-aware accent (colored text in Minimal, background block in Brutalist, link-blue in Tweet)
 - `**bold**` → Extra-heavy weight
 - `_italic_` → Italic emphasis
 - `__underline__` → Clean CSS-based underline
-- **Character Foundry**: Independently select any Google Font for **Headlines**, **Subheadings**, and **Body text**. Optimized deduped injection ensures fast loading.
+- **Nesting**: Combine styles freely — `**_bold italic_**`, `*__highlighted underline__*`
+- **Character Foundry**: Independently select any Google Font for **Headlines**, **Subheadings**, and **Body text**. The font engine dedupes and batches font requests for fast loading.
+
+### 📐 Format Switcher (Portrait & Square)
+
+Switch between two professional aspect ratios with one click:
+
+| Format | Dimensions | Best For |
+|--------|-----------|----------|
+| **Vertical (4:5)** | 1080 × 1350px | LinkedIn carousels, Instagram posts |
+| **Square (1:1)** | 1080 × 1080px | Twitter/X posts, universal sharing |
+
+The scaling math dynamically recalculates so your canvas never warps or stretches — it just works.
+
+### 🔃 1-Click Theme Invert
+
+Instantly swap your background and text colors to toggle between dark and light modes. Located in the **Brand Palette** section. One click → your entire carousel flips. Perfect for testing which version looks better before exporting.
+
+### 🏷️ Global Brand Watermark
+
+Upload your logo or brand mark once, and it appears on **every single slide** automatically in the top-right corner.
+
+- Logos are auto-compressed to 300px max width for performance.
+- Displayed at 80% opacity so it doesn't overpower your content.
+- Persisted to IndexedDB — your watermark survives browser refreshes.
+- Easily remove it with one click when you don't need it.
+
+### 📊 Dynamic Progress Bar
+
+Add a visual progress indicator to your slides so viewers know how far along they are:
+
+| Position | Effect |
+|----------|--------|
+| **Off** | No progress bar (default) |
+| **Top** | Colored bar at the top of each slide |
+| **Bottom** | Colored bar at the bottom of each slide |
+
+The bar's width grows proportionally with each slide (Slide 3 of 10 = 30% width). Uses your accent color for seamless branding.
+
+### 📱 Social Feed Sandbox
+
+Preview how your carousel will look inside real social media feeds:
+
+- **LinkedIn Sandbox** — Wraps your carousel in a simulated LinkedIn post with profile info, reactions, and engagement UI.
+- **Instagram Sandbox** — Shows your carousel inside an Instagram-style frame with like/comment icons.
+- **Off** — Raw preview with no frame (default).
+
+### 🖼 Asset Gallery (Image Locker)
+
+A persistent gallery of your uploaded images. Upload once, use across all projects:
+
+- Upload multiple images at once.
+- Click any image to copy its `[img:ID]` tag to your clipboard.
+- Paste the tag into your bulk text to embed the image in any slide.
+- Images are stored in IndexedDB, so they survive browser refreshes.
+- Delete images you no longer need with one click.
 
 ### 📁 Agency Workflow & Portability
 
-- **Saved Project Slots**: Save multiple drafts locally and switch between them instantly.
-- **Brand Presets**: Store unique combinations of fonts, colors, and author data for different clients.
-- **Project Backup (.carousel)**: Export your entire workspace into a single portable file to keep backups or move your work between browsers.
+- **Saved Project Slots**: Save up to 50 individual carousel drafts in your browser. Switch between them instantly.
+- **Brand Presets**: Store unique combinations of fonts, colors, and author data for different clients. One click to swap branding.
+- **Project Backup (.carousel)**: Export your entire workspace (text, theme, images) into a single portable `.carousel` file. Load it back on any device.
+- **Auto-Sync**: Your last active project is always restored on refresh using IndexedDB.
 
 ### 📱 Focus Modal (Mobile Editor)
 
-A Figma-inspired mobile workspace that allows for per-slide precision tuning:
+A Figma-inspired mobile workspace for per-slide precision tuning:
 
-- **Numerical Sizing**: Type exact pixel values for every primary text element.
+- **Numerical Sizing**: Type exact pixel values for every text element (H1, H2/H3, Body).
 - **Segmented Alignment**: Toggle Horizontal alignment (Left/Center/Right) instantly.
 - **Vertical Drafting**: Micro-tune the Y-axis position with 10px increments.
-- **Live Font Preview**: Type the name of any Google Font and see it render instantly in the focus preview.
-- **Per-Slide Backgrounds**: Upload unique high-res background images for specific slides via the "Bg" tab.
+- **Live Font Preview**: Type any Google Font name and see it render instantly.
+- **Per-Slide Backgrounds**: Upload unique background images for individual slides.
 
-### 🖼 Professional Media Support
+### ⏪ Undo / Redo (Time-Travel Engine)
 
-- **Per-Slide BG**: Individual slides can override the global background with unique images.
-- **Export Ghosting Fix**: UI elements like slide numbers and arrows are automatically stripped from exports for a clean, pixel-perfect finish.
-- **Grid View Reordering**: Mobile-optimized "Shift Left/Right" buttons allow for easy slide reordering without complex drag-and-drop on small screens.
+Made a mistake? Use `Ctrl+Z` (undo) and `Ctrl+Shift+Z` (redo) to navigate through your text editing history. The engine saves snapshots every time you pause typing for 500ms. History is capped at 50 states to prevent memory bloat.
 
 ### 🔒 Enterprise Infrastructure
 
-- **Async Persistence**: Uses **IndexedDB (via localforage)** for heavy data (images, projects, presets), bypassing the 5MB `localStorage` limit and preventing UI lock-ups.
-- **BYOK Architecture**: Your OpenRouter API key is stored locally, never transmitted to us.
+- **Async Persistence**: Uses **IndexedDB (via localforage)** for heavy data (images, projects, presets), bypassing the 5MB `localStorage` limit.
+- **BYOK Architecture**: Your OpenRouter API key is stored locally, never transmitted to anyone.
 - **Stable Export Engine**: Processes slides sequentially with memory clearing to handle large 10+ slide carousels on low-end devices.
+- **Export Ghosting Fix**: UI elements like slide numbers, arrows, and safe zone guides are automatically stripped from exports.
 
 ---
 
@@ -97,18 +159,19 @@ A Figma-inspired mobile workspace that allows for per-slide precision tuning:
 | **Storage** | IndexedDB + localforage | High-capacity async local persistence |
 | **Build** | Vite 7 | Sub-second HMR, optimized production bundles |
 | **Styling** | Tailwind CSS 4.0 | Utility-first responsive design |
-| **Export: PDF** | `html-to-image` + `jsPDF` | Sequential capture loop → multi-page PDF |
+| **DnD** | @dnd-kit | Drag-and-drop slide reordering |
+| **Export: PDF** | `html-to-image` + `jsPDF` | Sequential capture → multi-page PDF |
 | **Export: ZIP** | `html-to-image` + `JSZip` | Multi-template batch render → ZIP archive |
 | **AI** | OpenRouter API | Optional text-to-carousel generation (BYOK) |
-| **Analytics** | Vercel Analytics | Production performance monitoring |
+| **Analytics** | Vercel Analytics + Speed Insights | Production performance monitoring |
 
 ### Key Engineering Decisions
 
-- **Rigid Canvas (1080×1350)**: All slides render at a fixed 4:5 aspect ratio inside a `transform: scale()` wrapper. The DOM node is always 1080×1350px — scaling is purely visual. This guarantees pixel-perfect exports regardless of viewport size.
-- **Safe Zone Padding**: 108px padding on all sides constrains text to an 864×1134px safe zone, preventing content from being cropped on any platform.
-- **Sequential Capture**: The export engine captures one slide at a time with a 500ms delay between pages. This ensures React reconciliation is complete and prevents browser crashes due to memory spikes during heavy DOM-to-Image conversions.
-- **Multi-Font Orchestrator**: Uses custom logic to merge multiple font requests into a single Google Fonts API call with full weight support (400-900 + italics), minimizing layout shift.
-- **Nested Markdown Parser**: A sequential HTML injector that allows for complex formatting combinations (e.g., ****bold + italic + underline****).
+- **Rigid Canvas**: All slides render at a fixed 1080px width with dynamic height (1350px for portrait, 1080px for square) inside a `transform: scale()` wrapper. The DOM node is always full-size — scaling is purely visual. This guarantees pixel-perfect exports regardless of viewport.
+- **Safe Zone Padding**: 108px padding on all sides constrains text to an 864px-wide safe zone, preventing content from being cropped on any platform.
+- **Sequential Capture**: The export engine captures one slide at a time with a 500ms delay between pages. This ensures React DOM reconciliation is complete and prevents browser crashes.
+- **Multi-Font Orchestrator**: Merges multiple font requests into a single Google Fonts API call with full weight support (400-900 + italics), minimizing layout shift.
+- **Nested Markdown Parser**: A sequential HTML injector that allows complex formatting combinations.
 
 ---
 
@@ -159,13 +222,14 @@ git push origin main
 
 ```
 src/
-├── App.tsx                    # Root shell, global state, layout
+├── App.tsx                    # Root shell, global state, persistence layer
 ├── main.tsx                   # React DOM entry point
 ├── types.ts                   # TypeScript interfaces (Slide, Theme, CarouselData)
+├── utils.ts                   # Shared utilities (markdown parser, image compression)
 ├── index.css                  # Global styles, Tailwind imports, custom scrollbar
 ├── components/
 │   ├── LeftPane.tsx            # Bulk compiler, AI generator, tuner controls, setup
-│   ├── CarouselPreview.tsx     # Multi-template slide renderer, export nodes
+│   ├── CarouselPreview.tsx     # Multi-template slide renderer, export nodes, DnD
 │   ├── ExportControls.tsx      # PDF/ZIP export engine, lead capture modal
 │   └── NetflixIntro.tsx        # Animated splash screen
 public/
@@ -192,23 +256,25 @@ public/
 | `**text**` | Bold | `This is **critical**` |
 | `_text_` | Italic | `This is _emphasized_` |
 | `__text__` | Underline | `This is __underlined__` |
+| `[img:ID]` | Inline image | `[img:bg_7f2x1]` |
 | Double newline | New slide | *(blank line between blocks)* |
 
 ---
 
 ## 🔐 Security Model
 
+- **Zero Server Architecture**: No backend. All data stays in your browser's local storage and IndexedDB.
 - **Lead Capture**: `localStorage.setItem('carousel_unlocked', 'true')` is strictly inside the `try` block after a successful API call. Network failures refuse the unlock token.
 - **Rate Limiting**: 30-second cooldown between email submissions (client-side).
-- **Input Sanitization**: Text inputs capped at 10,000 characters to prevent ReDoS. Slide count capped at 50.
+- **Input Sanitization**: Text inputs capped at 10,000 characters. Slide count capped at 50.
 - **API Key Handling**: OpenRouter key stored as a password input, persisted only to local `localStorage`.
-- **CORS Safety**: All images (avatar, background) are converted to base64 data URLs on ingestion, preventing tainted canvas errors during export.
+- **CORS Safety**: All images are converted to base64 data URLs on ingestion, preventing tainted canvas errors during export.
 
 ---
 
 ## 📈 SEO & Discovery
 
-`LinkedIn Carousel Generator` · `Instagram Carousel Maker` · `Free AI Carousel Tool` · `Open Source Content Creation` · `1080x1350 Social Media Design` · `React Carousel Export` · `Bulk Text to Carousel` · `Professional Slide Generator`
+`LinkedIn Carousel Generator` · `Instagram Carousel Maker` · `Twitter/X Square Carousel` · `Free AI Carousel Tool` · `Open Source Content Creation` · `1080x1350 Social Media Design` · `React Carousel Export` · `Bulk Text to Carousel` · `Professional Slide Generator` · `Brand Watermark Carousel`
 
 ---
 

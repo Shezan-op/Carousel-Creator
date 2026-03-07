@@ -38,6 +38,8 @@ interface Props {
     setBulkText: (text: string) => void;
     progressBar: 'none' | 'top' | 'bottom';
     sandboxMode: 'none' | 'linkedin' | 'instagram';
+    brandWatermark?: string | null;
+    aspectRatio: 'portrait' | 'square';
 }
 
 interface SortableSlideProps {
@@ -45,18 +47,27 @@ interface SortableSlideProps {
     effectiveScale: number;
     previewMode: 'stack' | 'carousel' | 'grid';
     children: React.ReactNode;
+    aspectRatio: 'portrait' | 'square';
 }
 
-const SortableSlide: React.FC<SortableSlideProps> = ({ id, effectiveScale, previewMode, children }) => {
+const SortableSlide: React.FC<SortableSlideProps> = ({ id, effectiveScale, previewMode, children, aspectRatio }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: id.toString() });
+
+    const getDimensions = () => {
+        const width = 1080;
+        if (aspectRatio === 'square') return { w: width, h: 1080 };
+        return { w: width, h: 1350 };
+    };
+
+    const dim = getDimensions();
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         zIndex: isDragging ? 50 : 1,
         opacity: isDragging ? 0.8 : 1,
-        width: `${1080 * effectiveScale}px`,
-        height: `${1350 * effectiveScale}px`,
+        width: `${dim.w * effectiveScale}px`,
+        height: `${dim.h * effectiveScale}px`,
         position: 'relative' as const,
         overflow: 'hidden',
         cursor: previewMode === 'grid' ? 'grab' : 'default',
@@ -94,7 +105,7 @@ const CarouselPreview: React.FC<Props> = ({
     showSafeZones, showSlideNumbers,
     inlineImages, previewMode, setPreviewMode,
     bulkText, setBulkText,
-    progressBar, sandboxMode
+    progressBar, sandboxMode, aspectRatio, brandWatermark
 }) => {
     const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
     const [overflowingSlides, setOverflowingSlides] = useState<number[]>([]);
@@ -205,6 +216,7 @@ const CarouselPreview: React.FC<Props> = ({
                     id={index.toString()}
                     effectiveScale={renderScale}
                     previewMode={previewMode}
+                    aspectRatio={aspectRatio}
                 >
                     {/* WRAPPER FOR SANDBOX (Not exported) */}
                     <div style={{
@@ -312,7 +324,7 @@ const CarouselPreview: React.FC<Props> = ({
                             }}
                             style={{
                                 width: '1080px',
-                                height: '1350px',
+                                height: aspectRatio === 'square' ? '1080px' : '1350px',
                                 transform: `scale(${renderScale})`,
                                 transformOrigin: 'center center',
                                 backgroundColor: data.theme.background,
@@ -360,6 +372,16 @@ const CarouselPreview: React.FC<Props> = ({
                             )}
 
 
+
+                            {/* GLOBAL BRAND WATERMARK */}
+                            {brandWatermark && (
+                                <img
+                                    src={brandWatermark}
+                                    className="absolute z-40 object-contain opacity-80"
+                                    style={{ top: '48px', right: '48px', maxWidth: '150px', maxHeight: '60px' }}
+                                    alt="Watermark"
+                                />
+                            )}
 
                             {/* LAYER 1: THE NOISE OVERLAY */}
                             <div style={{
@@ -888,7 +910,7 @@ const CarouselPreview: React.FC<Props> = ({
         textAlign, noiseOpacity, customBgImage,
         setActivePreviewSlideIndex, setFocusedSlideIndex,
         showSafeZones, showSlideNumbers, previewMode, inlineImages, overflowingSlides, handleShiftSlide,
-        progressBar, sandboxMode
+        progressBar, sandboxMode, aspectRatio
     ]);
 
     if (!data) {
@@ -924,6 +946,7 @@ const CarouselPreview: React.FC<Props> = ({
                         setActiveTemplate={setActiveTemplate}
                         isUnlocked={isUnlocked}
                         hasGivenFeedback={hasGivenFeedback}
+                        aspectRatio={aspectRatio}
                     />
                 )}
             </div>

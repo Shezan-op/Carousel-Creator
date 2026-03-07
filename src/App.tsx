@@ -19,11 +19,24 @@ function App() {
   const [isDbLoaded, setIsDbLoaded] = useState(false);
   const [progressBar, setProgressBar] = useState<'none' | 'top' | 'bottom'>('none');
   const [sandboxMode, setSandboxMode] = useState<'none' | 'linkedin' | 'instagram'>('none');
-
+  const [aspectRatio, setAspectRatio] = useState<'portrait' | 'square'>(() => (localStorage.getItem('carousel_aspect_ratio') as 'portrait' | 'square') || 'portrait');
+  const [brandWatermark, setBrandWatermark] = useState<string | null>(null);
 
   useEffect(() => {
     if (isDbLoaded) localforage.setItem('carousel_inline_images', inlineImages);
   }, [inlineImages, isDbLoaded]);
+
+  useEffect(() => {
+    localStorage.setItem('carousel_aspect_ratio', aspectRatio);
+  }, [aspectRatio]);
+
+  useEffect(() => {
+    if (isDbLoaded && brandWatermark !== null) {
+      localforage.setItem('carousel_watermark', brandWatermark);
+    } else if (isDbLoaded && brandWatermark === null) {
+      localforage.removeItem('carousel_watermark');
+    }
+  }, [brandWatermark, isDbLoaded]);
 
   const [previewMode, setPreviewMode] = useState<'stack' | 'carousel' | 'grid'>('stack');
   const [openRouterKey, setOpenRouterKey] = useState(() => localStorage.getItem('openRouterKey') || '');
@@ -152,8 +165,7 @@ function App() {
           const content = match[2];
           const parts = configString.split(',').map(p => p.trim());
           const type = parts[0];
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const options: any = {};
+          const options: Partial<Slide> = {};
           parts.slice(1).forEach(opt => {
             const [k, v] = opt.split(':').map(x => x?.trim());
             if (!k || !v) return;
@@ -161,7 +173,7 @@ function App() {
             if (k === 'sh_s') options.subheading_size = parseInt(v);
             if (k === 'b_s') options.body_size = parseInt(v);
             if (k === 'y') options.y_offset = parseInt(v);
-            if (k === 'a') options.text_align = v;
+            if (k === 'a') options.text_align = v as 'left' | 'center' | 'right';
             if (k === 'bg') options.bg_image = v;
           });
 
@@ -212,6 +224,13 @@ function App() {
           setBulkText(lastText);
           compileBulkText(lastText);
         }
+        const savedRatio = await localforage.getItem<string>('carousel_aspect_ratio');
+        if (savedRatio === '4:5' || savedRatio === 'portrait') setAspectRatio('portrait');
+        else if (savedRatio === '1:1' || savedRatio === 'square') setAspectRatio('square');
+        else if (savedRatio) setAspectRatio('portrait'); // Default fallback
+
+        const savedWatermark = await localforage.getItem<string>('carousel_watermark');
+        if (savedWatermark) setBrandWatermark(savedWatermark);
       } catch (error) {
         console.error("IndexedDB Load Failed", error);
       } finally {
@@ -481,6 +500,10 @@ function App() {
           setProgressBar={setProgressBar}
           sandboxMode={sandboxMode}
           setSandboxMode={setSandboxMode}
+          aspectRatio={aspectRatio}
+          setAspectRatio={setAspectRatio}
+          brandWatermark={brandWatermark}
+          setBrandWatermark={setBrandWatermark}
         />
       </div>
 
@@ -519,12 +542,14 @@ function App() {
             setBulkText={setBulkText}
             progressBar={progressBar}
             sandboxMode={sandboxMode}
+            aspectRatio={aspectRatio}
+            brandWatermark={brandWatermark}
           />
         </div>
       </div>
 
       {focusedSlideIndex !== null && carouselData && (
-        <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-sm flex justify-center">
+        <div className="fixed inset-0 z-[99999] bg-zinc-950/80 backdrop-blur-xl flex justify-center">
           {/* Phone-sized container constraint for desktop */}
           <div className="w-full max-w-md bg-zinc-950 h-full flex flex-col shadow-2xl relative animate-in slide-in-from-bottom-4 duration-200">
 
@@ -535,7 +560,7 @@ function App() {
               </div>
               <button
                 onClick={() => setFocusedSlideIndex(null)}
-                className="px-4 py-1.5 bg-white text-black text-xs font-bold rounded-full hover:bg-zinc-200 transition-colors"
+                className="px-4 py-1.5 bg-white text-black active:scale-[0.98] transition-all duration-200 shadow-md border border-white/10 text-xs font-bold rounded-full hover:bg-zinc-200"
               >
                 Done
               </button>
@@ -543,64 +568,76 @@ function App() {
 
             {/* THE SLIDE PREVIEW AREA */}
             <div className="flex-1 w-full relative overflow-hidden bg-zinc-950 min-h-[35vh]">
-
-              {/* BULLETPROOF CENTERING & SCALING */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1080px] h-[1350px] scale-[0.22] sm:scale-[0.28] md:scale-[0.35] origin-center pointer-events-none flex items-center justify-center">
-
-                <div
-                  className="slide-export-node shadow-2xl relative overflow-hidden"
-                  style={{
-                    width: '1080px',
-                    height: '1350px',
-                    backgroundColor: carouselData.theme.background,
-                    color: carouselData.theme.text,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    padding: '80px'
-                  }}
-                >
-                  <div style={{
-                    textAlign: carouselData.slides[focusedSlideIndex].text_align || 'left',
-                    transform: `translateY(${carouselData.slides[focusedSlideIndex].y_offset || 0}px)`
-                  }}>
-                    {carouselData.slides[focusedSlideIndex].headline && (
-                      <h1 style={{
-                        fontFamily: `"${headingFont}", sans-serif`,
-                        fontSize: `${carouselData.slides[focusedSlideIndex].heading_size || 120}px`,
-                        fontWeight: '900',
-                        lineHeight: '1.1',
-                        marginBottom: '40px'
-                      }}>
-                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].headline || '', activeTemplate, carouselData.theme.accent, inlineImages)}
-                      </h1>
-                    )}
-                    {(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading) && (
-                      <h2 style={{
-                        fontFamily: `"${subheadingFont}", sans-serif`,
-                        fontSize: `${carouselData.slides[focusedSlideIndex].subheading_size || 60}px`,
-                        fontWeight: '500',
-                        opacity: 0.8,
-                        marginBottom: '40px'
-                      }}>
-                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading || '', activeTemplate, carouselData.theme.accent, inlineImages)}
-                      </h2>
-                    )}
-                    {carouselData.slides[focusedSlideIndex].body && (
+              {/* Math variables for aspect ratio */}
+              {(() => {
+                const canvasHeight = aspectRatio === 'square' ? 1080 : 1350;
+                return (
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1080px] origin-center pointer-events-none flex items-center justify-center" style={{ height: `${canvasHeight}px`, scale: '0.22' }}>
+                    <div
+                      className="slide-export-node shadow-2xl relative overflow-hidden"
+                      style={{
+                        width: '1080px',
+                        height: `${canvasHeight}px`,
+                        backgroundColor: carouselData.theme.background,
+                        color: carouselData.theme.text,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        padding: '80px'
+                      }}
+                    >
+                      {/* GLOBAL BRAND WATERMARK */}
+                      {brandWatermark && (
+                        <img
+                          src={brandWatermark}
+                          className="absolute z-40 object-contain opacity-80"
+                          style={{ top: '48px', right: '48px', maxWidth: '150px', maxHeight: '60px' }}
+                          alt="Watermark"
+                        />
+                      )}
                       <div style={{
-                        fontFamily: `"${bodyFont}", sans-serif`,
-                        fontSize: `${carouselData.slides[focusedSlideIndex].body_size || 40}px`,
-                        lineHeight: '1.4',
-                        opacity: 0.9,
-                        whiteSpace: 'pre-line'
+                        textAlign: carouselData.slides[focusedSlideIndex].text_align || 'left',
+                        transform: `translateY(${carouselData.slides[focusedSlideIndex].y_offset || 0}px)`
                       }}>
-                        {renderHighlightedText(carouselData.slides[focusedSlideIndex].body || '', activeTemplate, carouselData.theme.accent, inlineImages)}
+                        {carouselData.slides[focusedSlideIndex].headline && (
+                          <h1 style={{
+                            fontFamily: `"${headingFont}", sans-serif`,
+                            fontSize: `${carouselData.slides[focusedSlideIndex].heading_size || 120}px`,
+                            fontWeight: '900',
+                            lineHeight: '1.1',
+                            marginBottom: '40px'
+                          }}>
+                            {renderHighlightedText(carouselData.slides[focusedSlideIndex].headline || '', activeTemplate, carouselData.theme.accent, inlineImages)}
+                          </h1>
+                        )}
+                        {(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading) && (
+                          <h2 style={{
+                            fontFamily: `"${subheadingFont}", sans-serif`,
+                            fontSize: `${carouselData.slides[focusedSlideIndex].subheading_size || 60}px`,
+                            fontWeight: '500',
+                            opacity: 0.8,
+                            marginBottom: '40px'
+                          }}>
+                            {renderHighlightedText(carouselData.slides[focusedSlideIndex].subheadline || carouselData.slides[focusedSlideIndex].subheading || '', activeTemplate, carouselData.theme.accent, inlineImages)}
+                          </h2>
+                        )}
+                        {carouselData.slides[focusedSlideIndex].body && (
+                          <div style={{
+                            fontFamily: `"${bodyFont}", sans-serif`,
+                            fontSize: `${carouselData.slides[focusedSlideIndex].body_size || 40}px`,
+                            lineHeight: '1.4',
+                            opacity: 0.9,
+                            whiteSpace: 'pre-line'
+                          }}>
+                            {renderHighlightedText(carouselData.slides[focusedSlideIndex].body || '', activeTemplate, carouselData.theme.accent, inlineImages)}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-              </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* THE BOTTOM DRAWER */}

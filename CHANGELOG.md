@@ -1,131 +1,72 @@
-# Changelog
+# 📋 Changelog — Carousel Creator
 
-All notable changes to Carousel Creator are documented here.
-
----
-
-## [2.5.0] — 2026-03-08
-
-### ✨ Added
-
-- **Dynamic Progress Bar**: New rendering engine for top/bottom progress indicator bars (exported with carousel).
-- **Social Feed Sandbox**: Immersive LinkedIn and Instagram frame shells for realistic previewing.
-- **Enhanced Advance Controls**: Integrated toggles for progress bars and sandbox modes in the Advanced Settings pane.
-- **Improved Rendering Logic**: Optimized SVG noise overlays and coordinate systems for per-slide background images.
-
-## [2.4.0] — 2026-03-08
-
-### ✨ Added
-
-- **Visual Slide Builder**: A new card-based interface for managing slides without touching code.
-- **Time-Travel Engine**: Full Undo/Redo support for the content engine (Ctrl+Z / Ctrl+Y).
-- **Reverse Compiler**: Synchronizes changes from the visual UI back into the proprietary bulk format.
-- **View Toggles**: Fluid switching between Raw Editor and Visual Builder modes.
-- **Dynamic Slide Management**: 1-click Slide deletion and creation from within the visual card stack.
-
-## [2.3.0] — 2026-03-08
-
-### ✨ Added
-
-- **Enterprise Infrastructure Upgrade**: Migrated heavy data payloads (`inlineImages`, `savedProjects`, `brandPresets`, and `bulkText`) from synchronous `localStorage` to asynchronous IndexedDB via `localforage`. This prevents UI blocking during large state saves and bypasses the 5MB `localStorage` limit.
-- **Project Backup system (.carousel)**: Users can now export their entire workspace (text, theme, and images) as a portable `.carousel` file for backups or sharing across devices.
-- **Local Project Save Slots**: Implement multiple project save slots within the app, allowing users to switch between different carousel drafts instantly.
-- **Agency Brand Presets**: Save and load multiple brand identities (fonts, colors, author info) to rapidly switch between client designs.
-- **Native Drag-and-Drop Image Injection**: Simply drop images onto the Bulk Editor to automatically compress them and inject a generated `[img:id]` tag at the cursor position.
-
-### 🔧 Fixed
-
-- **Bulletproof Export Engine**: The export pipeline now processes slides sequentially with memory clearing and forced UI refreshes between captures. This resolves "Out of Memory" crashes on mobile and during large 10+ slide exports.
-- **Tally Form Logic**: Fixed a recurring popup issue where the export gate would reappear even after form completion by hardening the `postMessage` synchronization.
-- **Font Licensing & Stability**: Added explicit `await document.fonts.ready` calls before export to ensure custom Google Fonts are fully rendered in the final assets.
+All notable changes to this project are documented here.
 
 ---
 
-## [2.2.0] — 2026-03-07
+## [v3.0.0] — 2026-03-08 — "Final Shot" Release
 
-### ✨ Added
+### ✨ New Features
 
-- **Per-Slide Background Images**: Users can now set unique background images for individual slides via the "Bg" tab in the Focus Modal. These overrides the global background.
-- **Mobile Grid Shift Buttons**: Added "Move Left" and "Move Right" buttons to slides in Grid View for easier reordering on mobile devices.
+- **Format Switcher**: Choose between Vertical (4:5, 1080×1350) and Square (1:1, 1080×1080) aspect ratios with one click
+- **1-Click Theme Invert**: Instantly swap background and text colors to toggle dark/light mode
+- **Global Brand Watermark**: Upload a logo that appears on every slide — persisted to IndexedDB
+- **Dynamic Progress Bar**: Visual progress indicator (Top/Bottom/Off) that fills proportionally per slide
+- **Social Feed Sandbox**: Preview carousels inside simulated LinkedIn or Instagram feed frames
+- **Asset Gallery**: Persistent image library with upload, click-to-copy tags, and delete functionality
+- **Undo/Redo Engine**: Time-travel through text edits with Ctrl+Z / Ctrl+Shift+Z
+- **Visual Builder**: Slide-by-slide visual editing mode alongside the raw text editor
+- **Per-Slide Background Images**: Upload unique backgrounds for individual slides via Focus Modal
+- **Highlight Template**: Fourth visual motif with dynamic accent emphasis
 
-### 🔧 Fixed
+### 🔧 Infrastructure
 
-- **Export Ghosting**: Slide counters, swipe arrows, and safe-zone overlays are now correctly ignored during export using `data-html2canvas-ignore`, ensuring a clean JPEG/PDF.
-- **Tally Export Gate persistence**: Resolved an issue where the export unlock (form submission) was not persisting between exports. Implemented a robust `postMessage` event listener and added a `localStorage` fallback check on window focus/visibility change.
-- **Tally UI Polish**: Set `transparentBackground: true` for all Tally popups to match the app's dark theme.
-- **Vercel Build Warnings**: Fixed TypeScript typing errors and ESLint warnings in `CarouselPreview.tsx` and `App.tsx` related to unused props and incorrect event types.
-- **Drag-and-Drop Optimization**: Cleaned up `useMemo` dependencies and wrapped reordering logic in `useCallback` to prevent unnecessary slide list re-renders.
+- Migrated heavy storage (images, projects, presets, watermark) from localStorage to IndexedDB via `localforage`
+- Added `.carousel` file backup and restore system for project portability
+- Export engine processes slides sequentially with memory cleanup for stability
+- Export ghosting fix: UI overlays (slide numbers, arrows) hidden from PDF/ZIP output
+- Aspect ratio dynamically recalculates canvas height without stretching
 
----
+### 📖 Documentation
 
-## [2.1.0] — 2026-03-01
-
-### 🔧 Fixed
-
-- **Typography Mapping Bug**: Unified `subheading_size` to control both H2 (subheadline) and H3 (section header) across all templates. Previously, `subheadline_size` and `subheading_size` were decoupled, causing the `sh_s` tuner to only affect H3.
-- **Body Text Mutation**: The Visual Tuner no longer converts untagged body text into headline text. Config-only changes now inject a neutral `/config/` tag that preserves original content.
-- **Duplicate Tuner Controls**: Removed the redundant "Section" (`sb_s`) slider that shadowed the "Subhead" (`sh_s`) slider — both wrote to the same property.
-- **React Import**: Fixed missing `React` import in `NetflixIntro.tsx` that caused `React.FC` type resolution failure.
-
-### 🎨 Changed
-
-- **Hex Color Pickers**: Replaced native `<input type="color">` (which rendered OS-level RGB sliders) with custom text inputs that strictly accept and display hex codes (e.g., `#FAFAFA`).
-- **Global Slider Removal**: Removed redundant "Master Sliders" from the design panel. Per-slide tuning via the Visual Tuner is now the single source of truth.
-
-### 🗑 Removed
-
-- `sectionSize` global state (dead code — no UI controlled it after slider removal)
-- `subheadline_size` from active use (deprecated; kept in type for backwards compatibility)
+- Complete rewrite of README.md, HOW_TO_USE.md, WALKTHROUGH.md, CONTRIBUTING.md
+- Every feature documented with plain-language explanations and examples
 
 ---
 
-## [2.0.5] — 2026-02-28
+## [v2.0.0] — 2026-03-04 — "Agency Workflow" Release
 
-### ✨ Added
+### ✨ New Features
 
-- **Bulk Compiler Overhaul**: Replaced fragile regex parser with stable `.startsWith()` string-matching logic, then upgraded to a robust regex parser with combined option support (`/h, s:120, a:center/`).
-- **Visual Tuner Engine**: In-context sliders for Headline, Subhead, Body size, and Y-Offset per slide.
-- **Config Injection**: `updateSlideConfig()` utility reliably injects/updates key:value pairs in bulk text without duplicating keys.
+- **Brand Presets**: Save multiple combinations of fonts, colors, and author identity
+- **Project Save Slots**: Store up to 50 carousel drafts in the browser
+- **Drag-and-Drop Image Injection**: Drop images onto the Bulk Editor to embed them
+- **Focus Modal**: Figma-inspired per-slide editing with size, font, alignment, and Y-offset controls
 
-### 🔧 Fixed
+### 🔧 Improvements
 
-- **Textarea Clipping**: Increased parent padding to fix scrollbar being cut off.
-- **Tab Jumping**: Typography/Design controls moved to a permanently visible panel below text areas.
-
----
-
-## [2.0.0] — 2026-02-24
-
-### ✨ Added
-
-- **ZIP Content Pack Engine**: One-click export renders all 3 templates into organized ZIP folders.
-- **Mobile Responsive Scaling**: Dynamic `transform: scale()` canvas fitting for mobile.
-- **Creator Identity Persistence**: Avatar, name, handle, and font saved to `localStorage` as base64.
-- **Netflix-style Intro Animation**: Cinematic splash screen on first load.
-- **Lead Capture Modal**: Email gate after 5 daily exports, with rate limiting and inline error handling.
-
-### 🎨 Changed
-
-- **Template Engine Rebuild**: Minimal, Tweet, and Brutalist templates fully rewritten with precise styling.
-- **Safe Zone Enforcement**: 108px padding on all sides for content-safe exports.
-- **Font Engine**: Google Fonts fetch string now requests both normal and italic axes for all weights.
-
-### 🔐 Security
-
-- **Defensive Storage**: `localStorage` parsers guard against `NaN` for counters.
-- **API Safety**: OpenRouter payload validates `choices[0].message` before parsing.
-- **CORS Prevention**: All images converted to base64 data URLs on ingestion.
-- **Input Caps**: Text capped at 10,000 chars, slides capped at 50.
+- Inline image compression for performance
+- Sequential export engine for stability on large carousels
+- Mobile-optimized shift buttons for slide reordering
+- Multi-font Google Fonts orchestrator with deduplication
 
 ---
 
-## [1.0.0] — 2026-02-23
+## [v1.0.0] — 2026-02-28 — Initial Release
 
-### ✨ Initial Release
+### ✨ Features
 
-- React 19 + Vite + TypeScript foundation
-- Minimal template with single-slide rendering
-- Basic PDF export via `html-to-image` + `jsPDF`
-- OpenRouter AI integration (BYOK)
-- Theme preset system (4 initial palettes)
-- Tailwind CSS 4.0 styling
+- Bulk Compiler with tag-based syntax (/h/, /sh/, plain text)
+- Three templates: Minimal, Tweet, Brutalist
+- Nested Markdown engine (*highlight*, **bold**, *italic*, **underline**)
+- PDF and ZIP export with multi-template rendering
+- AI-powered generation via OpenRouter (BYOK)
+- Custom color palettes with preset themes
+- Google Fonts integration for headline, subheading, and body text
+- Creator identity (name, handle, avatar) on slide footers
+- Responsive design for desktop and mobile
+- Privacy-first: all data stays in the browser
+
+---
+
+*View the [full documentation](./README.md) for details.*

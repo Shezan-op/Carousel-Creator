@@ -12,9 +12,10 @@ interface Props {
     setActiveTemplate: (template: string) => void;
     isUnlocked: boolean;
     hasGivenFeedback: boolean;
+    aspectRatio: 'portrait' | 'square';
 }
 
-const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTemplate, isUnlocked, hasGivenFeedback }) => {
+const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTemplate, isUnlocked, hasGivenFeedback, aspectRatio }) => {
     const [exportType, setExportType] = useState<'pdf' | 'zip' | null>(null);
 
     const exportToPDF = async () => {
@@ -43,16 +44,19 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             const slideNodes = Array.from(document.querySelectorAll('.slide-export-node')) as HTMLElement[];
             if (slideNodes.length === 0) return;
 
+            const width = 1080;
+            const height = aspectRatio === 'square' ? 1080 : 1350;
+
             const pdf = new jsPDF({
                 compress: true,
                 orientation: 'portrait',
                 unit: 'px',
-                format: [1080, 1350]
+                format: [width, height]
             });
 
             for (let i = 0; i < slideNodes.length; i++) {
                 const node = slideNodes[i];
-                const scale = 1080 / node.offsetWidth;
+                const scale = width / node.offsetWidth;
 
                 // Process ONE slide completely before moving to the next
                 const dataUrl: string | null = await toJpeg(node, {
@@ -61,11 +65,10 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
                     style: { transform: 'none', margin: '0' } // Reset transforms for capture
                 });
 
-                if (i !== 0) pdf.addPage([1080, 1350], 'portrait');
-                pdf.addImage(dataUrl, 'JPEG', 0, 0, 1080, 1350, `slide_${i}`, 'FAST');
+                if (i !== 0) pdf.addPage([width, height], 'portrait');
+                pdf.addImage(dataUrl, 'JPEG', 0, 0, width, height, `slide_${i}`, 'FAST');
 
                 // Explicitly clear memory to prevent RAM spike
-                // @ts-ignore
                 node.style.transform = '';
             }
 
@@ -144,7 +147,6 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
                     folder?.file(`slide-${i + 1}.jpg`, blob);
 
                     // Explicitly clear memory to prevent RAM spike
-                    // @ts-ignore
                     node.style.transform = '';
                 }
             }

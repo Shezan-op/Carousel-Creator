@@ -1,82 +1,119 @@
-# 🎯 60-Second Walkthrough
+# 🎯 60-Second Walkthrough — Carousel Creator
 
-Go from a blank screen to a professional carousel in under a minute.
-
----
-
-### Step 1: Brand Yourself *(10 seconds)*
-
-Open the **Setup** tab → Enter your name, handle, and upload an avatar.  
-Pick a font. Done — it's saved forever.
+**Go from zero to a finished carousel in under a minute.** No sign-up. No design skills. Just text in, carousel out.
 
 ---
 
-### Step 1.5: Save Your Project *(5 seconds)*
+## Step 1: Open the App (5 seconds)
 
-Click **Saved Projects** in the sidebar → **+ Save Current Project**.  
-Give it a name. You can now safely refresh or switch to another client’s work!
+Go to **[carousel-creator-kohl.vercel.app](https://carousel-creator-kohl.vercel.app/)**
+
+A short animated intro plays. Wait for it to finish (or click to skip).
 
 ---
 
-### Step 2: Write Your Content *(20 seconds)*
+## Step 2: Type Your Content (20 seconds)
 
-Switch to the **Bulk** tab and type:
+In the **left panel**, you'll see a large text area. This is the Bulk Editor. Type or paste your content:
 
 ```
-/h/ 5 Lessons I Learned Building a Startup
-/sh/ A thread worth saving.
+/h/ 5 Reasons to Start a Newsletter
+/sh/ A thread 🧵
 
-/h/ Lesson 1: Ship Fast
-Speed beats perfection. Get your MVP out,
-then iterate based on *real feedback*.
+Most people overthink newsletters.
+Here's what actually matters.
 
-/h/ Lesson 2: Talk to Users
-**Every single day.** Not once a week.
-Not through surveys. _Face to face._
+/h/ 1. You Own the Audience
+Social media algorithms change.
+Your email list is *yours forever*.
 
-/h/ Follow for More
-/sh/ @yourhandle
+/h/ 2. Revenue on Autopilot
+One well-placed **CTA** can generate income while you sleep.
+
+/h/ 3. Build Authority Fast
+Consistent writing = _consistent trust_.
+
+/h/ 4. Low Barrier to Entry
+All you need is an email tool and a keyboard.
+
+/h/ 5. Compounding Returns
+Every issue builds on the last. __Momentum is everything__.
+
+/h/ Ready to start?
+/sh/ Follow me for more creator tips
+What are you waiting for? Start today.
 ```
 
-Slides appear instantly in the preview panel →
+As you type, watch the right panel — your slides appear **in real-time**.
 
 ---
 
-### Step 3: Style It *(10 seconds)*
+## Step 3: Pick a Style (5 seconds)
 
-In Setup, pick a **Template** (Minimal, Tweet, or Brutalist) and a **Color Palette** (Midnight, Cyberpunk, Nord, etc.).
+Scroll down on the left panel to **Typography & Motifs**. Click one:
 
-Use the **Visual Tuner** sliders below the text area to adjust font sizes for the active slide.  
-**Pro Tip:** Switch to the **Bg** tab in the tuner to upload a unique background image for that specific slide!
-
----
-
-### Step 4: Export *(5 seconds)*
-
-Click **Download PDF** for LinkedIn, or **Download ZIP** for a multi-template content pack (all 3 styles in one archive).
+- **Minimal** → Clean and professional
+- **Tweet** → Looks like a viral tweet
+- **Brutalist** → Bold and attention-grabbing
+- **Highlight** → Dynamic accent colors
 
 ---
 
-### That's it. You're done. 🚀
+## Step 4: Choose Colors (5 seconds)
 
-> **Pro Tip:** All slides render at **1080×1350px (4:5 ratio)** — the optimal format for LinkedIn carousels. No cropping, no scaling, maximum visual impact in the feed.
+Under **Brand Palette**, click a preset (Midnight, Cyberpunk, Nord, etc.) or type your own hex colors.
 
----
-
-## Quick Reference Card
-
-| Action | How |
-|--------|-----|
-| New slide | Blank line (double-enter) |
-| Headline | `/h/ Your text` |
-| Subtitle | `/sh/ Your text` |
-| Body | Just type (no prefix) |
-| Highlight | `*word*` |
-| Bold | `**word**` |
-| Italic | `_word_` |
-| Custom size | `/h, s:120/ Big Title` |
-| Center text | `/h, a:center/ Centered` |
+Want to flip between dark and light? Hit the **"Invert Theme"** button.
 
 ---
 
-*Built with 🧠 by [Shezan Ahmed](https://www.linkedin.com/in/shezanahmed29/) · Founder @ [LeadLinked](https://www.linkedin.com/company/lead-linked/)*
+## Step 5: Adjust the Format (5 seconds)
+
+Under **Hyper-parameters**:
+
+- **Vertical (4:5)** → Best for LinkedIn and Instagram
+- **Square (1:1)** → Best for Twitter/X
+
+---
+
+## Step 6: Export (10 seconds)
+
+At the top of the **right panel**, click one:
+
+| Button | What You Get |
+|--------|-------------|
+| **Download PDF** | A single multi-page PDF file (perfect for LinkedIn) |
+| **Download ZIP** | Your carousel in 3 different templates, organized into folders |
+
+Your file downloads instantly. Upload it to LinkedIn, Instagram, or Twitter/X.
+
+---
+
+## 🎉 That's It
+
+You just created a professional carousel in under 60 seconds.
+
+---
+
+## Want to Go Deeper?
+
+Here's what else you can do:
+
+| Feature | Where to Find It |
+|---------|------------------|
+| 🖼 **Add images** | Drag-and-drop onto the text area, or use the Asset Gallery |
+| 🏷 **Brand watermark** | Brand Palette → Watermark Logo |
+| 📊 **Progress bar** | Hyper-parameters → Progress Bar Axis |
+| 📱 **Social preview** | Hyper-parameters → Feed Sandbox Environment |
+| ✏️ **Fine-tune slides** | Click any slide to open the Focus Modal |
+| ⏪ **Undo/Redo** | Ctrl+Z / Ctrl+Shift+Z (Cmd on Mac) |
+| 💾 **Save projects** | Manuscript Vault → + New Snapshot |
+| 🏢 **Brand presets** | Brand Presets → + Save Current |
+| 📤 **Backup files** | Manuscript Vault → Export .carousel file |
+| 🤖 **AI generation** | Auto tab → paste content → Generate |
+
+Read the **[Full Guide](./HOW_TO_USE.md)** for detailed instructions on every feature.
+
+---
+
+*Built for speed. Built for creators.* 🚀
