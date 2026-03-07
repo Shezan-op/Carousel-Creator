@@ -3,7 +3,7 @@ import { Loader2, ArrowRight, Heart, MessageCircle, Repeat2, Check } from 'lucid
 import type { CarouselData } from '../types';
 import ExportControls from './ExportControls';
 import { renderHighlightedText } from '../utils';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -20,14 +20,12 @@ interface Props {
     previewScale: number;
     showProfile: boolean;
     footerLayout: string;
-    onDeleteSlide?: (index: number) => void;
-    onMoveSlide?: (index: number, direction: 'up' | 'down') => void;
+    // onDeleteSlide and onMoveSlide are managed via dnd reordering now
     // Retained global states
     textAlign: string;
     noiseOpacity: number;
     customBgImage: string | null;
     setActivePreviewSlideIndex: (index: number) => void;
-    activePreviewSlideIndex: number;
     isUnlocked: boolean;
     hasGivenFeedback: boolean;
     setFocusedSlideIndex: (index: number | null) => void;
@@ -40,7 +38,14 @@ interface Props {
     setBulkText: (text: string) => void;
 }
 
-const SortableSlide = ({ id, index, slide, effectiveScale, previewMode, children }: any) => {
+interface SortableSlideProps {
+    id: string;
+    effectiveScale: number;
+    previewMode: 'stack' | 'carousel' | 'grid';
+    children: React.ReactNode;
+}
+
+const SortableSlide: React.FC<SortableSlideProps> = ({ id, effectiveScale, previewMode, children }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: id.toString() });
 
     const style = {
@@ -80,9 +85,9 @@ const SortableSlide = ({ id, index, slide, effectiveScale, previewMode, children
 
 const CarouselPreview: React.FC<Props> = ({
     data, authorName, authorHandle, authorAvatar, headingFont, subheadingFont, bodyFont,
-    activeTemplate, setActiveTemplate, onDeleteSlide, onMoveSlide, previewScale, showProfile, footerLayout,
+    activeTemplate, setActiveTemplate, previewScale, showProfile, footerLayout,
     textAlign, noiseOpacity, customBgImage,
-    activePreviewSlideIndex, setActivePreviewSlideIndex,
+    setActivePreviewSlideIndex,
     isUnlocked, hasGivenFeedback, setFocusedSlideIndex,
     showSafeZones, showSlideNumbers,
     inlineImages, previewMode, setPreviewMode,
@@ -96,12 +101,12 @@ const CarouselPreview: React.FC<Props> = ({
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
-        const oldIndex = parseInt(active.id);
-        const newIndex = parseInt(over.id);
+        const oldIndex = parseInt(active.id as string);
+        const newIndex = parseInt(over.id as string);
 
         // Reorder the physical text blocks
         const rawSlides = bulkText.split(/\n\s*\n/).filter((s: string) => s.trim());
@@ -182,8 +187,6 @@ const CarouselPreview: React.FC<Props> = ({
                 <SortableSlide
                     key={index}
                     id={index.toString()}
-                    index={index}
-                    slide={slide}
                     effectiveScale={renderScale}
                     previewMode={previewMode}
                 >
@@ -739,9 +742,8 @@ const CarouselPreview: React.FC<Props> = ({
         data, accentColor, activeTemplate,
         authorName, authorHandle, authorAvatar, showProfile, footerLayout,
         headingFont, subheadingFont, bodyFont, effectiveScale,
-        onDeleteSlide, onMoveSlide,
         textAlign, noiseOpacity, customBgImage,
-        activePreviewSlideIndex, setActivePreviewSlideIndex, setFocusedSlideIndex,
+        setActivePreviewSlideIndex, setFocusedSlideIndex,
         showSafeZones, showSlideNumbers, previewMode, inlineImages, overflowingSlides
     ]);
 

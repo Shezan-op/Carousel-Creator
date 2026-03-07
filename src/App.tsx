@@ -352,21 +352,6 @@ function App() {
     } catch { /* quota */ }
   }, [headingFont, subheadingFont, bodyFont]);
 
-  const deleteSlide = (index: number) => {
-    if (!carouselData) return;
-    const newSlides = carouselData.slides.filter((_, i) => i !== index);
-    setCarouselData({ ...carouselData, slides: newSlides });
-  };
-
-  const moveSlide = (index: number, direction: 'up' | 'down') => {
-    if (!carouselData) return;
-    const newSlides = [...carouselData.slides];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newSlides.length) return;
-
-    [newSlides[index], newSlides[targetIndex]] = [newSlides[targetIndex], newSlides[index]];
-    setCarouselData({ ...carouselData, slides: newSlides });
-  };
 
   return (
     <div className="min-h-screen lg:h-screen bg-[#000000] text-[#F3F4F6] selection:bg-blue-500/30 font-sans antialiased flex flex-col lg:flex-row p-4 lg:p-6 gap-6 lg:overflow-hidden">
@@ -445,8 +430,6 @@ function App() {
             bodyFont={bodyFont}
             activeTemplate={activeTemplate}
             setActiveTemplate={setActiveTemplate}
-            onDeleteSlide={deleteSlide}
-            onMoveSlide={moveSlide}
             previewScale={previewScale}
             showProfile={showProfile}
             footerLayout={footerLayout}
@@ -454,7 +437,6 @@ function App() {
             noiseOpacity={noiseOpacity}
             customBgImage={customBgImage}
             setActivePreviewSlideIndex={setActivePreviewSlideIndex}
-            activePreviewSlideIndex={activePreviewSlideIndex}
             isUnlocked={isUnlocked}
             hasGivenFeedback={hasGivenFeedback}
             setFocusedSlideIndex={setFocusedSlideIndex}
