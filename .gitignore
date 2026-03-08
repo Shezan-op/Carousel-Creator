@@ -51,3 +51,4 @@ eslint-output.json
 *.bak
 *.swp
 *~
+tracked_files.txt
