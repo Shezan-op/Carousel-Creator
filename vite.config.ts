@@ -11,7 +11,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Carousel Creator',
+        name: 'Carousel Architect',
         short_name: 'Carousel',
         description: '100% Client-Side Carousel Generator',
         theme_color: '#09090B',

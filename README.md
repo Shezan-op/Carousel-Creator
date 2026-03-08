@@ -1,26 +1,17 @@
-<p align="center">
-  <img src="./public/Logo.png" alt="Carousel Creator Logo" width="80" />
-</p>
+# Carousel Architect
 
-<h1 align="center">Carousel Creator</h1>
+![Carousel Architect Logo](./public/Logo.png)
 
-<p align="center">
-  <strong>Transform raw text into viral social media carousels in seconds.</strong><br/>
-  100% serverless. Privacy-first. Built for modern creators.
-</p>
+**Transform raw text into viral social media carousels in seconds.**
+100% serverless. Privacy-first. Built for modern creators.
 
-<p align="center">
-  <a href="https://carousel-creator-kohl.vercel.app/" target="_blank">🚀 Live Demo</a> &nbsp;·&nbsp;
-  <a href="./HOW_TO_USE.md">📖 How to Use</a> &nbsp;·&nbsp;
-  <a href="./WALKTHROUGH.md">🎯 60-Second Walkthrough</a> &nbsp;·&nbsp;
-  <a href="./CONTRIBUTING.md">🤝 Contributing</a>
-</p>
+[🚀 Live Demo](https://mycarouselcreator.vercel.app/) · [� How to Use](./SYSTEM_DOCUMENTATION.md) · [🎯 Architect Guide](./ARCHITECT_GUIDE.md) · [🤝 Contributing](./CONTRIBUTING.md)
 
 ---
 
-## What is Carousel Creator?
+## What is Carousel Architect?
 
-Carousel Creator is a **high-performance, browser-based design tool** that converts raw text into pixel-perfect LinkedIn, Instagram, and Twitter/X carousels — no Canva, no Figma, no design skills required.
+Carousel Architect is a **high-performance, browser-based design tool** that converts raw text into pixel-perfect LinkedIn, Instagram, and Twitter/X carousels — no Canva, no Figma, no design skills required.
 
 Everything runs **entirely in your browser**. Your data never leaves your device. There are no servers, no accounts, no cloud uploads. You type text, pick your style, and download beautiful carousels in seconds.
 
@@ -33,7 +24,7 @@ It was built from the ground up as a **React 19 + TypeScript** single-page appli
 ### 🎨 Four Professional Visual Motifs
 
 | Minimal | Faux Tweet | Brutalist | Highlight |
-|---------|-----------|-----------|-----------|
+| :--- | :--- | :--- | :--- |
 | Clean, modern typography with subtle accent colors | Simulates a viral X/Twitter post with engagement metrics | Heavy uppercase type with high-contrast block accents | Bold accent highlights with dynamic color emphasis |
 
 Switch between templates in one click. Your content stays the same — only the visual presentation changes.
@@ -45,7 +36,7 @@ Write naturally, get structured slides. The compiler uses a simple tag-based syn
 - **Native Drag-and-Drop**: Drop any image file directly onto the text editor to inject it into your carousel instantly at the cursor position.
 - **Tag-based Syntax**:
 
-```
+```text
 /h/ Your Headline Here
 /sh/ A subtitle or section header
 Body text flows naturally without any tags.
@@ -65,14 +56,14 @@ Format your text with familiar syntax that works across all templates:
 - `_italic_` → Italic emphasis
 - `__underline__` → Clean CSS-based underline
 - **Nesting**: Combine styles freely — `**_bold italic_**`, `*__highlighted underline__*`
-- **Character Foundry**: Independently select any Google Font for **Headlines**, **Subheadings**, and **Body text**. The font engine dedupes and batches font requests for fast loading.
+- **Fonts**: Independently select any Google Font for **Headlines**, **Subheadings**, and **Body text**. The font engine dedupes and batches font requests for fast loading.
 
 ### 📐 Format Switcher (Portrait & Square)
 
 Switch between two professional aspect ratios with one click:
 
 | Format | Dimensions | Best For |
-|--------|-----------|----------|
+| :--- | :--- | :--- |
 | **Vertical (4:5)** | 1080 × 1350px | LinkedIn carousels, Instagram posts |
 | **Square (1:1)** | 1080 × 1080px | Twitter/X posts, universal sharing |
 
@@ -96,14 +87,14 @@ Upload your logo or brand mark once, and it appears on **every single slide** au
 Add a visual progress indicator to your slides so viewers know how far along they are:
 
 | Position | Effect |
-|----------|--------|
+| :--- | :--- |
 | **Off** | No progress bar (default) |
 | **Top** | Colored bar at the top of each slide |
 | **Bottom** | Colored bar at the bottom of each slide |
 
 The bar's width grows proportionally with each slide (Slide 3 of 10 = 30% width). Uses your accent color for seamless branding.
 
-### 📱 Social Feed Sandbox
+### 📱 Social Media Preview
 
 Preview how your carousel will look inside real social media feeds:
 
@@ -146,7 +137,6 @@ Made a mistake? Use `Ctrl+Z` (undo) and `Ctrl+Shift+Z` (redo) to navigate throug
 
 - **Responsive Geometry Engine**: Uses strict `min-width` constraints and scale-aware CSS to prevent Flexbox crushing. Displays pixel-perfect slides on everything from an iPhone SE to a 4K Pro Display.
 - **Async Persistence**: Uses **IndexedDB (via localforage)** for heavy data (images, projects, presets), bypassing the 5MB `localStorage` limit.
-- **BYOK Architecture**: Your OpenRouter API key is stored locally, never transmitted to anyone.
 - **Stable Export Engine**: Processes slides sequentially with memory clearing to handle large 10+ slide carousels on low-end devices.
 - **Export Ghosting Fix**: UI elements like slide numbers, arrows, and safe zone guides are automatically stripped from exports.
 
@@ -155,7 +145,7 @@ Made a mistake? Use `Ctrl+Z` (undo) and `Ctrl+Shift+Z` (redo) to navigate throug
 ## 🏗 Architecture & Tech Stack
 
 | Layer | Technology | Purpose |
-|-------|-----------|---------|
+| :--- | :--- | :--- |
 | **Framework** | React 19 + TypeScript | Type-safe component architecture |
 | **Storage** | IndexedDB + localforage | High-capacity async local persistence |
 | **Build** | Vite 7 | Sub-second HMR, optimized production bundles |
@@ -163,7 +153,6 @@ Made a mistake? Use `Ctrl+Z` (undo) and `Ctrl+Shift+Z` (redo) to navigate throug
 | **DnD** | @dnd-kit | Drag-and-drop slide reordering |
 | **Export: PDF** | `html-to-image` + `jsPDF` | Sequential capture → multi-page PDF |
 | **Export: ZIP** | `html-to-image` + `JSZip` | Multi-template batch render → ZIP archive |
-| **AI** | OpenRouter API | Optional text-to-carousel generation (BYOK) |
 | **Analytics** | Vercel Analytics + Speed Insights | Production performance monitoring |
 
 ### Key Engineering Decisions
@@ -214,14 +203,14 @@ git push origin main
 ### Environment Variables (Optional)
 
 | Variable | Purpose |
-|----------|---------|
+| :--- | :--- |
 | `VITE_GOOGLE_SCRIPT_URL` | Google Apps Script endpoint for lead capture |
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 src/
 ├── App.tsx                    # Root shell, global state, persistence layer
 ├── main.tsx                   # React DOM entry point
@@ -229,10 +218,9 @@ src/
 ├── utils.ts                   # Shared utilities (markdown parser, image compression)
 ├── index.css                  # Global styles, Tailwind imports, custom scrollbar
 ├── components/
-│   ├── LeftPane.tsx            # Bulk compiler, AI generator, tuner controls, setup
+│   ├── LeftPane.tsx            # Bulk compiler, tuner controls, setup
 │   ├── CarouselPreview.tsx     # Multi-template slide renderer, export nodes, DnD
-│   ├── ExportControls.tsx      # PDF/ZIP export engine, lead capture modal
-│   └── NetflixIntro.tsx        # Animated splash screen
+│   └── ExportControls.tsx      # PDF/ZIP export engine, feedback loop
 public/
 ├── Logo.png                   # App logo
 ├── manifest.json              # PWA manifest
@@ -244,7 +232,7 @@ public/
 ## 🧪 Bulk Compiler Syntax Reference
 
 | Syntax | Effect | Example |
-|--------|--------|---------|
+| :--- | :--- | :--- |
 | `/h/ text` | Headline (H1) | `/h/ Why AI Matters` |
 | `/sh/ text` | Subheadline (H2) or Section Header (H3) | `/sh/ The 5 Key Trends` |
 | Plain text | Body paragraph | `AI is transforming every industry.` |
@@ -265,17 +253,14 @@ public/
 ## 🔐 Security Model
 
 - **Zero Server Architecture**: No backend. All data stays in your browser's local storage and IndexedDB.
-- **Lead Capture**: `localStorage.setItem('carousel_unlocked', 'true')` is strictly inside the `try` block after a successful API call. Network failures refuse the unlock token.
-- **Rate Limiting**: 30-second cooldown between email submissions (client-side).
 - **Input Sanitization**: Text inputs capped at 10,000 characters. Slide count capped at 50.
-- **API Key Handling**: OpenRouter key stored as a password input, persisted only to local `localStorage`.
 - **CORS Safety**: All images are converted to base64 data URLs on ingestion, preventing tainted canvas errors during export.
 
 ---
 
 ## 📈 SEO & Discovery
 
-`LinkedIn Carousel Generator` · `Instagram Carousel Maker` · `Twitter/X Square Carousel` · `Free AI Carousel Tool` · `Open Source Content Creation` · `1080x1350 Social Media Design` · `React Carousel Export` · `Bulk Text to Carousel` · `Professional Slide Generator` · `Brand Watermark Carousel`
+`LinkedIn Carousel Generator` · `Instagram Carousel Maker` · `Twitter/X Square Carousel` · `Content Design Tool` · `Open Source Content Creation` · `1080x1350 Social Media Design` · `React Carousel Export` · `Bulk Text to Carousel` · `Professional Slide Generator` · `Brand Watermark Carousel`
 
 ---
 
@@ -285,6 +270,4 @@ MIT — free for personal and commercial use.
 
 ---
 
-<p align="center">
-  Built with 🧠 by <a href="https://www.linkedin.com/in/shezanahmed29/" target="_blank"><strong>Shezan Ahmed</strong></a> · Founder @ <a href="https://www.linkedin.com/company/lead-linked/" target="_blank">LeadLinked</a>
-</p>
+Built with 🧠 by [**Shezan Ahmed**](https://www.linkedin.com/in/shezanahmed29/) · Founder @ [LeadLinked](https://www.linkedin.com/company/lead-linked/)

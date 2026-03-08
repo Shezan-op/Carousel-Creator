@@ -4,7 +4,6 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import localforage from 'localforage';
 import LeftPane from './components/LeftPane';
 import CarouselPreview from './components/CarouselPreview';
-import NetflixIntro from './components/NetflixIntro';
 import type { CarouselData, Slide, BrandPreset, SavedProject } from './types';
 import { renderHighlightedText } from './utils';
 
@@ -39,7 +38,6 @@ function App() {
   }, [brandWatermark, isDbLoaded]);
 
   const [previewMode, setPreviewMode] = useState<'stack' | 'carousel' | 'grid'>('stack');
-  const [openRouterKey, setOpenRouterKey] = useState(() => localStorage.getItem('openRouterKey') || '');
 
   // Persistent Branding State
   const [authorName, setAuthorName] = useState(() => localStorage.getItem('authorName') || 'Creator Name');
@@ -59,67 +57,12 @@ function App() {
   const [noiseOpacity, setNoiseOpacity] = useState(() => Number(localStorage.getItem('noiseOpacity')) || 5);
   const [customBgImage, setCustomBgImage] = useState<string | null>(() => localStorage.getItem('customBgImage'));
 
-  const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('carousel_unlocked') === 'true');
-  const [hasGivenFeedback, setHasGivenFeedback] = useState(() => localStorage.getItem('has_given_feedback') === 'true');
   const [showSafeZones, setShowSafeZones] = useState(() => localStorage.getItem('showSafeZones') === 'true');
   const [showSlideNumbers, setShowSlideNumbers] = useState(() => localStorage.getItem('showSlideNumbers') !== 'false');
 
-  // Listen for Tally form submissions — robust handler
-  useEffect(() => {
-    const handleTallyMessage = (e: MessageEvent) => {
-      // Tally can send data as a string OR a plain object
-      let parsed: Record<string, unknown> | null = null;
 
-      if (typeof e.data === 'string') {
-        // Quick-exit: if the string doesn't mention Tally at all, ignore
-        if (!e.data.includes('Tally')) return;
-        try { parsed = JSON.parse(e.data); } catch { return; }
-      } else if (typeof e.data === 'object' && e.data !== null) {
-        parsed = e.data as Record<string, unknown>;
-      }
-
-      if (!parsed) return;
-
-      // Tally uses "event" or "eventId" depending on widget version
-      const eventName = (parsed.event || parsed.eventId || '') as string;
-      if (!eventName.includes('FormSubmitted')) return;
-
-      // formId can live at parsed.payload.formId OR parsed.formId
-      const payload = (parsed.payload || parsed) as Record<string, unknown>;
-      const formId = (payload.formId || '') as string;
-
-      if (formId === 'MeA7bM') {
-        // Lead Capture Form — unlock exports forever
-        localStorage.setItem('carousel_unlocked', 'true');
-        setIsUnlocked(true);
-      } else if (formId === 'zxK1DR') {
-        // Feedback Form
-        localStorage.setItem('has_given_feedback', 'true');
-        setHasGivenFeedback(true);
-      }
-    };
-
-    window.addEventListener('message', handleTallyMessage);
-    return () => window.removeEventListener('message', handleTallyMessage);
-  }, []);
 
   // Fallback: If Tally's postMessage was missed (adblocker, iframe sandbox, etc.),
-  // re-check localStorage whenever the window regains focus (e.g., after popup closes)
-  useEffect(() => {
-    const recheckUnlock = () => {
-      if (!isUnlocked && localStorage.getItem('carousel_unlocked') === 'true') {
-        setIsUnlocked(true);
-      }
-      if (!hasGivenFeedback && localStorage.getItem('has_given_feedback') === 'true') {
-        setHasGivenFeedback(true);
-      }
-    };
-    window.addEventListener('focus', recheckUnlock);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) recheckUnlock(); });
-    return () => {
-      window.removeEventListener('focus', recheckUnlock);
-    };
-  }, [isUnlocked, hasGivenFeedback]);
 
   const [customTheme, setCustomTheme] = useState({
     background: localStorage.getItem('custom_background') || '#09090B',
@@ -375,9 +318,6 @@ function App() {
     } catch { /* quota */ }
   }, [showSafeZones, showSlideNumbers]);
 
-  useEffect(() => {
-    try { localStorage.setItem('openRouterKey', openRouterKey); } catch { /* quota */ }
-  }, [openRouterKey]);
 
   useEffect(() => {
     try {
@@ -427,28 +367,17 @@ function App() {
       localStorage.setItem('body_font', bodyFont);
     } catch { /* quota */ }
   }, [headingFont, subheadingFont, bodyFont]);
-  if (!isDbLoaded) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-zinc-950 text-white font-sans">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-          <div className="text-xs font-bold tracking-widest uppercase opacity-50">Loading Engine...</div>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen lg:h-screen bg-[#000000] text-[#F3F4F6] selection:bg-blue-500/30 font-sans antialiased flex flex-col lg:flex-row p-4 lg:p-6 gap-6 lg:overflow-hidden">
-      <NetflixIntro />
+
 
       {/* THE LEFT PANE (Control Center) */}
       <div className="w-full lg:w-[480px] h-full relative z-10 glass rounded-[32px] overflow-hidden shadow-2xl premium-shadow">
         <LeftPane
           carouselData={carouselData}
           setCarouselData={setCarouselData}
-          openRouterKey={openRouterKey}
-          setOpenRouterKey={setOpenRouterKey}
           authorName={authorName}
           setAuthorName={setAuthorName}
           authorHandle={authorHandle}
@@ -494,8 +423,6 @@ function App() {
           savedProjects={savedProjects}
           setSavedProjects={setSavedProjects}
           inlineImages={inlineImages}
-          creatorAvatar={authorAvatar}
-          setCreatorAvatar={setAuthorAvatar}
           progressBar={progressBar}
           setProgressBar={setProgressBar}
           sandboxMode={sandboxMode}
@@ -530,8 +457,6 @@ function App() {
             noiseOpacity={noiseOpacity}
             customBgImage={customBgImage}
             setActivePreviewSlideIndex={setActivePreviewSlideIndex}
-            isUnlocked={isUnlocked}
-            hasGivenFeedback={hasGivenFeedback}
             setFocusedSlideIndex={setFocusedSlideIndex}
             showSafeZones={showSafeZones}
             showSlideNumbers={showSlideNumbers}

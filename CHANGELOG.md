@@ -1,4 +1,4 @@
-# 📋 Changelog — Carousel Creator
+# 📋 Changelog — Carousel Architect
 
 All notable changes to this project are documented here.
 
@@ -12,7 +12,7 @@ All notable changes to this project are documented here.
 - **1-Click Theme Invert**: Instantly swap background and text colors to toggle dark/light mode
 - **Global Brand Watermark**: Upload a logo that appears on every slide — persisted to IndexedDB
 - **Dynamic Progress Bar**: Visual progress indicator (Top/Bottom/Off) that fills proportionally per slide
-- **Social Feed Sandbox**: Preview carousels inside simulated LinkedIn or Instagram feed frames
+- **Social Media Preview**: Preview carousels inside simulated LinkedIn or Instagram feed frames
 - **Asset Gallery**: Persistent image library with upload, click-to-copy tags, and delete functionality
 - **Undo/Redo Engine**: Time-travel through text edits with Ctrl+Z / Ctrl+Shift+Z
 - **Visual Builder**: Slide-by-slide visual editing mode alongside the raw text editor
@@ -41,7 +41,7 @@ All notable changes to this project are documented here.
 
 ## [v2.0.0] — 2026-03-04 — "Agency Workflow" Release
 
-### ✨ New Features
+### ✨ Workflow Features
 
 - **Brand Presets**: Save multiple combinations of fonts, colors, and author identity
 - **Project Save Slots**: Store up to 50 carousel drafts in the browser
@@ -68,7 +68,7 @@ All notable changes to this project are documented here.
 - AI-powered generation via OpenRouter (BYOK)
 - Custom color palettes with preset themes
 - Google Fonts integration for headline, subheading, and body text
-- Creator identity (name, handle, avatar) on slide footers
+- Profile info (name, handle, avatar) on slide footers
 - Responsive design for desktop and mobile
 - Privacy-first: all data stays in the browser
 

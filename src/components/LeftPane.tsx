@@ -1,34 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, type FC, type ChangeEvent, type DragEvent as ReactDragEvent } from 'react';
+import localforage from 'localforage';
 import type { CarouselData, Slide, BrandPreset, SavedProject } from '../types';
 import {
-    Sparkles, Code, Settings, ListTree, RotateCcw,
-    Trash2, Loader2, Heart, Palette, Type, Layout, User,
+    Code, Settings, ListTree, RotateCcw,
+    Trash2, Heart, Palette, Type, Layout, User,
     Zap, Image as ImageIcon, CheckCircle2, Upload
 } from 'lucide-react';
+import {
+    compressImage,
+    GLOBAL_MAX_PX
+} from '../utils';
 
 const MAX_SLIDES = 50;
-const AVATAR_MAX_PX = 256;
-const AVATAR_JPEG_QUALITY = 0.7;
-
-const compressImage = (file: File, maxWidth = AVATAR_MAX_PX): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-            URL.revokeObjectURL(url);
-            const canvas = document.createElement('canvas');
-            const scale = Math.min(1, maxWidth / img.width);
-            canvas.width = Math.round(img.width * scale);
-            canvas.height = Math.round(img.height * scale);
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return reject(new Error('Canvas context unavailable'));
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL('image/jpeg', AVATAR_JPEG_QUALITY));
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image decode failed')); };
-        img.src = url;
-    });
-};
 
 const safeLocalStorageSet = (key: string, value: string): boolean => {
     try {
@@ -51,35 +34,39 @@ const extractJSON = (raw: string): string => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sanitizeCarouselData = (data: any): CarouselData | null => {
-    if (!data || !Array.isArray(data.slides)) return null;
+    if (!data || typeof data !== 'object') return null;
+    if (!Array.isArray(data.slides)) return null;
+
     const validTypes: Slide['type'][] = ['title', 'content', 'cta'];
+    const sanitizeString = (val: unknown) => typeof val === 'string' ? val : undefined;
+    const sanitizeNumber = (val: unknown) => typeof val === 'number' && !isNaN(val) ? val : undefined;
+
     return {
         theme: {
             background: typeof data.theme?.background === 'string' ? data.theme.background.slice(0, 50) : '#09090B',
             text: typeof data.theme?.text === 'string' ? data.theme.text.slice(0, 50) : '#FFFFFF',
             accent: typeof data.theme?.accent === 'string' ? data.theme.accent.slice(0, 50) : '#3B82F6',
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        slides: data.slides.slice(0, MAX_SLIDES).map((s: any, i: number) => ({
+        slides: data.slides.slice(0, MAX_SLIDES).map((s: Record<string, unknown>, i: number) => ({
             slide_number: i + 1,
-            type: validTypes.includes(s.type) ? s.type : 'content',
-            headline: (s.headline as string) || undefined,
-            subheadline: (s.subheadline as string) || undefined,
-            subheading: (s.subheading as string) || undefined,
-            body: (s.body as string) || undefined,
-            heading_size: (s.heading_size as number) || undefined,
-            subheading_size: (s.subheading_size as number) || (s.subheadline_size as number) || undefined,
-            body_size: (s.body_size as number) || undefined,
-            text_align: (s.text_align as Slide['text_align']) || undefined,
-            y_offset: (s.y_offset as number) || undefined,
+            type: validTypes.includes(s.type as Slide['type']) ? s.type as Slide['type'] : 'content',
+            headline: sanitizeString(s.headline),
+            subheadline: sanitizeString(s.subheadline),
+            subheading: sanitizeString(s.subheading),
+            body: sanitizeString(s.body),
+            heading_size: sanitizeNumber(s.heading_size),
+            subheading_size: sanitizeNumber(s.subheading_size) || sanitizeNumber(s.subheadline_size),
+            body_size: sanitizeNumber(s.body_size),
+            text_align: (['left', 'center', 'right'].includes(s.text_align as string) ? s.text_align as Slide['text_align'] : undefined),
+            y_offset: sanitizeNumber(s.y_offset),
+            bg_image: sanitizeString(s.bg_image),
         }))
     };
 };
 
+
 interface Props {
     setCarouselData: React.Dispatch<React.SetStateAction<CarouselData | null>>;
-    openRouterKey: string;
-    setOpenRouterKey: (val: string) => void;
     authorName: string;
     setAuthorName: (val: string) => void;
     authorHandle: string;
@@ -126,8 +113,6 @@ interface Props {
     savedProjects: SavedProject[];
     setSavedProjects: React.Dispatch<React.SetStateAction<SavedProject[]>>;
     inlineImages: Record<string, string>;
-    creatorAvatar: string | null;
-    setCreatorAvatar: (val: string | null) => void;
     progressBar: 'none' | 'top' | 'bottom';
     setProgressBar: (val: 'none' | 'top' | 'bottom') => void;
     sandboxMode: 'none' | 'linkedin' | 'instagram';
@@ -138,9 +123,9 @@ interface Props {
     setBrandWatermark: (val: string | null) => void;
 }
 
-const LeftPane: React.FC<Props> = (props) => {
+const LeftPane: FC<Props> = (props) => {
     const {
-        setCarouselData, openRouterKey, setOpenRouterKey, authorName, setAuthorName, authorHandle, setAuthorHandle,
+        setCarouselData, authorName, setAuthorName, authorHandle, setAuthorHandle,
         authorAvatar, setAuthorAvatar, headingFont, setHeadingFont, subheadingFont, setSubheadingFont,
         bodyFont, setBodyFont, activeTemplate, setActiveTemplate,
         previewScale, setPreviewScale, customTheme, applyCustomTheme, showProfile, setShowProfile,
@@ -150,7 +135,7 @@ const LeftPane: React.FC<Props> = (props) => {
         showSafeZones, setShowSafeZones, showSlideNumbers, setShowSlideNumbers,
         setInlineImages, carouselData,
         brandPresets, setBrandPresets, savedProjects, setSavedProjects,
-        inlineImages, creatorAvatar, setCreatorAvatar,
+        inlineImages,
         progressBar, setProgressBar, sandboxMode, setSandboxMode,
         aspectRatio, setAspectRatio, brandWatermark, setBrandWatermark
     } = props;
@@ -169,43 +154,27 @@ const LeftPane: React.FC<Props> = (props) => {
     };
 
     // Global Brand Watermark Handler: Upload and compression
-    const handleWatermarkUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleWatermarkUpload = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 300; // Efficient watermark size
-                const scale = MAX_WIDTH / img.width;
-                canvas.width = MAX_WIDTH;
-                canvas.height = img.height * scale;
-
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                const compressed = canvas.toDataURL('image/webp', 0.8);
-                setBrandWatermark(compressed);
-            };
-            img.src = event.target?.result as string;
-        };
-        reader.readAsDataURL(file);
+        try {
+            const compressed = await compressImage(file, 300);
+            setBrandWatermark(compressed);
+        } catch {
+            setError('Failed to process watermark logo');
+        }
     };
 
-    const [isDragging, setIsDragging] = useState(false);
-    const [activeTab, setActiveTab] = useState<'auto' | 'bulk' | 'json' | 'setup'>('bulk');
+    const [activeTab, setActiveTab] = useState<'bulk' | 'json' | 'setup'>('bulk');
     const [jsonInput, setJsonInput] = useState('');
-    const [rawInput, setRawInput] = useState('');
-    // bulkText is now a prop
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [aiModel, setAiModel] = useState<'free' | 'pro'>('free');
+    const [isDragging, setIsDragging] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [jsonError, setJsonError] = useState<string | null>(null);
     const [showGuide, setShowGuide] = useState(false);
 
-    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-    const bulkTextRef = React.useRef(bulkText);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const bulkTextRef = useRef(bulkText);
     useEffect(() => { bulkTextRef.current = bulkText; }, [bulkText]);
 
     // Phase 2: Time-Travel Engine
@@ -213,31 +182,18 @@ const LeftPane: React.FC<Props> = (props) => {
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [editorMode, setEditorMode] = useState<'raw' | 'visual'>('raw');
 
-    const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleGalleryUpload = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files) return;
 
-        Array.from(files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    const ctx = canvas.getContext('2d');
-                    ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
-                    const imgId = 'img_' + Math.random().toString(36).substring(2, 9);
-
-                    setInlineImages((prev: Record<string, string>) => ({ ...prev, [imgId]: compressedBase64 }));
-                };
-                img.src = event.target?.result as string;
-            };
-            reader.readAsDataURL(file);
+        Array.from(files).forEach(async (file: File) => {
+            try {
+                const compressedBase64 = await compressImage(file, GLOBAL_MAX_PX);
+                const imgId = 'img_' + Math.random().toString(36).substring(2, 9);
+                setInlineImages((prev: Record<string, string>) => ({ ...prev, [imgId]: compressedBase64 }));
+            } catch {
+                setError('Failed to process gallery image');
+            }
         });
     };
 
@@ -282,7 +238,7 @@ const LeftPane: React.FC<Props> = (props) => {
     }, [history, historyIndex, setBulkText, compileBulkText]);
 
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
+        const handleKeyDown = (e: globalThis.KeyboardEvent) => {
             const isZ = e.key.toLowerCase() === 'z';
             const isY = e.key.toLowerCase() === 'y';
             const ctrlOrMeta = e.ctrlKey || e.metaKey;
@@ -340,7 +296,7 @@ const LeftPane: React.FC<Props> = (props) => {
     };
 
     const handleThemeChange = (key: 'background' | 'text' | 'accent', value: string) => {
-        setCarouselData(prev => {
+        setCarouselData((prev: CarouselData | null) => {
             if (!prev) return prev;
             const newTheme = { ...prev.theme, [key]: value };
             // Persist to localStorage so it survives reloads
@@ -351,9 +307,9 @@ const LeftPane: React.FC<Props> = (props) => {
         applyCustomTheme(key, value);
     };
 
-    const handleImageDrop = useCallback(async (e: React.DragEvent<HTMLTextAreaElement>) => {
+    const handleImageDrop = useCallback(async (e: ReactDragEvent<HTMLTextAreaElement>) => {
         const files = Array.from(e.dataTransfer.files);
-        const imageFiles = files.filter(f => f.type.startsWith('image/'));
+        const imageFiles = files.filter((f): f is File => f instanceof File && f.type.startsWith('image/'));
 
         if (imageFiles.length === 0) return;
 
@@ -369,9 +325,9 @@ const LeftPane: React.FC<Props> = (props) => {
         for (const file of imageFiles) {
             try {
                 const id = Math.random().toString(36).substring(2, 9);
-                const compressed = await compressImage(file, 1080);
+                const compressed = await compressImage(file as File, GLOBAL_MAX_PX);
 
-                setInlineImages(prev => ({ ...prev, [id]: compressed }));
+                setInlineImages((prev: Record<string, string>) => ({ ...prev, [id]: compressed }));
 
                 const tag = `\n[img:${id}]\n`;
                 currentText = currentText.substring(0, start + insertionOffset) + tag + currentText.substring(end + insertionOffset);
@@ -384,32 +340,32 @@ const LeftPane: React.FC<Props> = (props) => {
         setBulkText(currentText);
         // Small delay to ensure state is flushed before compile
         setTimeout(() => compileBulkText(currentText), 10);
-    }, [setInlineImages, setBulkText, compileBulkText]);
+    }, [setInlineImages, setBulkText, compileBulkText, setError]);
 
     // native drag and drop listeners
     useEffect(() => {
         const textarea = textareaRef.current;
         if (!textarea) return;
 
-        const handleDragOver = (e: DragEvent) => {
+        const handleDragOver = (e: globalThis.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
             setIsDragging(true);
         };
 
-        const handleDragLeave = (e: DragEvent) => {
+        const handleDragLeave = (e: globalThis.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
             setIsDragging(false);
         };
 
-        const handleDropLocal = (e: DragEvent) => {
+        const handleDropLocal = (e: globalThis.DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
             setIsDragging(false);
 
             // Re-use the existing async logic, but pass the event
-            handleImageDrop(e as unknown as React.DragEvent<HTMLTextAreaElement>);
+            handleImageDrop(e as unknown as ReactDragEvent<HTMLTextAreaElement>);
         };
 
         textarea.addEventListener('dragover', handleDragOver);
@@ -431,41 +387,6 @@ const LeftPane: React.FC<Props> = (props) => {
         }
     }, [error]);
 
-    const generateNarrative = async () => {
-        if (!openRouterKey || !rawInput) return setError('Key and prompt required');
-        setIsGenerating(true);
-        setError(null);
-        try {
-            const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${openRouterKey.trim()}`,
-                    'HTTP-Referer': window.location.origin,
-                    'X-Title': 'Carousel Creator'
-                },
-                body: JSON.stringify({
-                    model: aiModel === 'free' ? "arcee-ai/trinity-large-preview:free" : "anthropic/claude-3.5-sonnet",
-                    messages: [
-                        { role: 'system', content: 'You are a LinkedIn Viral Ghostwriter. Convert raw text into a high-retention carousel JSON object with slides array including headline, subheadline, and body fields. Divide slides with double line breaks.' },
-                        { role: 'user', content: rawInput }
-                    ],
-                    response_format: { type: 'json_object' }
-                })
-            });
-            const data = await resp.json();
-            const content = data.choices[0].message.content;
-            const parsed = JSON.parse(extractJSON(content));
-            const sanitized = sanitizeCarouselData(parsed);
-            if (sanitized) {
-                setCarouselData(sanitized);
-                setJsonInput(JSON.stringify(sanitized, null, 2));
-                setActiveTab('json');
-            }
-        } catch { setError('AI Generation failed'); }
-        finally { setIsGenerating(false); }
-    };
-
     const applyFormatting = (prefix: string, suffix: string) => {
         const textarea = document.getElementById('bulk-textarea') as HTMLTextAreaElement;
         if (!textarea) return;
@@ -484,25 +405,37 @@ const LeftPane: React.FC<Props> = (props) => {
         }, 0);
     };
 
-    const handleAutoFormat = () => {
-        if (!bulkText.trim()) return;
+    const handleAutoFormat = async () => {
+        let textToFormat = "";
+        try {
+            // Attempt to read from clipboard for the "Paste & Format" experience
+            textToFormat = await navigator.clipboard.readText();
+        } catch (err) {
+            console.warn("Clipboard access denied, using current text.", err);
+            textToFormat = bulkText;
+        }
 
-        // 1. Clean the text (remove existing double breaks to reset formatting)
-        const cleanText = bulkText.replace(/\n\s*\n/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!textToFormat.trim()) {
+            setError("Clipboard is empty. Copy some text first!");
+            return;
+        }
 
-        // 2. Split into sentences (basic regex for punctuation)
-        const sentences = cleanText.match(/[^.!?]+[.!?]*/g) || [cleanText];
+        // 1. Clean the text
+        const cleanText = textToFormat.replace(/\n\s*\n/g, ' ').replace(/\s+/g, ' ').trim();
 
-        const maxWordsPerSlide = 25;
+        // 2. Split into sentences
+        const sentences = cleanText.match(/[^.!?]+[.!?]*|[^.!?]+/g) || [cleanText];
+
+        const targetWordsPerSlide = 15; // User requested 10-15 words per slide
         const newSlides: string[] = [];
         let currentSlide = "";
         let currentWordCount = 0;
 
-        sentences.forEach((sentence) => {
+        sentences.forEach((sentence: string) => {
             const sentenceWordCount = sentence.trim().split(/\s+/).length;
 
-            // If adding this sentence pushes us over the limit, save the current slide and start a new one
-            if (currentWordCount + sentenceWordCount > maxWordsPerSlide && currentWordCount > 0) {
+            // Chunking algorithm: if adding sentence exceeds budget, start new slide
+            if (currentWordCount + sentenceWordCount > targetWordsPerSlide && currentWordCount > 0) {
                 newSlides.push(currentSlide.trim());
                 currentSlide = sentence + " ";
                 currentWordCount = sentenceWordCount;
@@ -512,20 +445,23 @@ const LeftPane: React.FC<Props> = (props) => {
             }
         });
 
-        // Push the last remaining slide
         if (currentSlide.trim()) {
             newSlides.push(currentSlide.trim());
         }
 
-        // 3. Format the slides with our Bulk Syntax
+        // 3. Format with tag-based syntax
         const formattedText = newSlides.map((slideText, index) => {
             if (index === 0) {
-                return `/h/ ${slideText}`; // Force the first chunk to be a headline
+                // Hook the reader with a headline
+                return `/h, s: 110/ ${slideText}`;
             }
-            return slideText; // The rest is standard body text
+            if (index === newSlides.length - 1) {
+                // CTA/Closing slide
+                return `/sh, a: center, y: -20/ ${slideText}`;
+            }
+            return slideText;
         }).join('\n\n');
 
-        // 4. Update the state and trigger the compiler
         setBulkText(formattedText);
         compileBulkText(formattedText);
     };
@@ -540,9 +476,9 @@ const LeftPane: React.FC<Props> = (props) => {
             name,
             theme: carouselData.theme,
             fonts: { heading: headingFont, subheading: subheadingFont, body: bodyFont },
-            author: { name: authorName, handle: authorHandle, avatar: creatorAvatar || '' }
+            author: { name: authorName, handle: authorHandle, avatar: authorAvatar || '' }
         };
-        setBrandPresets(prev => [newPreset, ...prev]);
+        setBrandPresets((prev: BrandPreset[]) => [newPreset, ...prev]);
     };
 
     const handleLoadBrandPreset = (preset: BrandPreset) => {
@@ -552,7 +488,7 @@ const LeftPane: React.FC<Props> = (props) => {
         setBodyFont(preset.fonts.body);
         setAuthorName(preset.author.name);
         setAuthorHandle(preset.author.handle);
-        setCreatorAvatar(preset.author.avatar);
+        setAuthorAvatar(preset.author.avatar);
 
         // Ensure localStorage is updated for the individual items so they persist on refresh
         localStorage.setItem('custom_background', preset.theme.background);
@@ -654,11 +590,11 @@ const LeftPane: React.FC<Props> = (props) => {
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-white/5 p-1.5 flex items-center justify-center shadow-2xl">
-                            <img src="/Logo.png" className="w-full h-full object-contain" alt="Carousel Creator Logo" />
+                            <img src="/Logo.png" className="w-full h-full object-contain" alt="Carousel Architect Logo" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-black tracking-tighter font-display bg-gradient-to-br from-white to-zinc-500 bg-clip-text text-transparent">
-                                CAROUSEL <span className="text-zinc-600 font-light italic">CREATOR</span>
+                                CAROUSEL <span className="text-zinc-600 font-light italic">ARCHITECT</span>
                             </h1>
                             <p className="text-[9px] text-zinc-500 uppercase tracking-[0.3em] font-bold">Fast. Clean. Professional.</p>
                         </div>
@@ -671,14 +607,13 @@ const LeftPane: React.FC<Props> = (props) => {
                 {/* ── PREMIUM TABS ── */}
                 <div className="flex p-1.5 bg-zinc-950/80 rounded-2xl border border-white/5 shadow-inner shrink-0">
                     {[
-                        { id: 'auto', icon: Sparkles, label: 'Auto' },
-                        { id: 'bulk', icon: ListTree, label: 'Bulk' },
+                        { id: 'bulk', icon: ListTree, label: 'Write' },
                         { id: 'json', icon: Code, label: 'JSON' },
                         { id: 'setup', icon: Settings, label: 'Setup' }
                     ].map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as 'auto' | 'bulk' | 'json' | 'setup')}
+                            onClick={() => setActiveTab(tab.id as 'bulk' | 'json' | 'setup')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black active:scale-[0.98] transition-all duration-200 uppercase tracking-widest ${activeTab === tab.id ? 'bg-white text-black shadow-2xl scale-[1.02] border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
                         >
                             <tab.icon size={12} strokeWidth={3} />
@@ -687,251 +622,211 @@ const LeftPane: React.FC<Props> = (props) => {
                     ))}
                 </div>
 
-                {activeTab === 'auto' && (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
-                        <div className="p-6 space-y-6 bg-gradient-to-b from-zinc-900 to-zinc-950 rounded-[24px] border border-white/5 shadow-sm">
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center px-2">
-                                    <label className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em]">Manifestation Prompt</label>
-                                    <button onClick={() => setRawInput('')} className="bg-zinc-800 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 border border-white/10 px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 active:scale-[0.98]">
-                                        <Trash2 size={10} /> Clear
-                                    </button>
-                                </div>
-                                <textarea
-                                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 text-sm text-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all resize-none relative z-10 box-border"
-                                    placeholder="Explain your core idea... the AI will handle the hook, the flow, and the CTA."
-                                    value={rawInput}
-                                    onChange={(e) => setRawInput(e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-4 pt-4 border-t border-white/5">
-                                <label className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] ml-2">Engine Intelligence</label>
-                                <div className="grid grid-cols-2 gap-2 p-1 bg-black/40 rounded-2xl border border-white/5">
-                                    <button
-                                        onClick={() => setAiModel('free')}
-                                        className={`py-3 text-[9px] font-black active:scale-[0.98] uppercase rounded-xl transition-all ${aiModel === 'free' ? 'bg-zinc-800 text-white shadow-lg border border-white/5' : 'text-zinc-600 hover:text-zinc-400'}`}
-                                    >
-                                        Trinity (Free)
-                                    </button>
-                                    <button
-                                        onClick={() => setAiModel('pro')}
-                                        className={`py-3 text-[9px] font-black active:scale-[0.98] uppercase rounded-xl transition-all ${aiModel === 'pro' ? 'bg-zinc-800 text-blue-400 shadow-lg border border-white/5' : 'text-zinc-600 hover:text-zinc-400'}`}
-                                    >
-                                        Claude 3.5 (Pro)
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] ml-2">OpenRouter API Key</label>
-                                <input
-                                    type="password"
-                                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl p-4 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all text-white"
-                                    placeholder="sk-or-v1-..."
-                                    value={openRouterKey}
-                                    onChange={(e) => setOpenRouterKey(e.target.value)}
-                                />
-                            </div>
-                            <button
-                                onClick={generateNarrative}
-                                disabled={isGenerating}
-                                className="w-full py-5 bg-white text-black active:scale-[0.98] transition-all duration-200 shadow-md border border-white/10 rounded-[24px] font-black text-xs uppercase tracking-[0.3em] hover:bg-zinc-200 flex items-center justify-center gap-3"
-                            >
-                                {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Zap size={14} fill="currentColor" />}
-                                {isGenerating ? 'ARCHITECTING...' : 'MANIFEST NARRATIVE'}
-                            </button>
-                        </div>
-                    </div>
-                )}
                 {activeTab === 'bulk' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
                         <div className="p-6 space-y-6 bg-gradient-to-b from-zinc-900 to-zinc-950 rounded-[24px] border border-white/5 shadow-sm">
                             <div className="space-y-2">
-                                <div className="flex justify-between items-center px-2">
-                                    <label className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em]">Bulk Content Engine</label>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => {
-                                                const heroPayload = `/h, s: 130, a: center, y: -20/ Stop wasting hours on **__*Canva*__**\n/sh, sh_s: 60, a: center/ You are a creator, not a graphic designer.\n\n/h, s: 100, a: left/ The *Friction* Trap\n/body, b_s: 42/ Moving text boxes. Aligning layers. Fiddling with hex codes. \nEvery minute spent designing is a minute you aren't **writing**.\n\n/h, s: 100, a: right/ Enter the **__*Machine*__**\n/sh, sh_s: 50, a: right/ Type text. Get a carousel.\n/body, b_s: 40, a: right/ Paste your messy brain dump. \nOur engine instantly transforms it into a pixel-perfect, high-converting design.\n\n/h, s: 95, a: left/ The ✨ *Auto-Splitter*\n/body, b_s: 38/ Got a 300-word rant? \nClick one button. We automatically chunk it into perfectly paced, readable slides. Zero manual splitting.\n\n/sh, sh_s: 70, a: center, y: -10/ The Visual **Builder**\n/body, b_s: 40, a: center/ Don't like code? \nTap any slide to open the **Focus Modal**. Adjust fonts, alignment, and sizes with simple, intuitive sliders.\n\n/h, s: 95, a: left/ Never get *Blocked*\n/body, b_s: 38/ Turn on **Safe Zones**. \nSee exactly where the Instagram "Like" button and LinkedIn header will sit, so your text is never hidden again.\n\n/sh, sh_s: 70, a: right/ Instant **Images**\n/body, b_s: 42, a: right/ Need to show proof?\nPhysically drag and drop screenshots right into your text. They render beautifully in milliseconds.\n\n/h, s: 100, a: left/ 🏢 *Brand* Presets\n/body, b_s: 38/ Managing multiple clients?\nSave their specific fonts, hex colors, and avatars. Switch between entire brand identities with a single click.\n\n/sh, sh_s: 65, a: center/ The Social *Sandbox*\n/body, b_s: 40, a: center/ Toggle the **Sandbox Mode**. \nView your carousel inside a pixel-perfect replica of the LinkedIn or Instagram feed before you export.\n\n/h, s: 140, a: center, y: -10/ Ready to **__*Build*__**?\n/sh, a: center/ Clear this text and start writing.`;
-                                                setBulkText(heroPayload);
-                                                compileBulkText(heroPayload);
-                                            }}
-                                            className="bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-zinc-400 border border-white/5 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all"
-                                        >
-                                            Example
-                                        </button>
-                                        <button
-                                            onClick={handleAutoFormat}
-                                            className="bg-purple-600/20 hover:bg-purple-600/40 active:scale-[0.98] text-purple-400 border border-purple-500/30 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1"
-                                            title="Automatically split long text into slides"
-                                        >
-                                            <span>✨ Auto-Split</span>
-                                        </button>
-                                        <button onClick={() => { setBulkText(''); setCarouselData(null); }} className="bg-zinc-800 hover:bg-red-500/20 active:scale-[0.98] text-zinc-300 hover:text-red-400 border border-white/10 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1">
-                                            Clear
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-2 mb-2">
-                                    {/* ROW 1: View Toggle */}
-                                    <div className="flex items-center bg-zinc-900 border border-white/10 rounded-lg p-1">
-                                        <button
-                                            onClick={() => setEditorMode('raw')}
-                                            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${editorMode === 'raw' ? 'bg-zinc-700 text-white shadow' : 'text-zinc-500 hover:text-white'}`}
-                                        >
-                                            Raw Editor
-                                        </button>
-                                        <button
-                                            onClick={() => setEditorMode('visual')}
-                                            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${editorMode === 'visual' ? 'bg-zinc-700 text-white shadow' : 'text-zinc-500 hover:text-white'}`}
-                                        >
-                                            Visual Builder
-                                        </button>
-                                    </div>
-
-                                    {/* ROW 2: Formatting Toolbar (Only show in RAW mode) */}
-                                    {editorMode === 'raw' && (
-                                        <div className="flex items-center justify-between bg-zinc-900 border border-white/10 rounded-md p-1">
-                                            <div className="flex items-center gap-1">
-                                                <button onClick={() => applyFormatting('**', '**')} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded font-bold transition-colors" title="Bold (**)">B</button>
-                                                <button onClick={() => applyFormatting('_', '_')} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded italic font-serif transition-colors" title="Italic (_)">I</button>
-                                                <button onClick={() => applyFormatting('__', '__')} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded underline transition-colors" title="Underline (__)">U</button>
-                                                <button onClick={() => applyFormatting('*', '*')} className="w-8 h-8 flex items-center justify-center text-blue-400 hover:text-blue-300 hover:bg-zinc-800 rounded transition-colors" title="Highlight (*)">✒️</button>
-                                                <button onClick={() => applyFormatting('[img:', ']')} className="w-8 h-8 flex items-center justify-center text-green-400 hover:text-green-300 hover:bg-zinc-800 rounded transition-colors" title="Image Tag">🖼️</button>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <button onClick={handleUndo} disabled={historyIndex <= 0} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded disabled:opacity-30 transition-colors" title="Undo (Ctrl+Z)">
-                                                    <RotateCcw size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {editorMode === 'raw' ? (
-                                    <div className="relative group/textarea">
-                                        <textarea
-                                            ref={textareaRef}
-                                            id="bulk-textarea"
-                                            value={bulkText}
-                                            onChange={(e) => { setBulkText(e.target.value); compileBulkText(e.target.value); }}
-                                            placeholder={`/h/ My Headline\n/sh/ My Subheading\nBody text goes here\n\n/h/ Slide 2 Headline\nMore body text`}
-                                            rows={14}
-                                            className={`w-full bg-zinc-900/50 border ${isDragging ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-zinc-800 shadow-inner'} rounded-xl p-4 text-sm text-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all resize-none relative z-10 box-border`}
-                                        />
-                                        {/* UPDATE PREVIEW BUTTON */}
-                                        <div className="mt-4 flex flex-col gap-2">
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={handleAutoFormat}
+                                        className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 active:scale-[0.98] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg flex items-center justify-center gap-3 transition-all"
+                                    >
+                                        ✨ Paste Text & Auto-Format
+                                    </button>
+                                    <a
+                                        href="https://chatgpt.com/g/g-69ac48cc5618819185f90beed01ab31e-bulk-converter"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full py-2.5 text-center text-[9px] font-bold text-zinc-500 hover:text-blue-400 bg-zinc-900/50 hover:bg-blue-500/10 border border-white/5 hover:border-blue-500/20 rounded-xl transition-all flex items-center justify-center gap-1.5"
+                                    >
+                                        🤖 Need help writing? Use our GPT
+                                    </a>
+                                    <div className="flex justify-between items-center px-2 mt-2">
+                                        <label className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em]">Write Content</label>
+                                        <div className="flex gap-2">
                                             <button
-                                                onClick={() => compileBulkText(bulkText)}
-                                                className="w-full py-4 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] transition-all duration-200 shadow-md border border-white/10 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-2"
+                                                onClick={() => {
+                                                    const heroPayload = `/h, s: 130, a: center, y: -20/ Stop wasting hours on **__*Canva*__**\n/sh, sh_s: 60, a: center/ You are a creator, not a graphic designer.\n\n/h, s: 100, a: left/ The *Friction* Trap\n/body, b_s: 42/ Moving text boxes. Aligning layers. Fiddling with hex codes. \nEvery minute spent designing is a minute you aren't **writing**.\n\n/h, s: 100, a: right/ Enter the **__*Machine*__**\n/sh, sh_s: 50, a: right/ Type text. Get a carousel.\n/body, b_s: 40, a: right/ Paste your messy brain dump. \nOur engine instantly transforms it into a pixel-perfect, high-converting design.\n\n/h, s: 95, a: left/ The ✨ *Auto-Splitter*\n/body, b_s: 38/ Got a 300-word rant? \nClick one button. We automatically chunk it into perfectly paced, readable slides. Zero manual splitting.\n\n/sh, sh_s: 70, a: center, y: -10/ The Visual **Builder**\n/body, b_s: 40, a: center/ Don't like code? \nTap any slide to open the **Focus Modal**. Adjust fonts, alignment, and sizes with simple, intuitive sliders.\n\n/h, s: 95, a: left/ Never get *Blocked*\n/body, b_s: 38/ Turn on **Safe Zones**. \nSee exactly where the Instagram "Like" button and LinkedIn header will sit, so your text is never hidden again.\n\n/sh, sh_s: 70, a: right/ Instant **Images**\n/body, b_s: 42, a: right/ Need to show proof?\nPhysically drag and drop screenshots right into your text. They render beautifully in milliseconds.\n\n/h, s: 100, a: left/ 🏢 *Brand* Presets\n/body, b_s: 38/ Managing multiple clients?\nSave their specific fonts, hex colors, and avatars. Switch between entire brand identities with a single click.\n\n/sh, sh_s: 65, a: center/ The Social *Sandbox*\n/body, b_s: 40, a: center/ Toggle the **Sandbox Mode**. \nView your carousel inside a pixel-perfect replica of the LinkedIn or Instagram feed before you export.\n\n/h, s: 140, a: center, y: -10/ Ready to **__*Build*__**?\n/sh, a: center/ Clear this text and start writing.`;
+                                                    setBulkText(heroPayload);
+                                                    compileBulkText(heroPayload);
+                                                }}
+                                                className="bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-zinc-400 border border-white/5 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all"
                                             >
-                                                <Zap size={14} fill="currentColor" />
-                                                <span>Update Preview</span>
+                                                Example
                                             </button>
-                                            <p className="text-[10px] text-zinc-500 text-center">
-                                                Tip: Use double line-breaks to instantly create new slides.
-                                            </p>
+                                            <button
+                                                onClick={handleAutoFormat}
+                                                className="bg-purple-600/20 hover:bg-purple-600/40 active:scale-[0.98] text-purple-400 border border-purple-500/30 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1"
+                                                title="Automatically split long text into slides"
+                                            >
+                                                <span>✨ Auto-Split</span>
+                                            </button>
+                                            <button onClick={() => { setBulkText(''); setCarouselData(null); }} className="bg-zinc-800 hover:bg-red-500/20 active:scale-[0.98] text-zinc-300 hover:text-red-400 border border-white/10 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1">
+                                                Clear
+                                            </button>
                                         </div>
-                                        {isDragging && (
-                                            <div className="absolute inset-0 z-20 bg-blue-500/10 backdrop-blur-[2px] rounded-xl flex items-center justify-center pointer-events-none border-2 border-dashed border-blue-500/50">
-                                                <div className="bg-zinc-900 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-blue-500/30">
-                                                    <ImageIcon size={14} className="text-blue-400" />
-                                                    <span className="text-xs font-bold text-blue-400 tracking-widest uppercase">Injecting Image</span>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2 mb-2">
+                                        {/* ROW 1: View Toggle */}
+                                        <div className="flex items-center bg-zinc-900 border border-white/10 rounded-lg p-1">
+                                            <button
+                                                onClick={() => setEditorMode('raw')}
+                                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${editorMode === 'raw' ? 'bg-zinc-700 text-white shadow' : 'text-zinc-500 hover:text-white'}`}
+                                            >
+                                                Raw Editor
+                                            </button>
+                                            <button
+                                                onClick={() => setEditorMode('visual')}
+                                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${editorMode === 'visual' ? 'bg-zinc-700 text-white shadow' : 'text-zinc-500 hover:text-white'}`}
+                                            >
+                                                Visual Builder
+                                            </button>
+                                        </div>
+
+                                        {/* ROW 2: Formatting Toolbar (Only show in RAW mode) */}
+                                        {editorMode === 'raw' && (
+                                            <div className="flex items-center justify-between bg-zinc-900 border border-white/10 rounded-md p-1">
+                                                <div className="flex items-center gap-1">
+                                                    <button onClick={() => applyFormatting('**', '**')} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded font-bold transition-colors" title="Bold (**)">B</button>
+                                                    <button onClick={() => applyFormatting('_', '_')} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded italic font-serif transition-colors" title="Italic (_)">I</button>
+                                                    <button onClick={() => applyFormatting('__', '__')} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded underline transition-colors" title="Underline (__)">U</button>
+                                                    <button onClick={() => applyFormatting('*', '*')} className="w-8 h-8 flex items-center justify-center text-blue-400 hover:text-blue-300 hover:bg-zinc-800 rounded transition-colors" title="Highlight (*)">✒️</button>
+                                                    <button onClick={() => applyFormatting('[img:', ']')} className="w-8 h-8 flex items-center justify-center text-green-400 hover:text-green-300 hover:bg-zinc-800 rounded transition-colors" title="Image Tag">🖼️</button>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <button onClick={handleUndo} disabled={historyIndex <= 0} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded disabled:opacity-30 transition-colors" title="Undo (Ctrl+Z)">
+                                                        <RotateCcw size={14} />
+                                                    </button>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-                                        {carouselData && carouselData.slides.map((slide, index) => (
-                                            <div key={index} className="bg-zinc-900/50 border border-white/10 rounded-xl p-4 flex flex-col gap-3 group relative">
-                                                <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                                                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Slide {index + 1}</span>
-                                                    <button
-                                                        onClick={() => {
-                                                            const newSlides = carouselData.slides.filter((_, i) => i !== index);
-                                                            const newData = { ...carouselData, slides: newSlides };
-                                                            setCarouselData(newData);
-                                                            reverseCompileSlidesToText(newSlides);
-                                                        }}
-                                                        className="text-red-500/50 hover:text-red-400 text-[10px] font-bold uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
 
-                                                {/* Headline Input */}
-                                                <div className="flex flex-col gap-1">
-                                                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">Headline</label>
-                                                    <input
-                                                        type="text"
-                                                        value={slide.headline || ''}
-                                                        onChange={(e) => {
-                                                            const newSlides = [...carouselData.slides];
-                                                            newSlides[index] = { ...newSlides[index], headline: e.target.value };
-                                                            setCarouselData({ ...carouselData, slides: newSlides });
-                                                            reverseCompileSlidesToText(newSlides);
-                                                        }}
-                                                        className="w-full bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none transition-all"
-                                                        placeholder="e.g. The Ultimate Hook"
-                                                    />
-                                                </div>
-
-                                                {/* Subheadline/Subheading Input */}
-                                                <div className="flex flex-col gap-1">
-                                                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">{index === 0 ? 'Subheadline' : 'Subheading'}</label>
-                                                    <input
-                                                        type="text"
-                                                        value={index === 0 ? (slide.subheadline || '') : (slide.subheading || '')}
-                                                        onChange={(e) => {
-                                                            const newSlides = [...carouselData.slides];
-                                                            if (index === 0) newSlides[index] = { ...newSlides[index], subheadline: e.target.value };
-                                                            else newSlides[index] = { ...newSlides[index], subheading: e.target.value };
-                                                            setCarouselData({ ...carouselData, slides: newSlides });
-                                                            reverseCompileSlidesToText(newSlides);
-                                                        }}
-                                                        className="w-full bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none transition-all"
-                                                    />
-                                                </div>
-
-                                                {/* Body Textarea */}
-                                                <div className="flex flex-col gap-1">
-                                                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">Body Content (Max 500 chars)</label>
-                                                    <textarea
-                                                        maxLength={500}
-                                                        rows={3}
-                                                        value={slide.body || ''}
-                                                        onChange={(e) => {
-                                                            const newSlides = [...carouselData.slides];
-                                                            newSlides[index] = { ...newSlides[index], body: e.target.value };
-                                                            setCarouselData({ ...carouselData, slides: newSlides });
-                                                            reverseCompileSlidesToText(newSlides);
-                                                        }}
-                                                        className="w-full bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-zinc-300 focus:ring-1 focus:ring-blue-500 outline-none resize-none custom-scrollbar transition-all"
-                                                    />
-                                                </div>
+                                    {editorMode === 'raw' ? (
+                                        <div className="relative group/textarea">
+                                            <textarea
+                                                ref={textareaRef}
+                                                id="bulk-textarea"
+                                                value={bulkText}
+                                                onChange={(e) => { setBulkText(e.target.value); compileBulkText(e.target.value); }}
+                                                placeholder={`/h/ My Headline\n/sh/ My Subheading\nBody text goes here\n\n/h/ Slide 2 Headline\nMore body text`}
+                                                rows={14}
+                                                className={`w-full bg-zinc-900/50 border ${isDragging ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-zinc-800 shadow-inner'} rounded-xl p-4 text-sm text-zinc-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all resize-none relative z-10 box-border`}
+                                            />
+                                            {/* UPDATE PREVIEW BUTTON */}
+                                            <div className="mt-4 flex flex-col gap-2">
+                                                <button
+                                                    onClick={() => compileBulkText(bulkText)}
+                                                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] transition-all duration-200 shadow-md border border-white/10 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-2"
+                                                >
+                                                    <Zap size={14} fill="currentColor" />
+                                                    <span>Update Preview</span>
+                                                </button>
+                                                <p className="text-[10px] text-zinc-500 text-center">
+                                                    Tip: Use double line-breaks to instantly create new slides.
+                                                </p>
                                             </div>
-                                        ))}
+                                            {isDragging && (
+                                                <div className="absolute inset-0 z-20 bg-blue-500/10 backdrop-blur-[2px] rounded-xl flex items-center justify-center pointer-events-none border-2 border-dashed border-blue-500/50">
+                                                    <div className="bg-zinc-900 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-blue-500/30">
+                                                        <ImageIcon size={14} className="text-blue-400" />
+                                                        <span className="text-xs font-bold text-blue-400 tracking-widest uppercase">Injecting Image</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                                            {carouselData && carouselData.slides.map((slide, index) => (
+                                                <div key={index} className="bg-zinc-900/50 border border-white/10 rounded-xl p-4 flex flex-col gap-3 group relative">
+                                                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Slide {index + 1}</span>
+                                                        <button
+                                                            onClick={() => {
+                                                                const newSlides = carouselData.slides.filter((_, i) => i !== index);
+                                                                const newData = { ...carouselData, slides: newSlides };
+                                                                setCarouselData(newData);
+                                                                reverseCompileSlidesToText(newSlides);
+                                                            }}
+                                                            className="text-red-500/50 hover:text-red-400 text-[10px] font-bold uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
 
-                                        <button
-                                            onClick={() => {
-                                                const baseSlides = carouselData?.slides || [];
-                                                const newSlides = [...baseSlides, { slide_number: baseSlides.length + 1, type: 'content' as const }];
-                                                if (carouselData) {
-                                                    setCarouselData({ ...carouselData, slides: newSlides });
-                                                } else {
-                                                    setCarouselData({ theme: customTheme, slides: newSlides });
-                                                }
-                                                reverseCompileSlidesToText(newSlides);
-                                            }}
-                                            className="w-full py-4 border-2 border-dashed border-white/5 bg-white/[0.01] rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:border-white/20 hover:text-white hover:bg-white/[0.03] transition-all"
-                                        >
-                                            + Add New Slide
-                                        </button>
-                                    </div>
-                                )}
+                                                    {/* Headline Input */}
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">Headline</label>
+                                                        <input
+                                                            type="text"
+                                                            value={slide.headline || ''}
+                                                            onChange={(e) => {
+                                                                const newSlides = [...carouselData.slides];
+                                                                newSlides[index] = { ...newSlides[index], headline: e.target.value };
+                                                                setCarouselData({ ...carouselData, slides: newSlides });
+                                                                reverseCompileSlidesToText(newSlides);
+                                                            }}
+                                                            className="w-full bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                                                            placeholder="e.g. The Ultimate Hook"
+                                                        />
+                                                    </div>
+
+                                                    {/* Subheadline/Subheading Input */}
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">{index === 0 ? 'Subheadline' : 'Subheading'}</label>
+                                                        <input
+                                                            type="text"
+                                                            value={index === 0 ? (slide.subheadline || '') : (slide.subheading || '')}
+                                                            onChange={(e) => {
+                                                                const newSlides = [...carouselData.slides];
+                                                                if (index === 0) newSlides[index] = { ...newSlides[index], subheadline: e.target.value };
+                                                                else newSlides[index] = { ...newSlides[index], subheading: e.target.value };
+                                                                setCarouselData({ ...carouselData, slides: newSlides });
+                                                                reverseCompileSlidesToText(newSlides);
+                                                            }}
+                                                            className="w-full bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                                                        />
+                                                    </div>
+
+                                                    {/* Body Textarea */}
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-tighter">Body Content (Max 500 chars)</label>
+                                                        <textarea
+                                                            maxLength={500}
+                                                            rows={3}
+                                                            value={slide.body || ''}
+                                                            onChange={(e) => {
+                                                                const newSlides = [...carouselData.slides];
+                                                                newSlides[index] = { ...newSlides[index], body: e.target.value };
+                                                                setCarouselData({ ...carouselData, slides: newSlides });
+                                                                reverseCompileSlidesToText(newSlides);
+                                                            }}
+                                                            className="w-full bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-zinc-300 focus:ring-1 focus:ring-blue-500 outline-none resize-none custom-scrollbar transition-all"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <button
+                                                onClick={() => {
+                                                    const baseSlides = carouselData?.slides || [];
+                                                    const newSlides = [...baseSlides, { slide_number: baseSlides.length + 1, type: 'content' as const }];
+                                                    if (carouselData) {
+                                                        setCarouselData({ ...carouselData, slides: newSlides });
+                                                    } else {
+                                                        setCarouselData({ theme: customTheme, slides: newSlides });
+                                                    }
+                                                    reverseCompileSlidesToText(newSlides);
+                                                }}
+                                                className="w-full py-4 border-2 border-dashed border-white/5 bg-white/[0.01] rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:border-white/20 hover:text-white hover:bg-white/[0.03] transition-all"
+                                            >
+                                                + Add New Slide
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-
                         </div>
                     </div>
                 )}
@@ -955,16 +850,23 @@ const LeftPane: React.FC<Props> = (props) => {
                             <div className="flex gap-4">
                                 <button
                                     onClick={() => {
-                                        setError(null);
+                                        setJsonError(null);
                                         try {
-                                            const p = JSON.parse(extractJSON(jsonInput));
+                                            const raw = extractJSON(jsonInput);
+                                            if (!raw) {
+                                                setJsonError('No JSON found in input');
+                                                return;
+                                            }
+                                            const p = JSON.parse(raw);
                                             const s = sanitizeCarouselData(p);
                                             if (s) {
                                                 setCarouselData(s);
                                             } else {
-                                                setError('Invalid carousel structure — needs slides array');
+                                                setJsonError('Invalid carousel structure — needs slides array');
                                             }
-                                        } catch { setError('Invalid JSON — check syntax'); }
+                                        } catch {
+                                            setJsonError('Invalid JSON structure — check syntax');
+                                        }
                                     }}
                                     className="flex-1 py-4 bg-zinc-800 text-white rounded-2xl font-black text-[10px] active:scale-[0.98] uppercase tracking-widest hover:bg-zinc-700 transition-all border border-white/5 shadow-md"
                                 >
@@ -974,6 +876,13 @@ const LeftPane: React.FC<Props> = (props) => {
                                     <Heart size={16} fill={jsonInput ? 'white' : 'transparent'} />
                                 </button>
                             </div>
+
+                            {jsonError && (
+                                <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                    <Trash2 size={12} fill="none" />
+                                    {jsonError}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -984,7 +893,7 @@ const LeftPane: React.FC<Props> = (props) => {
                         {/* 1. CREATOR PROFILE */}
                         <details className="group border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 rounded-xl overflow-hidden shadow-sm">
                             <summary className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-zinc-800/50 transition-colors">
-                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><User size={12} /> Creator Manuscript</span>
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><User size={12} /> My Profile</span>
                                 <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
                             </summary>
                             <div className="p-6 space-y-6 border-t border-white/5 bg-zinc-950/20">
@@ -1046,7 +955,7 @@ const LeftPane: React.FC<Props> = (props) => {
 
                         <details className="group border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 rounded-xl overflow-hidden shadow-sm" open>
                             <summary className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-zinc-800/50 transition-colors">
-                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Palette size={12} /> 🎨 Brand Palette</span>
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Palette size={12} /> 🎨 Brand Colors</span>
                                 <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
                             </summary>
                             <div className="p-6 space-y-6 border-t border-white/5 bg-zinc-950/20">
@@ -1189,12 +1098,12 @@ const LeftPane: React.FC<Props> = (props) => {
                         {/* 3. TYPOGRAPHY & LAYOUT */}
                         <details className="group border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 rounded-xl overflow-hidden shadow-sm">
                             <summary className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-zinc-800/50 transition-colors">
-                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Type size={12} /> Typography & Motifs</span>
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Type size={12} /> Fonts & Layout</span>
                                 <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
                             </summary>
                             <div className="p-6 space-y-6 border-t border-white/5 bg-zinc-950/20">
                                 <div className="space-y-4">
-                                    <label className="text-[10px] uppercase font-black text-zinc-600 tracking-[0.2em] block mb-2 px-1">Character Foundry</label>
+                                    <label className="text-[10px] uppercase font-black text-zinc-600 tracking-[0.2em] block mb-2 px-1">Fonts</label>
                                     <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-zinc-800">
                                         <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest w-20">Heading</span>
                                         <input
@@ -1307,7 +1216,7 @@ const LeftPane: React.FC<Props> = (props) => {
                         {/* 5. SAVED PROJECTS */}
                         <details className="group border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 rounded-xl overflow-hidden shadow-sm">
                             <summary className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-zinc-800/50 transition-colors">
-                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">💾 Manuscript Vault</span>
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">💾 My Saved Slides</span>
                                 <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
                             </summary>
                             <div className="p-6 border-t border-white/5 bg-zinc-950/20">
@@ -1355,7 +1264,7 @@ const LeftPane: React.FC<Props> = (props) => {
                         {/* 6. ADVANCED SETTINGS */}
                         <details className="group border border-white/5 bg-gradient-to-b from-zinc-900 to-zinc-950 rounded-xl overflow-hidden shadow-sm">
                             <summary className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-zinc-800/50 transition-colors">
-                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Settings size={12} /> Hyper-parameters</span>
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2"><Settings size={12} /> Design Settings</span>
                                 <span className="text-zinc-500 group-open:rotate-180 transition-transform duration-200 text-[10px]">▼</span>
                             </summary>
                             <div className="p-6 space-y-6 border-t border-white/5 bg-zinc-950/20">
@@ -1368,14 +1277,14 @@ const LeftPane: React.FC<Props> = (props) => {
                                             <input type="file" accept="image/*" onChange={async (e) => {
                                                 const f = e.target.files?.[0];
                                                 if (f) {
-                                                    const c = await compressImage(f, 1080);
+                                                    const c = await compressImage(f, GLOBAL_MAX_PX);
                                                     setCustomBgImage(c);
                                                     safeLocalStorageSet('customBgImage', c);
                                                 }
                                             }} className="absolute inset-0 opacity-0 cursor-pointer" />
                                         </div>
                                         <div className="flex-1 space-y-1">
-                                            <p className="text-[10px] font-black uppercase text-white tracking-widest">Atmospheric Backdrop</p>
+                                            <p className="text-[10px] font-black uppercase text-white tracking-widest">Background Style</p>
                                             <p className="text-[8px] text-zinc-600 font-bold leading-tight">Apply a textured backdrop.</p>
                                         </div>
                                         {customBgImage && (
@@ -1417,7 +1326,7 @@ const LeftPane: React.FC<Props> = (props) => {
 
                                     {/* SOCIAL SANDBOX CONTROL */}
                                     <div className="flex flex-col gap-3 border-t border-white/5 pt-4">
-                                        <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest px-1">Feed Sandbox Environment</span>
+                                        <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest px-1">Preview on Social Media</span>
                                         <div className="flex bg-black/40 border border-zinc-800 rounded-2xl p-1 shadow-inner">
                                             {['none', 'linkedin', 'instagram'].map((mode) => (
                                                 <button
@@ -1450,10 +1359,17 @@ const LeftPane: React.FC<Props> = (props) => {
                         </details>
 
                         <button
-                            onClick={() => { setCarouselData(null); setBulkText(''); setRawInput(''); setJsonInput(''); }}
+                            onClick={() => {
+                                if (window.confirm("Delete Everything: This will remove ALL local data (projects, images, brand presets). Continue?")) {
+                                    localStorage.clear();
+                                    localforage.clear().then(() => {
+                                        window.location.reload();
+                                    });
+                                }
+                            }}
                             className="w-full py-4 border border-white/5 bg-zinc-900 hover:bg-red-500/10 active:scale-[0.98] rounded-2xl flex items-center justify-center gap-2 text-zinc-600 hover:text-red-400 transition-all font-black text-[10px] uppercase tracking-[0.3em] shadow-md"
                         >
-                            <RotateCcw size={12} /> Atomic Purge (Full Reset)
+                            <RotateCcw size={12} /> Delete Everything
                         </button>
                     </div>
                 )
@@ -1504,7 +1420,7 @@ const LeftPane: React.FC<Props> = (props) => {
                             <div className="space-y-8">
                                 <div>
                                     <h2 className="text-3xl font-black mb-2 text-white uppercase tracking-tighter">Architect's Guide</h2>
-                                    <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Carousel Creator v2.4 Enterprise</p>
+                                    <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Carousel Architect v2.5 Community</p>
                                 </div>
                                 <div className="space-y-6 text-sm text-zinc-300 leading-relaxed font-medium">
                                     <div className="space-y-2">
@@ -1537,7 +1453,7 @@ const LeftPane: React.FC<Props> = (props) => {
                     </div>
                 )
             }
-        </div >
+        </div>
     );
 };
 

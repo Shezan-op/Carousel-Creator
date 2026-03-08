@@ -1,4 +1,4 @@
-# 🤝 Contributing to Carousel Creator
+# 🤝 Contributing to Carousel Architect
 
 Thank you for your interest in contributing! This guide explains how to set up the project, make changes, and submit your work.
 
@@ -81,8 +81,8 @@ src/
 │   │                          #   - Brand Palette (colors, theme invert, watermark)
 │   │                          #   - Typography & Motifs
 │   │                          #   - Asset Gallery
-│   │                          #   - Saved Projects (Manuscript Vault)
-│   │                          #   - Hyper-parameters (aspect ratio, progress bar, etc.)
+│   │                          #   - Saved Projects (My Saved Slides)
+│   │                          #   - Design Settings (aspect ratio, progress bar, etc.)
 │   │                          #   - Brand Presets
 │   │
 │   ├── CarouselPreview.tsx     # The right panel. Renders all slides. Contains:
@@ -90,7 +90,7 @@ src/
 │   │                          #   - All 4 template renderers (minimal, tweet, brutalist, highlight)
 │   │                          #   - Progress bar rendering
 │   │                          #   - Watermark rendering
-│   │                          #   - Social feed sandbox frames
+│   │                          #   - Social media preview frames
 │   │                          #   - Export node markup (.slide-export-node)
 │   │
 │   ├── ExportControls.tsx      # PDF and ZIP export logic. Contains:
@@ -280,4 +280,4 @@ Found a bug? **[Open an issue](https://github.com/Shezan-op/Carousel-Creator/iss
 
 ---
 
-*Thank you for making Carousel Creator better!* 🚀
+*Thank you for making Carousel Architect better!* 🚀

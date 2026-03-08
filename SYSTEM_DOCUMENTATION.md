@@ -1,13 +1,13 @@
-# 📖 How to Use Carousel Creator — The Complete Guide
+# 📖 How to Use Carousel Architect — The Complete Guide
 
-Welcome to Carousel Creator! This guide walks you through **every single feature** in plain language. Whether you're a LinkedIn creator, social media manager, or agency owner — you'll be making beautiful carousels in under 2 minutes.
+Welcome to Carousel Architect! This guide walks you through **every single feature** in plain language. Whether you're a LinkedIn creator, social media manager, or agency owner — you'll be making beautiful carousels in under 2 minutes.
 
 ---
 
 ## Table of Contents
 
 1. [Your First Carousel (Quick Start)](#1-your-first-carousel-quick-start)
-2. [Setting Up Your Creator Identity](#2-setting-up-your-creator-identity)
+2. [Setting Up Your Profile](#2-setting-up-your-profile)
 3. [Writing Content with the Bulk Compiler](#3-writing-content-with-the-bulk-compiler)
 4. [Formatting Text (Markdown)](#4-formatting-text-markdown)
 5. [Adding Images to Slides](#5-adding-images-to-slides)
@@ -17,7 +17,7 @@ Welcome to Carousel Creator! This guide walks you through **every single feature
 9. [Adding a Brand Watermark](#9-adding-a-brand-watermark)
 10. [Changing the Aspect Ratio (Portrait vs Square)](#10-changing-the-aspect-ratio-portrait-vs-square)
 11. [The Progress Bar](#11-the-progress-bar)
-12. [Social Feed Sandbox Preview](#12-social-feed-sandbox-preview)
+12. [Preview on Social Media](#12-preview-on-social-media)
 13. [The Asset Gallery (Image Locker)](#13-the-asset-gallery-image-locker)
 14. [Fine-Tuning with the Focus Modal](#14-fine-tuning-with-the-focus-modal)
 15. [Undo & Redo](#15-undo--redo)
@@ -25,12 +25,11 @@ Welcome to Carousel Creator! This guide walks you through **every single feature
 17. [Saving & Loading Projects](#17-saving--loading-projects)
 18. [Brand Presets (Agency Mode)](#18-brand-presets-agency-mode)
 19. [Backup & Restore (.carousel Files)](#19-backup--restore-carousel-files)
-20. [AI-Powered Generation](#20-ai-powered-generation-optional)
-21. [Exporting Your Carousel](#21-exporting-your-carousel)
-22. [JSON Editing (Advanced)](#22-json-editing-advanced)
-23. [Tips & Tricks](#23-tips--tricks)
-24. [Mobile & Responsive Design](#24-mobile--responsive-design)
-25. [FAQ](#25-faq)
+20. [Exporting Your Carousel](#20-exporting-your-carousel)
+21. [JSON Editing (Advanced)](#21-json-editing-advanced)
+22. [Tips & Tricks](#22-tips--tricks)
+23. [Mobile & Responsive Design](#23-mobile--responsive-design)
+24. [FAQ](#24-faq)
 
 ---
 
@@ -38,8 +37,8 @@ Welcome to Carousel Creator! This guide walks you through **every single feature
 
 Here's the fastest path from zero to a finished carousel:
 
-1. **Open the app** → [carousel-creator-kohl.vercel.app](https://carousel-creator-kohl.vercel.app/)
-2. **Wait for the intro** → A short Netflix-style animation plays. It auto-dismisses.
+1. **Open the app** → [https://mycarouselcreator.vercel.app/](https://mycarouselcreator.vercel.app/)
+2. **Immediate Start** → No splash screens or intros.
 3. **Type in the Bulk Editor** (left panel):
 
 ```
@@ -62,18 +61,18 @@ Companies save an average of **$11,000 per year** per remote employee.
 
 ---
 
-## 2. Setting Up Your Creator Identity
+## 2. Setting Up Your Profile
 
 Your identity appears on the footer of every slide. This is how your audience knows who made the carousel.
 
 ### Where to Find It
 
-Look in the left panel. Scroll to the **Setup** section (it's the area with "Creator Identity" fields).
+Look in the left panel. Scroll to the **Setup** section (it's the area with "My Profile" fields).
 
 ### What You Can Set
 
 | Setting | What It Does | Example |
-|---------|-------------|---------|
+| :--- | :--- | :--- |
 | **Name** | Your display name on every slide footer | `Jane Doe` |
 | **Handle** | Your social handle shown below your name | `@janedoe` |
 | **Avatar** | A small profile picture on each slide | Upload any square image |
@@ -93,7 +92,7 @@ There's a toggle to show or hide the entire footer (name + handle + avatar). If 
 
 ## 3. Writing Content with the Bulk Compiler
 
-The Bulk Compiler is the heart of Carousel Creator. It's a smart text parser that turns plain text into structured slides.
+The Bulk Compiler is the heart of Carousel Architect. It's a smart text parser that turns plain text into structured slides.
 
 ### Where to Find It
 
@@ -166,10 +165,10 @@ This creates a 5-slide carousel with headlines, subtitles, body text, and format
 
 ## 4. Formatting Text (Markdown)
 
-Carousel Creator supports a lightweight markdown syntax for styling your text. These work inside headlines, subtitles, and body text.
+Carousel Architect supports a lightweight markdown syntax for styling your text. These work inside headlines, subtitles, and body text.
 
 | What You Type | What It Does | What It Looks Like |
-|--------------|-------------|-------------------|
+| :--- | :--- | :--- |
 | `*highlighted*` | Accent highlight | Colored text (Minimal), block background (Brutalist), blue link (Tweet) |
 | `**bold text**` | Bold | **Heavy weight text** |
 | `_italic text_` | Italic | *Slanted text* |
@@ -227,7 +226,7 @@ Templates control the visual style of your slides. Your content stays the same �
 ### Available Templates
 
 | Template | Style | Best For |
-|----------|-------|----------|
+| :--- | :--- | :--- |
 | **Minimal** | Clean, modern, subtle | Professional LinkedIn content |
 | **Tweet** | Simulates a Twitter/X post | Viral-style engagement content |
 | **Brutalist** | Heavy, bold, high-contrast | Attention-grabbing statements |
@@ -250,7 +249,7 @@ When you export as **ZIP**, you get your carousel rendered in **all three main t
 In the **Brand Palette** section, you'll find preset color schemes:
 
 | Palette | Background | Text | Accent |
-|---------|-----------|------|--------|
+| :--- | :--- | :--- |
 | **Midnight** | Dark blue-black | White | Amber |
 | **Cyberpunk** | Deep purple | Neon green | Pink |
 | **Nord** | Dark navy | Light gray | Cyan |
@@ -322,18 +321,18 @@ Click the **trash icon** next to the watermark preview to remove it. All slides 
 
 ## 10. Changing the Aspect Ratio (Portrait vs Square)
 
-Different social media platforms prefer different image sizes. Carousel Creator supports two formats:
+Different social media platforms prefer different image sizes. Carousel Architect supports two formats:
 
 ### Available Formats
 
 | Format | Dimensions | Best For |
-|--------|-----------|----------|
+| :--- | :--- | :--- |
 | **Vertical (4:5)** | 1080 × 1350 px | LinkedIn carousels, Instagram feed posts |
 | **Square (1:1)** | 1080 × 1080 px | Twitter/X posts, LinkedIn square posts, universal sharing |
 
 ### How to Switch
 
-1. Go to the **Hyper-parameters** section in the left panel (click the gear icon to expand it).
+1. Go to the **Design Settings** section in the left panel (click the gear icon to expand it).
 2. Find the **"Global Aspect Ratio"** control.
 3. Click **"Vertical (4:5)"** or **"Square (1:1)"**.
 4. The entire preview updates instantly — every slide resizes.
@@ -355,14 +354,14 @@ A progress bar shows viewers how far they are through your carousel. It fills up
 ### Options
 
 | Setting | Effect |
-|---------|--------|
+| :--- | :--- |
 | **Off** | No progress bar (default) |
 | **Top** | A thin colored bar at the very top of each slide |
 | **Bottom** | A thin colored bar at the very bottom of each slide |
 
 ### How to Enable
 
-1. Go to **Hyper-parameters** in the left panel.
+1. Go to **Design Settings** in the left panel.
 2. Find **"Progress Bar Axis"**.
 3. Click **Top** or **Bottom**.
 
@@ -376,22 +375,22 @@ A progress bar shows viewers how far they are through your carousel. It fills up
 
 ---
 
-## 12. Social Feed Sandbox Preview
+## 12. Preview on Social Media
 
 Want to see exactly how your carousel will look inside a LinkedIn or Instagram feed? The Sandbox wraps your carousel in a simulated social media post.
 
 ### Options
 
 | Mode | What It Shows |
-|------|-------------|
+| :--- | :--- |
 | **Off** | Raw slide preview, no frame (default) |
 | **LinkedIn** | Your carousel inside a LinkedIn post with profile info, reactions, and engagement UI |
 | **Instagram** | Your carousel inside an Instagram post with like, comment, share, and save icons |
 
 ### How to Enable
 
-1. Go to **Hyper-parameters** in the left panel.
-2. Find **"Feed Sandbox Environment"**.
+1. Go to **Design Settings** in the left panel.
+2. Find **"Preview on Social Media"**.
 3. Click **LinkedIn** or **Instagram**.
 
 ### Why Use It
@@ -479,7 +478,7 @@ Click **"Done"** in the top-right corner.
 
 ## 15. Undo & Redo
 
-Carousel Creator has a built-in time-travel engine for your text.
+Carousel Architect has a built-in time-travel engine for your text.
 
 ### Keyboard Shortcuts
 
@@ -517,7 +516,7 @@ In Grid view, each slide has **← Shift** and **→ Shift** buttons:
 
 ### Save a Project
 
-1. Open the **Manuscript Vault** section in the left panel.
+1. Open the **My Saved Slides** section in the left panel.
 2. Click **"+ New Snapshot"**.
 3. Enter a name for your project.
 4. Your entire workspace (text, theme, settings) is saved locally.
@@ -540,7 +539,7 @@ If you manage multiple brands or clients, Brand Presets let you save and switch 
 
 - Font choices (heading, subheading, body)
 - Color scheme (background, text, accent)
-- Creator identity (name, handle, avatar)
+- Profile info (name, handle, avatar)
 
 ### How to Save a Preset
 
@@ -559,14 +558,14 @@ Click the preset name. Everything switches instantly — fonts, colors, identity
 
 ### Export a Backup
 
-1. Go to **Manuscript Vault**.
+1. Go to **My Saved Slides**.
 2. Click the **code icon** (next to "+ New Snapshot").
 3. A `.carousel` file downloads to your computer.
 4. This file contains **everything**: your text, theme, and all uploaded images.
 
 ### Import a Backup
 
-1. Go to **Manuscript Vault**.
+1. Go to **My Saved Slides**.
 2. Click **"↑ Import .carousel File"**.
 3. Select a `.carousel` file from your computer.
 4. Your entire workspace is restored.
@@ -580,30 +579,7 @@ Click the preset name. Everything switches instantly — fonts, colors, identity
 
 ---
 
-## 20. AI-Powered Generation (Optional)
-
-You can use AI to automatically generate carousel content from raw text like blog posts, notes, or ideas.
-
-### Setup
-
-1. Go to the **Auto** tab (sparkles icon).
-2. Enter your **OpenRouter API Key** — get one at [openrouter.ai](https://openrouter.ai).
-3. Select a model (free models like Gemini Lite work well).
-
-### How to Use
-
-1. Paste your raw content into the AI prompt area.
-2. Click **Generate**.
-3. The AI structures your text into optimized carousel slides with hooks, highlights, and calls to action.
-4. The result appears in your Bulk Editor — you can edit it further.
-
-### Privacy
-
-This is a **BYOK (Bring Your Own Key)** system. Your API key and content go directly from your browser to OpenRouter. We never see your data.
-
----
-
-## 21. Exporting Your Carousel
+## 20. Exporting Your Carousel
 
 Two export options are available at the top of the right panel:
 
@@ -621,10 +597,7 @@ Two export options are available at the top of the right panel:
 - Each folder contains individually numbered JPEGs.
 - Great for testing which template performs best on each platform.
 
-### Export Limits
-
-- The first few exports are free.
-- After that, enter your email to unlock unlimited exports during the Beta period.
+- Everything is free, local, and private.
 
 ### What Gets Included in Exports
 
@@ -636,7 +609,7 @@ Two export options are available at the top of the right panel:
 
 ---
 
-## 22. JSON Editing (Advanced)
+## 21. JSON Editing (Advanced)
 
 For power users, the **JSON** tab gives you direct access to the raw slide data.
 
@@ -666,26 +639,26 @@ Paste valid JSON and click **Apply** to render slides instantly.
 
 ---
 
-## 23. Tips & Tricks
+## 22. Tips & Tricks
 
 | Tip | Description |
-|-----|-------------|
+| :--- | :--- |
 | **Preview Scale** | Use the "Viewport Zoom" slider to fit the canvas to your screen |
 | **Canvas Grain** | Add subtle noise texture with the "Canvas Grain" slider for a premium paper-like feel |
 | **Slide Navigation** | Click any slide in the preview to open the Focus Modal |
 | **Quick Reorder** | Use Grid view + drag-and-drop (desktop) or Shift buttons (mobile) |
-| **Background Image** | Upload via Hyper-parameters → Atmospheric Backdrop (global) or Focus Modal → Bg (per-slide) |
+| **Background Image** | Upload via Design Settings → Background Style (global) or Focus Modal → Bg (per-slide) |
 | **Copy Image Tag** | Click any image in the Asset Gallery to copy its embed tag |
 | **Template Testing** | Export as ZIP to get your carousel in all templates at once |
-| **Font Discovery** | Visit [fonts.google.com](https://fonts.google.com) to find font names, then type them in the Character Foundry |
+| **Font Discovery** | Visit [fonts.google.com](https://fonts.google.com) to find font names, then type them in the Fonts section |
 | **Safe Zones** | Enable the "Safe Zone" toggle to see the content-safe area on each slide |
 | **Slide Numbers** | Enable the "Slide Numbers" toggle to see page numbers during editing (hidden in exports) |
 
 ---
 
-## 24. Mobile & Responsive Design
+## 23. Mobile & Responsive Design
 
-Carousel Creator is built as a **PWA (Progressive Web App)**, meaning it works perfectly on phones, tablets, and desktops.
+Carousel Architect is built as a **PWA (Progressive Web App)**, meaning it works perfectly on phones, tablets, and desktops.
 
 ### Mobile-Specific Shortcuts
 
@@ -699,7 +672,7 @@ We use a **Rigid Canvas** architecture. Slides are always rendered at their nati
 
 ---
 
-## 25. FAQ
+## 24. FAQ
 
 ### Q: Where is my data stored?
 
@@ -715,11 +688,11 @@ We use a **Rigid Canvas** architecture. Slides are always rendered at their nati
 
 ### Q: Can I use my own fonts?
 
-**A:** Yes — any font available on [Google Fonts](https://fonts.google.com). Type the exact font name in the Character Foundry fields.
+**A:** Yes — any font available on [Google Fonts](https://fonts.google.com). Type the exact font name in the Fonts fields.
 
 ### Q: Is it really free?
 
-**A:** Yes. The tool is open source (MIT license). The only limitation is export count during early beta, which can be unlocked with an email.
+**A:** Yes. The tool is open source (MIT license). The only limitation is export count in the Community Edition, which can be unlocked with an email.
 
 ### Q: Can I use this for commercial work?
 

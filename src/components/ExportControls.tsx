@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Loader2, FileArchive, FileText } from 'lucide-react';
 import type { CarouselData } from '../types';
 import { toJpeg } from 'html-to-image';
@@ -10,28 +10,14 @@ interface Props {
     data: CarouselData;
     activeTemplate: string;
     setActiveTemplate: (template: string) => void;
-    isUnlocked: boolean;
-    hasGivenFeedback: boolean;
     aspectRatio: 'portrait' | 'square';
 }
 
-const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTemplate, isUnlocked, hasGivenFeedback, aspectRatio }) => {
+const ExportControls = ({ data, activeTemplate, setActiveTemplate, aspectRatio }: Props) => {
     const [exportType, setExportType] = useState<'pdf' | 'zip' | null>(null);
 
     const exportToPDF = async () => {
-        const currentCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
-        // Double-check: React state might lag behind localStorage if Tally just fired
-        const effectivelyUnlocked = isUnlocked || localStorage.getItem('carousel_unlocked') === 'true';
-        if (currentCount >= 3 && !effectivelyUnlocked) {
-            // @ts-expect-error - Tally from global script
-            if (window.Tally) window.Tally.openPopup('MeA7bM', {
-                layout: 'modal',
-                hideTitle: true,
-                transparentBackground: true,
-                formEventsForwarding: true
-            });
-            return; // Block the export
-        }
+        // No longer limiting exports or requiring business email
 
         // FONT EXPORT SAFETY: Wait for all fonts to load before capturing
         await document.fonts.ready;
@@ -79,17 +65,6 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             if (isNaN(updatedCount)) updatedCount = 0;
             updatedCount += 1;
             localStorage.setItem('carousel_export_count', updatedCount.toString());
-
-            // 2. The Feedback Loop (Ask on 1st export if not given)
-            if (updatedCount === 1 && !hasGivenFeedback) {
-                // @ts-expect-error - Tally from global script
-                if (window.Tally) window.Tally.openPopup('zxK1DR', {
-                    layout: 'modal',
-                    hideTitle: true,
-                    transparentBackground: true,
-                    formEventsForwarding: true
-                });
-            }
         } catch {
             console.error('Export Error: PDF generation failed.');
             alert('Failed to export PDF.');
@@ -99,19 +74,7 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
     };
 
     const exportToZip = async () => {
-        const currentCount = parseInt(localStorage.getItem('carousel_export_count') || '0', 10);
-        // Double-check: React state might lag behind localStorage if Tally just fired
-        const effectivelyUnlocked = isUnlocked || localStorage.getItem('carousel_unlocked') === 'true';
-        if (currentCount >= 3 && !effectivelyUnlocked) {
-            // @ts-expect-error - Tally from global script
-            if (window.Tally) window.Tally.openPopup('MeA7bM', {
-                layout: 'modal',
-                hideTitle: true,
-                transparentBackground: true,
-                formEventsForwarding: true
-            });
-            return; // Block the export
-        }
+        // No longer limiting exports or requiring business email
 
         setExportType('zip');
         const originalTemplate = activeTemplate;
@@ -161,12 +124,6 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             updatedCount += 1;
             localStorage.setItem('carousel_export_count', updatedCount.toString());
 
-            // 2. The Feedback Loop (Ask on 1st export if not given)
-            if (updatedCount === 1 && !hasGivenFeedback) {
-                // @ts-expect-error - Tally from global script
-                if (window.Tally) window.Tally.openPopup('zxK1DR', { layout: 'modal', autoClose: 0, formEventsForwarding: true });
-            }
-
         } catch (error) {
             console.error("ZIP Export failed", error);
             alert('ZIP Export failed. Please try again.');
@@ -176,6 +133,7 @@ const ExportControls: React.FC<Props> = ({ data, activeTemplate, setActiveTempla
             setExportType(null);
         }
     };
+
 
     const isExporting = exportType !== null;
 

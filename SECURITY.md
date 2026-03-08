@@ -1,8 +1,8 @@
-# 🔐 Security Policy — Carousel Creator
+# 🔐 Security Policy — Carousel Architect
 
 ## Overview
 
-Carousel Creator is a **100% client-side application**. There are no servers, no databases, no user accounts, and no cloud storage. All data processing happens entirely within your web browser.
+Carousel Architect is a **100% client-side application**. There are no servers, no databases, no user accounts, and no cloud storage. All data processing happens entirely within your web browser.
 
 This document explains how your data is handled and what security measures are in place.
 
@@ -22,14 +22,14 @@ This document explains how your data is handled and what security measures are i
 | Color preferences | `localStorage` | Your browser |
 | Font preferences | `localStorage` | Your browser |
 | Aspect ratio | `localStorage` | Your browser |
-| Creator identity | `localStorage` | Your browser |
+| Profile info | `localStorage` | Your browser |
 | OpenRouter API key | `localStorage` | Your browser |
 
 **Nothing is ever sent to a server** (with one optional exception — see AI Generation below).
 
 ### Data Persistence
 
-- Data persists until you clear your browser data or use the "Atomic Purge" reset button.
+- Data persists until you clear your browser data or use the "Delete Everything" reset button.
 - IndexedDB data survives browser restarts and system reboots.
 - Use the `.carousel` backup feature to save your work to a file for safekeeping.
 
@@ -92,7 +92,7 @@ If you choose to use the AI-powered generation feature:
 ### Rate Limiting
 
 - Email submission has a **30-second cooldown** (client-side) to prevent abuse.
-- Export count is tracked in `localStorage` with server-side verification disabled (beta period).
+- Export count is tracked in `localStorage` with server-side verification disabled (Community Edition).
 
 ---
 
@@ -131,14 +131,14 @@ Please do not open a public issue for security vulnerabilities.
 
 ## Clearing Your Data
 
-To remove all Carousel Creator data from your browser:
+To remove all Carousel Architect data from your browser:
 
 1. Open your browser's Developer Tools (F12 or Ctrl+Shift+I).
 2. Go to the **Application** tab.
 3. Under **Storage**, click **Clear site data**.
 4. This removes all localStorage, IndexedDB, and cached data.
 
-Alternatively, use the **"Atomic Purge"** button in the app to reset the current session.
+Alternatively, use the **"Delete Everything"** button in the app to reset the current session.
 
 ---
 

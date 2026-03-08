@@ -26,8 +26,6 @@ interface Props {
     noiseOpacity: number;
     customBgImage: string | null;
     setActivePreviewSlideIndex: (index: number) => void;
-    isUnlocked: boolean;
-    hasGivenFeedback: boolean;
     setFocusedSlideIndex: (index: number | null) => void;
     showSafeZones: boolean;
     showSlideNumbers: boolean;
@@ -103,7 +101,7 @@ const CarouselPreview: React.FC<Props> = ({
     activeTemplate, setActiveTemplate, previewScale, showProfile, footerLayout,
     textAlign, noiseOpacity, customBgImage,
     setActivePreviewSlideIndex,
-    isUnlocked, hasGivenFeedback, setFocusedSlideIndex,
+    setFocusedSlideIndex,
     showSafeZones, showSlideNumbers,
     inlineImages, previewMode, setPreviewMode,
     bulkText, setBulkText,
@@ -959,8 +957,6 @@ const CarouselPreview: React.FC<Props> = ({
                         data={data}
                         activeTemplate={activeTemplate}
                         setActiveTemplate={setActiveTemplate}
-                        isUnlocked={isUnlocked}
-                        hasGivenFeedback={hasGivenFeedback}
                         aspectRatio={aspectRatio}
                     />
                 )}
@@ -968,8 +964,8 @@ const CarouselPreview: React.FC<Props> = ({
 
             {/* THE MAIN SCROLLING WRAPPER */}
             <div className={`w-full h-full overflow-auto custom-scrollbar ${previewMode === 'carousel' ? 'flex flex-row snap-x snap-mandatory gap-8 px-12 items-center justify-start' :
-                    previewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 md:p-8 items-start justify-center content-start' :
-                        'flex flex-col gap-12 p-8 items-center justify-start'
+                previewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 md:p-8 items-start justify-center content-start' :
+                    'flex flex-col gap-12 p-8 items-center justify-start'
                 }`}>
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={(data?.slides || []).map((_, i) => i.toString())} strategy={rectSortingStrategy}>
