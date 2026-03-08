@@ -68,6 +68,8 @@ const SortableSlide: React.FC<SortableSlideProps> = ({ id, effectiveScale, previ
         opacity: isDragging ? 0.8 : 1,
         width: `${dim.w * effectiveScale}px`,
         height: `${dim.h * effectiveScale}px`,
+        minWidth: `${dim.w * effectiveScale}px`,
+        minHeight: `${dim.h * effectiveScale}px`,
         position: 'relative' as const,
         overflow: 'hidden',
         cursor: previewMode === 'grid' ? 'grab' : 'default',
@@ -218,75 +220,52 @@ const CarouselPreview: React.FC<Props> = ({
                     previewMode={previewMode}
                     aspectRatio={aspectRatio}
                 >
-                    {/* WRAPPER FOR SANDBOX (Not exported) */}
                     <div style={{
-                        position: 'relative',
-                        width: '100%',
-                        height: '100%',
                         display: 'flex',
+                        flexDirection: 'column',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        gap: 0,
+                        position: 'relative'
                     }}>
-                        {/* SANDBOX SHELL: LINKEDIN */}
+                        {/* FAKE LINKEDIN HEADER */}
                         {sandboxMode === 'linkedin' && (
-                            <div data-html2canvas-ignore="true" style={{
-                                position: 'absolute',
-                                top: -100 * renderScale,
-                                bottom: -150 * renderScale,
-                                left: -40 * renderScale,
-                                right: -40 * renderScale,
-                                backgroundColor: '#FFFFFF',
-                                borderRadius: 16 * renderScale,
-                                boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-                                zIndex: -1,
-                                padding: 20 * renderScale,
-                                display: 'flex',
-                                flexDirection: 'column'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 * renderScale, marginBottom: 12 * renderScale }}>
-                                    <div style={{ width: 48 * renderScale, height: 48 * renderScale, borderRadius: '50%', backgroundColor: '#E5E7EB' }}>
-                                        {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />}
+                            <div
+                                className="flex items-center justify-between p-4 bg-[#1d2226] text-white/90 border-b border-white/10"
+                                style={{
+                                    width: `${1080 * renderScale}px`,
+                                    minWidth: `${1080 * renderScale}px`,
+                                    borderTopLeftRadius: '16px',
+                                    borderTopRightRadius: '16px',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 * renderScale }}>
+                                    <div style={{ width: 48 * renderScale, height: 48 * renderScale, borderRadius: '50%', backgroundColor: '#E5E7EB', overflow: 'hidden' }}>
+                                        {authorAvatar && <img src={authorAvatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span style={{ fontSize: 14 * renderScale, fontWeight: 700, color: '#000' }}>{authorName || 'Creator Name'}</span>
-                                        <span style={{ fontSize: 12 * renderScale, color: '#666' }}>{authorHandle || '@handle'} • 2nd</span>
-                                        <span style={{ fontSize: 11 * renderScale, color: '#666' }}>1w • 🌐</span>
+                                        <span style={{ fontSize: 14 * renderScale, fontWeight: 700, color: '#fff' }}>{authorName || 'Creator Name'}</span>
+                                        <span style={{ fontSize: 12 * renderScale, color: '#ccc' }}>{authorHandle || '@handle'} • 2nd</span>
+                                        <span style={{ fontSize: 11 * renderScale, color: '#aaa' }}>1w • 🌐</span>
                                     </div>
                                 </div>
-                                <div style={{ height: 10 * renderScale, width: '100%', backgroundColor: '#F3F4F6', borderRadius: 4 * renderScale, marginBottom: 8 * renderScale }} />
-                                <div style={{ height: 10 * renderScale, width: '80%', backgroundColor: '#F3F4F6', borderRadius: 4 * renderScale, marginBottom: 20 * renderScale }} />
-
-                                {/* Slide goes here (centered via parent) */}
-
-                                <div style={{ marginTop: 'auto', paddingTop: 10 * renderScale, borderTop: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-around' }}>
-                                    {['Like', 'Comment', 'Republish', 'Send'].map(action => (
-                                        <div key={action} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 * renderScale }}>
-                                            <div style={{ width: 24 * renderScale, height: 24 * renderScale, backgroundColor: '#666', opacity: 0.2, borderRadius: 4 * renderScale }} />
-                                            <span style={{ fontSize: 10 * renderScale, color: '#666', fontWeight: 600 }}>{action}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                                <div style={{ color: '#fff', fontSize: 20 * renderScale }}>⋮</div>
                             </div>
                         )}
 
-                        {/* SANDBOX SHELL: INSTAGRAM */}
+                        {/* FAKE INSTAGRAM HEADER */}
                         {sandboxMode === 'instagram' && (
-                            <div data-html2canvas-ignore="true" style={{
-                                position: 'absolute',
-                                top: -60 * renderScale,
-                                bottom: -120 * renderScale,
-                                left: -10 * renderScale,
-                                right: -10 * renderScale,
-                                backgroundColor: '#000000',
-                                borderRadius: 12 * renderScale,
-                                boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
-                                zIndex: -1,
-                                padding: 10 * renderScale,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                color: '#FFF'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 * renderScale, marginBottom: 10 * renderScale, padding: `0 ${10 * renderScale}px` }}>
+                            <div
+                                className="flex items-center justify-between p-4 bg-black text-white border-b border-white/10"
+                                style={{
+                                    width: `${1080 * renderScale}px`,
+                                    minWidth: `${1080 * renderScale}px`,
+                                    borderTopLeftRadius: '16px',
+                                    borderTopRightRadius: '16px',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 * renderScale }}>
                                     <div style={{ width: 32 * renderScale, height: 32 * renderScale, borderRadius: '50%', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', padding: 2 * renderScale }}>
                                         <div style={{ width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#000', padding: 2 * renderScale }}>
                                             {authorAvatar ? <img src={authorAvatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#333' }} />}
@@ -296,23 +275,8 @@ const CarouselPreview: React.FC<Props> = ({
                                         <span style={{ fontSize: 13 * renderScale, fontWeight: 600 }}>{authorHandle?.replace('@', '') || 'creator'}</span>
                                         <span style={{ fontSize: 11 * renderScale }}>Original Audio</span>
                                     </div>
-                                    <div style={{ marginLeft: 'auto', fontSize: 20 * renderScale }}>⋮</div>
                                 </div>
-
-                                {/* Slide goes here (centered via parent) */}
-
-                                <div style={{ marginTop: 'auto', padding: `${10 * renderScale}px ${10 * renderScale}px` }}>
-                                    <div style={{ display: 'flex', gap: 15 * renderScale, marginBottom: 10 * renderScale }}>
-                                        <Heart size={24 * renderScale} />
-                                        <MessageCircle size={24 * renderScale} />
-                                        <Repeat2 size={24 * renderScale} />
-                                        <div style={{ marginLeft: 'auto' }}>🔖</div>
-                                    </div>
-                                    <div style={{ fontSize: 13 * renderScale, fontWeight: 700, marginBottom: 4 * renderScale }}>{likes} likes</div>
-                                    <div style={{ fontSize: 13 * renderScale }}>
-                                        <span style={{ fontWeight: 700 }}>{authorHandle?.replace('@', '') || 'creator'}</span> Lorem ipsum dolor sit amet...
-                                    </div>
-                                </div>
+                                <div style={{ color: '#fff', fontSize: 20 * renderScale }}>⋮</div>
                             </div>
                         )}
 
@@ -325,15 +289,16 @@ const CarouselPreview: React.FC<Props> = ({
                             style={{
                                 width: '1080px',
                                 height: aspectRatio === 'square' ? '1080px' : '1350px',
+                                minWidth: '1080px',
+                                minHeight: aspectRatio === 'square' ? '1080px' : '1350px',
                                 transform: `scale(${renderScale})`,
-                                transformOrigin: 'center center',
+                                transformOrigin: 'top center',
                                 backgroundColor: data.theme.background,
                                 color: data.theme.text,
                                 position: 'relative',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'center',
-                                /* THE SAFE ZONE MATH: 1080 - 864 = 216 / 2 = 108px padding */
                                 padding: '108px',
                                 boxSizing: 'border-box',
                                 overflow: 'hidden',
@@ -341,9 +306,11 @@ const CarouselPreview: React.FC<Props> = ({
                                 backgroundPosition: 'center',
                                 cursor: 'pointer',
                                 boxShadow: sandboxMode !== 'none' ? 'none' : '0 20px 50px rgba(0,0,0,0.3)',
-                                borderRadius: 16 * renderScale
+                                borderRadius: sandboxMode !== 'none' ? '0' : 16 * renderScale
                             }}
                         >
+
+
                             {/* LAYER 0: CUSTOM BACKGROUND TEMPLATE */}
                             {slide.bg_image && inlineImages[slide.bg_image] ? (
                                 <div style={{
@@ -840,11 +807,11 @@ const CarouselPreview: React.FC<Props> = ({
                             {/* SLIDE COUNTERS & ARROWS (Ignored during export) */}
                             {showSlideNumbers && (
                                 <div data-html2canvas-ignore="true">
-                                    <div style={{ position: 'absolute', bottom: '40px', left: '108px', fontSize: '24px', fontWeight: '600', color: data.theme.text, opacity: 0.5, zIndex: 20 }}>
+                                    <div style={{ position: 'absolute', bottom: '40px', left: '48px', fontSize: '28px', fontWeight: '800', color: data.theme.text, opacity: 0.4, zIndex: 20 }}>
                                         {index + 1} / {data.slides.length}
                                     </div>
                                     {index < data.slides.length - 1 && (
-                                        <div style={{ position: 'absolute', top: '50%', right: '40px', transform: 'translateY(-50%)', fontSize: '40px', color: data.theme.text, opacity: 0.3, zIndex: 20 }}>
+                                        <div style={{ position: 'absolute', top: '50%', right: '48px', transform: 'translateY(-50%)', fontSize: '40px', color: data.theme.text, opacity: 0.4, zIndex: 20 }}>
                                             →
                                         </div>
                                     )}
@@ -899,8 +866,56 @@ const CarouselPreview: React.FC<Props> = ({
                                 </div>
                             )}
                         </div>
+
+                        {/* FAKE LINKEDIN FOOTER */}
+                        {sandboxMode === 'linkedin' && (
+                            <div
+                                className="p-4 bg-white border-t border-gray-200"
+                                style={{
+                                    width: `${1080 * renderScale}px`,
+                                    minWidth: `${1080 * renderScale}px`,
+                                    borderBottomLeftRadius: '16px',
+                                    borderBottomRightRadius: '16px',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-around', paddingTop: 10 * renderScale }}>
+                                    {['Like', 'Comment', 'Republish', 'Send'].map(action => (
+                                        <div key={action} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 * renderScale }}>
+                                            <div style={{ width: 24 * renderScale, height: 24 * renderScale, backgroundColor: '#666', opacity: 0.2, borderRadius: 4 * renderScale }} />
+                                            <span style={{ fontSize: 10 * renderScale, color: '#666', fontWeight: 600 }}>{action}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* FAKE INSTAGRAM FOOTER */}
+                        {sandboxMode === 'instagram' && (
+                            <div
+                                className="p-4 bg-black text-white border-t border-white/10"
+                                style={{
+                                    width: `${1080 * renderScale}px`,
+                                    minWidth: `${1080 * renderScale}px`,
+                                    borderBottomLeftRadius: '16px',
+                                    borderBottomRightRadius: '16px',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                <div style={{ display: 'flex', gap: 15 * renderScale, marginBottom: 10 * renderScale }}>
+                                    <Heart size={24 * renderScale} />
+                                    <MessageCircle size={24 * renderScale} />
+                                    <Repeat2 size={24 * renderScale} />
+                                    <div style={{ marginLeft: 'auto' }}>🔖</div>
+                                </div>
+                                <div style={{ fontSize: 13 * renderScale, fontWeight: 700, marginBottom: 4 * renderScale }}>{likes} likes</div>
+                                <div style={{ fontSize: 13 * renderScale }}>
+                                    <span style={{ fontWeight: 700 }}>{authorHandle?.replace('@', '') || 'creator'}</span> Lorem ipsum dolor sit amet...
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </SortableSlide>
+                </SortableSlide >
             );
         });
     }, [
@@ -952,9 +967,9 @@ const CarouselPreview: React.FC<Props> = ({
             </div>
 
             {/* THE MAIN SCROLLING WRAPPER */}
-            <div className={`w-full h-full overflow-auto custom-scrollbar flex ${previewMode === 'carousel' ? 'flex-row snap-x snap-mandatory gap-8 px-12 items-center justify-start' :
-                previewMode === 'grid' ? 'flex-row flex-wrap items-start justify-center p-8 gap-8 content-start' :
-                    'flex-col items-center justify-start p-8 gap-12 pb-24'
+            <div className={`w-full h-full overflow-auto custom-scrollbar ${previewMode === 'carousel' ? 'flex flex-row snap-x snap-mandatory gap-8 px-12 items-center justify-start' :
+                    previewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 md:p-8 items-start justify-center content-start' :
+                        'flex flex-col gap-12 p-8 items-center justify-start'
                 }`}>
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={(data?.slides || []).map((_, i) => i.toString())} strategy={rectSortingStrategy}>

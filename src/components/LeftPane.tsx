@@ -750,7 +750,11 @@ const LeftPane: React.FC<Props> = (props) => {
                                     <label className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em]">Bulk Content Engine</label>
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={() => setBulkText("/h, s: 120, a: center/ **SaaS Builder** Guide\n/sh/ How to go from 0 to _10k MRR_ in 90 days\n\n/h/ The *Hard* Truth\nBuilding is the easy part. \nDistribution is where most founders fail.\nYou need a system, not just a product.\n\n/sh, sh_s: 60, a: right/ Why Carousels?\n/body, b_s: 40/ 1. High engagement\n2. Easy to digest\n3. Perfect for **educational** content.\n\n/h, s: 90, a: center/ Want the **Blueprint**?\n/sh/ I'm launching the full guide next week.\nFollow for the _early access_ link.")}
+                                            onClick={() => {
+                                                const heroPayload = `/h, s: 130, a: center, y: -20/ Stop wasting hours on **__*Canva*__**\n/sh, sh_s: 60, a: center/ You are a creator, not a graphic designer.\n\n/h, s: 100, a: left/ The *Friction* Trap\n/body, b_s: 42/ Moving text boxes. Aligning layers. Fiddling with hex codes. \nEvery minute spent designing is a minute you aren't **writing**.\n\n/h, s: 100, a: right/ Enter the **__*Machine*__**\n/sh, sh_s: 50, a: right/ Type text. Get a carousel.\n/body, b_s: 40, a: right/ Paste your messy brain dump. \nOur engine instantly transforms it into a pixel-perfect, high-converting design.\n\n/h, s: 95, a: left/ The ✨ *Auto-Splitter*\n/body, b_s: 38/ Got a 300-word rant? \nClick one button. We automatically chunk it into perfectly paced, readable slides. Zero manual splitting.\n\n/sh, sh_s: 70, a: center, y: -10/ The Visual **Builder**\n/body, b_s: 40, a: center/ Don't like code? \nTap any slide to open the **Focus Modal**. Adjust fonts, alignment, and sizes with simple, intuitive sliders.\n\n/h, s: 95, a: left/ Never get *Blocked*\n/body, b_s: 38/ Turn on **Safe Zones**. \nSee exactly where the Instagram "Like" button and LinkedIn header will sit, so your text is never hidden again.\n\n/sh, sh_s: 70, a: right/ Instant **Images**\n/body, b_s: 42, a: right/ Need to show proof?\nPhysically drag and drop screenshots right into your text. They render beautifully in milliseconds.\n\n/h, s: 100, a: left/ 🏢 *Brand* Presets\n/body, b_s: 38/ Managing multiple clients?\nSave their specific fonts, hex colors, and avatars. Switch between entire brand identities with a single click.\n\n/sh, sh_s: 65, a: center/ The Social *Sandbox*\n/body, b_s: 40, a: center/ Toggle the **Sandbox Mode**. \nView your carousel inside a pixel-perfect replica of the LinkedIn or Instagram feed before you export.\n\n/h, s: 140, a: center, y: -10/ Ready to **__*Build*__**?\n/sh, a: center/ Clear this text and start writing.`;
+                                                setBulkText(heroPayload);
+                                                compileBulkText(heroPayload);
+                                            }}
                                             className="bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-zinc-400 border border-white/5 px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all"
                                         >
                                             Example
@@ -768,32 +772,38 @@ const LeftPane: React.FC<Props> = (props) => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between mb-2">
-                                    {/* View Toggle */}
-                                    <div className="flex items-center bg-zinc-950 border border-white/5 rounded-lg p-1 mb-2 w-full lg:w-48 shadow-inner">
+                                <div className="flex flex-col gap-2 mb-2">
+                                    {/* ROW 1: View Toggle */}
+                                    <div className="flex items-center bg-zinc-900 border border-white/10 rounded-lg p-1">
                                         <button
                                             onClick={() => setEditorMode('raw')}
-                                            className={`flex-1 py-1.5 text-[10px] font-black active:scale-[0.98] uppercase tracking-widest rounded-md transition-all ${editorMode === 'raw' ? 'bg-zinc-800 text-white shadow-xl border border-white/5' : 'text-zinc-500 hover:text-white'}`}
+                                            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${editorMode === 'raw' ? 'bg-zinc-700 text-white shadow' : 'text-zinc-500 hover:text-white'}`}
                                         >
-                                            Raw
+                                            Raw Editor
                                         </button>
                                         <button
                                             onClick={() => setEditorMode('visual')}
-                                            className={`flex-1 py-1.5 text-[10px] font-black active:scale-[0.98] uppercase tracking-widest rounded-md transition-all ${editorMode === 'visual' ? 'bg-zinc-800 text-white shadow-xl border border-white/5' : 'text-zinc-500 hover:text-white'}`}
+                                            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${editorMode === 'visual' ? 'bg-zinc-700 text-white shadow' : 'text-zinc-500 hover:text-white'}`}
                                         >
-                                            Visual
+                                            Visual Builder
                                         </button>
                                     </div>
 
-                                    {/* Markdown Formatting Toolbar */}
+                                    {/* ROW 2: Formatting Toolbar (Only show in RAW mode) */}
                                     {editorMode === 'raw' && (
-                                        <div className="flex items-center gap-1 bg-zinc-950 border border-white/5 rounded-md p-1 mb-2 shadow-inner">
-                                            <button onClick={() => applyFormatting('**', '**')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded font-bold transition-colors" title="Bold (**)">&nbsp;B&nbsp;</button>
-                                            <button onClick={() => applyFormatting('_', '_')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded italic transition-colors" title="Italic (_)">I</button>
-                                            <button onClick={() => applyFormatting('__', '__')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded underline transition-colors" title="Underline (__)">U</button>
-                                            <button onClick={() => applyFormatting('*', '*')} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors" title="Highlight (*)">🖍️</button>
-                                            <div className="w-px h-4 bg-white/10 mx-1" />
-                                            <button onClick={handleUndo} disabled={historyIndex <= 0} className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded disabled:opacity-30" title="Undo (Ctrl+Z)"><RotateCcw size={12} /></button>
+                                        <div className="flex items-center justify-between bg-zinc-900 border border-white/10 rounded-md p-1">
+                                            <div className="flex items-center gap-1">
+                                                <button onClick={() => applyFormatting('**', '**')} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded font-bold transition-colors" title="Bold (**)">B</button>
+                                                <button onClick={() => applyFormatting('_', '_')} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded italic font-serif transition-colors" title="Italic (_)">I</button>
+                                                <button onClick={() => applyFormatting('__', '__')} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded underline transition-colors" title="Underline (__)">U</button>
+                                                <button onClick={() => applyFormatting('*', '*')} className="w-8 h-8 flex items-center justify-center text-blue-400 hover:text-blue-300 hover:bg-zinc-800 rounded transition-colors" title="Highlight (*)">✒️</button>
+                                                <button onClick={() => applyFormatting('[img:', ']')} className="w-8 h-8 flex items-center justify-center text-green-400 hover:text-green-300 hover:bg-zinc-800 rounded transition-colors" title="Image Tag">🖼️</button>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <button onClick={handleUndo} disabled={historyIndex <= 0} className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 rounded disabled:opacity-30 transition-colors" title="Undo (Ctrl+Z)">
+                                                    <RotateCcw size={14} />
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
