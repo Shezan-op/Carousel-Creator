@@ -1,141 +1,40 @@
-# 📖 How to Use Carousel Architect — The Complete Guide
+# System Documentation
 
-### From raw ideas to pixel-perfect carousels in under 2 minutes
+## 1. The Workflow
 
-Welcome! Whether you're a LinkedIn creator, social media manager, or agency owner — Carousel Architect is built to kill procrastination. This guide walks you through **every single feature** in plain language.
+Write or paste your text in the Text Editor.
 
-**[Try the Live App 🚀](https://mycarouselcreator.vercel.app/)**
+Click ✨ **Paste Text & Auto-Format** to instantly chunk long text into perfectly paced slides.
 
----
+Use the **Toolbar** to highlight, bold, or underline words.
 
-## ⚡️ 1. Your First Carousel (The 60-Second Start)
+Click **Download PDF** (for LinkedIn) or **Download ZIP** (for X/Instagram).
 
-The fastest path from zero to a finished carousel:
+## 2. The AI Assistant
 
-1. **Open the app** → [https://mycarouselcreator.vercel.app/](https://mycarouselcreator.vercel.app/)
-2. **Type in the Bulk Editor** (The big white text area on the left):
+Stuck on what to write? Use our Custom GPT trained specifically for this tool:
+[**Carousel Bulk Converter GPT**](https://chatgpt.com/g/g-67ce242099cc8191bc31289196b01f92-carousel-bulk-converter)
+It outputs the exact formatting this app needs. Just copy and paste.
 
-   ```text
-   /h/ Why Remote Work is Here to Stay
-   /sh/ 5 Data-Backed Reasons
-   
-   Remote work isn't a trend — it's the new default.
-   Here are 5 reasons why it's not going away.
-   
-   /h/ 1. Productivity is Higher
-   Studies show *remote workers* are 13% more productive.
-   ```
+## 3. The Syntax Engine
 
-3. **Watch the preview** update on the right in real-time.
-4. **Click "Download PDF"** at the top.
-5. **Done!** You have a multi-page PDF ready for LinkedIn.
+If you want to write manually, the engine is simple:
 
----
+- `/h/` creates a massive **Headline**.
+- `/sh/` creates a **Subheading**.
+- No prefix creates regular **Body text**.
+- Double "Enter" (a blank line) creates a **new slide**.
 
-## ✍️ 2. Writing Content (The "Bulk Compiler")
+**Markdown Support:**
 
-Carousel Architect is a **Bulk Compiler**. You don't drag boxes; you just type.
+- `**text**` = Bold
+- `_text_` = Italic
+- `__text__` = Underline
+- `*text*` = Highlight (Color changes based on your Template choice).
 
-### The 4 Magic Rules
+## 4. Where is my data?
 
-- **Rule 1: Headline** → `/h/` creates a large, bold title.
-- **Rule 2: Subtitle** → `/sh/` creates a smaller, supporting line.
-- **Rule 3: Body Text** → Type anything else to create a paragraph.
-- **Rule 4: New Slide** → Press **Enter twice** to create a blank line. A blank line starts a new slide.
-
-### Example
-
-```text
-/h/ Title for Slide 1
-Subtitle for Slide 1
-Slide 1 Body text goes here.
-
-/h/ Title for Slide 2
-Slide 2 Body text goes here.
-```
+Your custom colors, fonts, saved projects, and uploaded images are saved in your browser's IndexedDB. If you clear your browser data, you will lose your projects. Use the **Saved Projects -> Backup** feature to download a `.carousel` file to your computer for safekeeping.
 
 ---
-
-## 🎨 3. Styling Your Slides
-
-Switch styles instantly without touching a single alignment button.
-
-### 🎭 Visual Templates
-
-In the **Typography & Motifs** section, pick a "Vibe":
-
-- **Minimal:** Clean and professional. Best for LinkedIn.
-- **Tweet:** Simulates a viral Twitter/X post. Great for engagement.
-- **Brutalist:** Heavy, bold, and high-contrast. Grabs attention.
-- **Highlight:** Adds dynamic color accents to your text.
-
-### 🌈 Quick Colors (Brand Palette)
-
-- **Presets:** Click Midnight, Cyberpunk, or Nord to instantly brand your entire carousel.
-- **Custom:** Type your own hex codes (like `#FF5733`) for BG (Background), Text, and Accent.
-- **Invert:** Click "Invert Theme" to instantly swap between Light and Dark mode.
-
----
-
-## 🖼️ 4. Adding Images & Icons
-
-### Method 1: The Drag-and-Drop (Magic)
-
-Grab an image from your computer and drop it **directly onto the text area**.
-The app will automatically:
-
-1. Compress it (so it's fast).
-2. Save it to your private library.
-3. Insert a tag like `[img:bg_7f2x1]` into your text.
-
-### Method 2: The Asset Gallery
-
-Open the **Asset Gallery** on the left. Upload your logos or photos here. Click a thumbnail to copy its tag, then paste it where you want it to appear!
-
----
-
-## 💼 5. Agency Mode (Brand Presets)
-
-Managing multiple clients? Save their unique styles as **Brand Presets**.
-
-1. Set up a client's fonts, colors, and profile info (Avatar + Handle).
-2. Click **"+ Save Current"** in the Brand Presets box.
-3. Switch between clients with **one click**.
-
----
-
-## 💾 6. Saving & Backing Up
-
-**Everything is 100% Private.** Nothing is uploaded to our servers. This means:
-
-- **Auto-Save:** Your current work is saved to your browser automatically.
-- **Snapshots:** Save multiple projects in the "My Saved Slides" section.
-- **Export Backup:** Click the code icon to download a `.carousel` file. You can send this file to a teammate or move it to a new computer!
-
----
-
-## 📦 7. The Export Pipeline (Which one do I pick?)
-
-### 📄 Download PDF
-
-- Best for **LinkedIn Document Posts**.
-- Creates a single high-quality file that users can slide through on LinkedIn.
-
-### 📦 Download ZIP (The Content Pack)
-
-- Best for **Instagram & Twitter/X**.
-- The app renders your carousel in **all 3 main styles** (Minimal, Tweet, and Brutalist) automatically.
-- You get 3 folders full of high-res images to test which one works best.
-
----
-
-## 💡 Pro Tips for Creators
-
-1. **Markdown Styling:** Use `*highlighted text*` for a color splash, `**bold text**` for impact, and `_italic text_` for emphasis.
-2. **Safe Zones:** Toggle the "Safe Zone" to ensure your text isn't cut off on certain devices.
-3. **PWA Install:** Click "Install App" in your browser address bar to use Carousel Architect as a standalone desktop app.
-4. **Canvas Grain:** Use the "Canvas Grain" slider to give your slides a premium, textured paper feel.
-
----
-
-*Stop fighting Canva. Start creating.* 🚀
+**Links point to:** [https://mycarouselcreator.vercel.app/](https://mycarouselcreator.vercel.app/)
