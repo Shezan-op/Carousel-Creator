@@ -28,7 +28,7 @@ const NetflixIntro: React.FC = () => {
                         CREATOR
                     </span>
                 </div>
-                <p className="mt-3 text-[10px] uppercase tracking-[0.4em] text-zinc-600 font-bold"
+                <p className="mt-3 text-[9px] sm:text-[10px] whitespace-nowrap uppercase tracking-[0.3em] sm:tracking-[0.4em] text-zinc-600 font-bold"
                     style={{ animation: 'introSlideUp 0.6s ease-out 0.5s both' }}>
                     Make your carousels fast and clean
                 </p>
