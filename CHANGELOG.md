@@ -25,6 +25,11 @@ All notable changes to this project are documented here.
 - Added `.carousel` file backup and restore system for project portability
 - Export engine processes slides sequentially with memory cleanup for stability
 - Export ghosting fix: UI overlays (slide numbers, arrows) hidden from PDF/ZIP output
+- **Responsive Geometry Patch**: Fixed Flexbox "canvas squish" by enforcing strict minimum dimensions on slide wrappers
+- **Sandbox Scaling Refactor**: Completely rebuilt LinkedIn/Instagram feed previews with scale-aware CSS for pixel-perfect mobile viewing
+- **Mobile Grid Rescue**: Enforced CSS Grid for the grid preview mode to ensure high-performance slide management on touch devices
+- **Premium Marketing Payload**: Replaced default example with a 10-slide high-fidelity tutorial showcasing advanced motifs and markdown
+- **UI Polish**: Fixed tagline wrapping on the Netflix-style intro for mobile viewports
 - Aspect ratio dynamically recalculates canvas height without stretching
 
 ### 📖 Documentation

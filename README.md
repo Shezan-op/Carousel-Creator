@@ -144,6 +144,7 @@ Made a mistake? Use `Ctrl+Z` (undo) and `Ctrl+Shift+Z` (redo) to navigate throug
 
 ### 🔒 Enterprise Infrastructure
 
+- **Responsive Geometry Engine**: Uses strict `min-width` constraints and scale-aware CSS to prevent Flexbox crushing. Displays pixel-perfect slides on everything from an iPhone SE to a 4K Pro Display.
 - **Async Persistence**: Uses **IndexedDB (via localforage)** for heavy data (images, projects, presets), bypassing the 5MB `localStorage` limit.
 - **BYOK Architecture**: Your OpenRouter API key is stored locally, never transmitted to anyone.
 - **Stable Export Engine**: Processes slides sequentially with memory clearing to handle large 10+ slide carousels on low-end devices.

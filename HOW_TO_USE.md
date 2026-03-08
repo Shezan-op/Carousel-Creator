@@ -29,7 +29,8 @@ Welcome to Carousel Creator! This guide walks you through **every single feature
 21. [Exporting Your Carousel](#21-exporting-your-carousel)
 22. [JSON Editing (Advanced)](#22-json-editing-advanced)
 23. [Tips & Tricks](#23-tips--tricks)
-24. [FAQ](#24-faq)
+24. [Mobile & Responsive Design](#24-mobile--responsive-design)
+25. [FAQ](#25-faq)
 
 ---
 
@@ -682,7 +683,23 @@ Paste valid JSON and click **Apply** to render slides instantly.
 
 ---
 
-## 24. FAQ
+## 24. Mobile & Responsive Design
+
+Carousel Creator is built as a **PWA (Progressive Web App)**, meaning it works perfectly on phones, tablets, and desktops.
+
+### Mobile-Specific Shortcuts
+
+- **Grid Rescue**: If the preview looks small, switch to **Grid Mode**. We use a rigid CSS Grid that ensures you can see and manage slides even on small screens.
+- **Tapping Slides**: On mobile, tapping any slide in the preview gallery instantly opens the **Focus Modal** for full-screen editing.
+- **Shift Buttons**: Instead of dragging on touchscreens (which can be flaky), use the "Shift Left" and "Shift Right" buttons on each slide to reorder them.
+
+### Pixel-Perfect Geometry
+
+We use a **Rigid Canvas** architecture. Slides are always rendered at their native 1080px resolution internally. The "Preview Scale" slider simply zooms the camera out. This ensures that what you see on your phone is exactly what gets exported in the PDF.
+
+---
+
+## 25. FAQ
 
 ### Q: Where is my data stored?
 
