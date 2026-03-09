@@ -19,18 +19,73 @@
 }
 
 @layer base {
+
+  /* PWA safe-area support for notched devices (iPhone X+, etc.) */
+  html {
+    /* Prevent overscroll bounce that interferes with PWA feel */
+    overscroll-behavior: none;
+    /* Safe area insets for notched phones */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
   body {
     @apply bg-[#050505] text-[#F3F4F6];
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
+    /* Prevent pull-to-refresh in standalone PWA mode */
+    overscroll-behavior-y: contain;
+    /* Remove tap highlight on mobile */
+    -webkit-tap-highlight-color: transparent;
+    /* Prevent text selection on double-tap (app-like feel) */
+    -webkit-touch-callout: none;
+    /* Smooth touch scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* When running as installed PWA (standalone mode) */
+  @media all and (display-mode: standalone) {
+    body {
+      /* Extra safety padding in standalone mode */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
   }
 
   /* Make ALL scrollbars overlay-style globally — they float ON TOP of content */
   * {
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
+
+  /* Respect user's reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Touch-friendly: make interactive elements easier to tap on mobile */
+  button,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  /* Prevent long-press context menu on images in PWA */
+  img {
+    -webkit-user-drag: none;
+    user-select: none;
   }
 }
 
