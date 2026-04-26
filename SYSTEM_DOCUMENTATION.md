@@ -1,40 +1,42 @@
-# System Documentation
+# 🎠 Carousel Creator — Documentation Hub
 
-## 1. The Workflow
+Welcome. This is the central navigation point for all Carousel Creator documentation.
 
-Write or paste your text in the Text Editor.
+Whether you're a creator making your first carousel, or a developer reading the source code, start here.
 
-Click ✨ **Paste Text & Auto-Format** to instantly chunk long text into perfectly paced slides.
-
-Use the **Toolbar** to highlight, bold, or underline words.
-
-Click **Download PDF** (for LinkedIn) or **Download ZIP** (for X/Instagram).
-
-## 2. The AI Assistant
-
-Stuck on what to write? Use our Custom GPT trained specifically for this tool:
-[**Carousel Bulk Converter GPT**](https://chatgpt.com/g/g-67ce242099cc8191bc31289196b01f92-carousel-bulk-converter)
-It outputs the exact formatting this app needs. Just copy and paste.
-
-## 3. The Syntax Engine
-
-If you want to write manually, the engine is simple:
-
-- `/h/` creates a massive **Headline**.
-- `/sh/` creates a **Subheading**.
-- No prefix creates regular **Body text**.
-- Double "Enter" (a blank line) creates a **new slide**.
-
-**Markdown Support:**
-
-- `**text**` = Bold
-- `_text_` = Italic
-- `__text__` = Underline
-- `*text*` = Highlight (Color changes based on your Template choice).
-
-## 4. Where is my data?
-
-Your custom colors, fonts, saved projects, and uploaded images are saved in your browser's IndexedDB. If you clear your browser data, you will lose your projects. Use the **Saved Projects -> Backup** feature to download a `.carousel` file to your computer for safekeeping.
+**Live App** → [mycarouselcreator.vercel.app](https://mycarouselcreator.vercel.app/)
 
 ---
-**Links point to:** [https://mycarouselcreator.vercel.app/](https://mycarouselcreator.vercel.app/)
+
+## For Creators
+
+| Guide | What you'll learn |
+|---|---|
+| 📖 [How to Use](./docs/HOW_TO_USE.md) | Full step-by-step walkthrough — from open app to downloaded file |
+| 📜 [Syntax Cheatsheet](./docs/SYNTAX_CHEATSHEET.md) | Every tag, option, and inline style with examples |
+| 🧠 [How It Works](./docs/SYSTEM_BRAIN.md) | Plain-English explanation of the engine — no code required |
+
+## For Developers
+
+| Guide | What you'll learn |
+|---|---|
+| 🛠️ [Tech Stack & Architecture](./docs/TECH_STACK.md) | Deep dive into the parser, renderer, persistence, and export pipeline |
+| 🗺️ [System Architecture Blueprint](./SYSTEM_ARCHITECTURE_BLUEPRINT.md) | Full data flow, trust boundaries, and external dependencies |
+| 📋 [README](./README.md) | Complete project overview including FAQ and contributing guide |
+
+## Project History
+
+| Document | Content |
+|---|---|
+| 📜 [Changelog](./CHANGELOG.md) | Version history and what changed in each release |
+
+---
+
+## Quick Facts
+
+- **Zero backend** — Pure client-side PWA. No server, no database, no API.
+- **Zero accounts** — No signup. No login. No email required.
+- **Zero cost** — Free forever. Open source (MIT).
+- **Zero tracking** — Your content never leaves your device.
+- **Offline ready** — Works without internet after the first page load.
+- **AI-compatible** — Pairs with the [Carousel Bulk Converter GPT](https://chatgpt.com/g/g-67ce242099cc8191bc31289196b01f92-carousel-bulk-converter).
