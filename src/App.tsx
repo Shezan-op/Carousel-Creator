@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import localforage from 'localforage';
+import { z } from 'zod';
 import LeftPane from './components/LeftPane';
 import CarouselPreview from './components/CarouselPreview';
 import type { CarouselData, Slide, BrandPreset, SavedProject } from './types';
 import { renderHighlightedText } from './utils';
+import { savedProjectSchema, brandPresetSchema } from './schema';
 
 localforage.config({
   name: 'CarouselCreator',
@@ -156,11 +158,18 @@ function App() {
         const savedImages = await localforage.getItem<Record<string, string>>('carousel_inline_images');
         if (savedImages) setInlineImages(savedImages);
 
-        const savedProj = await localforage.getItem<SavedProject[]>('carousel_saved_projects');
-        if (savedProj) setSavedProjects(savedProj);
+        const rawSavedProj = await localforage.getItem('carousel_saved_projects');
+        if (rawSavedProj) {
+          const validated = z.array(savedProjectSchema).safeParse(rawSavedProj);
+          if (validated.success) setSavedProjects(validated.data as SavedProject[]);
+        }
 
-        const savedPresets = await localforage.getItem<BrandPreset[]>('carousel_brand_presets');
-        if (savedPresets) setBrandPresets(savedPresets);
+        const rawSavedPresets = await localforage.getItem('carousel_brand_presets');
+        if (rawSavedPresets) {
+          const validated = z.array(brandPresetSchema).safeParse(rawSavedPresets);
+          if (validated.success) setBrandPresets(validated.data as BrandPreset[]);
+        }
+
 
         const lastText = await localforage.getItem<string>('lastBulkText');
         if (lastText) {

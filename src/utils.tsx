@@ -1,5 +1,7 @@
 
 
+import DOMPurify from 'dompurify';
+
 // Image compression constants
 export const AVATAR_MAX_PX = 256;
 export const GLOBAL_MAX_PX = 800;
@@ -65,6 +67,15 @@ export const renderHighlightedText = (text: string, template: string, accentColo
     // 6. Handle JSON line breaks (\n)
     parsedText = parsedText.replace(/\n/g, '<br />');
 
+    // Sanitization with DOMPurify
+    const sanitizedHtml = DOMPurify.sanitize(parsedText, {
+        ALLOWED_TAGS: ['b', 'i', 'strong', 'em', 'img', 'br', 'span'],
+        ALLOWED_ATTR: ['style', 'src', 'class'],
+        // Explicitly strip javascript: URIs and dangerous attributes
+        ALLOW_DATA_ATTR: false,
+    });
+
     // Safely render the nested HTML string
-    return <span dangerouslySetInnerHTML={{ __html: parsedText }} />;
+    return <span dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />;
 };
+

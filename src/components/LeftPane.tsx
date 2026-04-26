@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, type FC, type ChangeEvent, type DragEvent as ReactDragEvent } from 'react';
 import localforage from 'localforage';
 import type { CarouselData, Slide, BrandPreset, SavedProject } from '../types';
+import { projectFileSchema } from '../schema';
 import {
     Code, Settings, ListTree, RotateCcw,
     Trash2, Heart, Palette, Type, Layout, User,
@@ -551,21 +552,21 @@ const LeftPane: FC<Props> = (props) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const data = JSON.parse(e.target?.result as string);
-                if (data.bulkText && data.theme) {
-                    setBulkText(data.bulkText);
-                    setCarouselData(prev => ({ ...prev!, slides: prev?.slides || [], theme: data.theme }));
-                    if (data.inlineImages) setInlineImages(data.inlineImages);
-                    alert("Project loaded successfully!");
-                } else {
-                    alert("Invalid .carousel file.");
-                }
-            } catch {
-                alert("Failed to parse file.");
+                const rawData = JSON.parse(e.target?.result as string);
+                const data = projectFileSchema.parse(rawData);
+
+                setBulkText(data.bulkText);
+                setCarouselData(prev => ({ ...prev!, slides: prev?.slides || [], theme: data.theme }));
+                if (data.inlineImages) setInlineImages(data.inlineImages);
+                alert("Project loaded successfully!");
+            } catch (error) {
+                console.error("Import Validation Failed:", error);
+                alert("Invalid .carousel file content. Validation failed.");
             }
         };
         reader.readAsText(file);
     };
+
 
     const palettes = [
         { name: 'Night', bg: '#0A0A0B', text: '#FFFFFF', accent: '#3B82F6' },

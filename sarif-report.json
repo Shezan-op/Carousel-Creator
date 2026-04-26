@@ -1,0 +1,100 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "HackerX-SAST",
+          "informationUri": "https://github.com/hackerx/sast",
+          "rules": [
+            {
+              "id": "HX101",
+              "name": "hardcoded_secret",
+              "shortDescription": {
+                "text": "Hardcoded secrets found in source code."
+              }
+            },
+            {
+              "id": "HX104",
+              "name": "dom_xss",
+              "shortDescription": {
+                "text": "Potential DOM XSS via unsafe sink."
+              }
+            },
+            {
+              "id": "HX107",
+              "name": "unvalidated_json_parse",
+              "shortDescription": {
+                "text": "Unvalidated JSON.parse call found. Verify schema before parsing."
+              }
+            },
+            {
+              "id": "HX108",
+              "name": "potential_redos",
+              "shortDescription": {
+                "text": "Regex execution found. Verify for ReDoS vulnerability."
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "HX107",
+          "message": {
+            "text": "Unvalidated JSON.parse call found. Verify schema before parsing."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/components/LeftPane.tsx"
+                },
+                "region": {
+                  "startLine": 554
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "HX107",
+          "message": {
+            "text": "Unvalidated JSON.parse call found. Verify schema before parsing."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/components/LeftPane.tsx"
+                },
+                "region": {
+                  "startLine": 860
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "HX104",
+          "message": {
+            "text": "Potential DOM XSS via unsafe sink."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils.tsx"
+                },
+                "region": {
+                  "startLine": 69
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
